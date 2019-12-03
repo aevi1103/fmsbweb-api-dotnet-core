@@ -1,0 +1,2 @@
+﻿
+Scaffold-DbContext "Data Source=SBNDINMS007;Initial Catalog=SAP_Imports;Integrated Security=False;User ID=rontoa20;Password=aebbie17;Connect Timeout=15;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" Microsoft.EntityFrameworkCore.SqlServer -OutputDir "Entity/SAP" -ContextDir "Context/SAP" -Context "SapContext" -d

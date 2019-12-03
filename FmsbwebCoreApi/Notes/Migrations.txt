@@ -1,0 +1,4 @@
+﻿Add-Migration -Name initialCreate -OutputDir "Migrations/SAP" -Context SapContext
+
+
+Update-Database "removeTestTable" -Context "SapContext"
