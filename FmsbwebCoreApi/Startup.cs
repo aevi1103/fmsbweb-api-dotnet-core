@@ -11,6 +11,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
+using FmsbwebCoreApi.Context.Fmsb2;
+using FmsbwebCoreApi.Context.Safety;
+using FmsbwebCoreApi.Context.SAP;
+using Microsoft.EntityFrameworkCore;
+
 namespace FmsbwebCoreApi
 {
     public class Startup
@@ -26,6 +31,15 @@ namespace FmsbwebCoreApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            services.AddDbContext<Fmsb2Context>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));
+
+            services.AddDbContext<SafetyContext>(options =>
+               options.UseSqlServer(Configuration.GetConnectionString("safetyConn")));
+
+            services.AddDbContext<SapContext>(options =>
+               options.UseSqlServer(Configuration.GetConnectionString("sapConn")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
