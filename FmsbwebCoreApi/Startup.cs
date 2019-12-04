@@ -10,11 +10,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
-using Microsoft.EntityFrameworkCore;
+
+using FmsbwebCoreApi.Services.Safety;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace FmsbwebCoreApi
 {
@@ -30,8 +33,15 @@ namespace FmsbwebCoreApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers(setupAction => {
+                setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
+            })
+            .AddXmlDataContractSerializerFormatters(); //support xml output formatter
 
+            //inject safety repo
+            services.AddScoped<ISafetyLibraryRepository, SafetyLibraryRepository>(); 
+
+            //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));
 

@@ -11,6 +11,7 @@ namespace FmsbwebCoreApi.Entity.Safety
         [StringLength(50)]
         public string Label { get; set; }
         [StringLength(50)]
-        public string Series { get; set; }
+        public string Series { get; set; } 
+
     }
 }
