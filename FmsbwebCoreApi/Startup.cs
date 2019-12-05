@@ -18,6 +18,8 @@ using FmsbwebCoreApi.Context.SAP;
 
 using FmsbwebCoreApi.Services.Safety;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 
 namespace FmsbwebCoreApi
 {
@@ -34,11 +36,14 @@ namespace FmsbwebCoreApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers(setupAction => {
+                //content negotation
                 setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
             })
             .AddXmlDataContractSerializerFormatters(); //support xml output formatter
 
-            //inject safety repo
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            //inject safety lib repo
             services.AddScoped<ISafetyLibraryRepository, SafetyLibraryRepository>(); 
 
             //inject connection strings
@@ -58,6 +63,18 @@ namespace FmsbwebCoreApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            } 
+            else
+            {
+                app.UseExceptionHandler(appBuilder => {
+
+                    appBuilder.Run(async context =>
+                    {
+                        context.Response.StatusCode = 500;
+                        await context.Response.WriteAsync("An unexpected fault happened. Try again later.");
+                    });
+
+                });
             }
 
             app.UseHttpsRedirection();
