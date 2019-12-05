@@ -99,7 +99,7 @@ namespace FmsbwebCoreApi.Context.Safety
                 entity.HasOne(d => d.Incident)
                     .WithMany(p => p.Attachments)
                     .HasForeignKey(d => d.Incidentid)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_attachments_Incidence");
             });
 

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using FmsbwebCoreApi.Entity.Safety;
-using FmsbwebCoreApi.Models.Safety;
+using FmsbwebCoreApi.Models.Safety.Incident;
 
 namespace FmsbwebCoreApi.Profiles.Safety
 {
@@ -39,6 +39,8 @@ namespace FmsbwebCoreApi.Profiles.Safety
                     );
 
             CreateMap<IncidentForCreationDto, Incidence>();
+            CreateMap<IncidentForUpdateDto, Incidence>();
+            CreateMap<Incidence, IncidentForUpdateDto>();
         }
     }
 }

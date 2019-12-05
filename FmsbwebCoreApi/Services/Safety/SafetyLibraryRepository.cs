@@ -124,6 +124,21 @@ namespace FmsbwebCoreApi.Services.Safety
             _context.Incidence.Add(incident);
         }
 
+        public void UpdateIncident(Incidence incident)
+        {
+            // no code in this implementation
+        }
+
+        public void DeleteIncident(Incidence incident)
+        {
+            if (incident == null)
+            {
+                throw new ArgumentNullException(nameof(incident));
+            }
+
+            _context.Remove(incident);
+        }
+
         public void AddIncidentCollection(IEnumerable<Incidence> incidents)
         {
             if (incidents == null)
@@ -198,5 +213,7 @@ namespace FmsbwebCoreApi.Services.Safety
                 // dispose resources when needed
             }
         }
+
+        
     }
 }

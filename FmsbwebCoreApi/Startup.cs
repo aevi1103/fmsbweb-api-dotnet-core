@@ -1,25 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Serialization;
+using System;
 
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
-
 using FmsbwebCoreApi.Services.Safety;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using AutoMapper;
-using Microsoft.AspNetCore.Http;
 
 namespace FmsbwebCoreApi
 {
@@ -39,7 +33,33 @@ namespace FmsbwebCoreApi
                 //content negotation
                 setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
             })
-            .AddXmlDataContractSerializerFormatters(); //support xml output formatter
+            .AddNewtonsoftJson(setupAction =>
+            {
+                setupAction.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver(); //enabled patch format in .net core
+            })
+            .AddXmlDataContractSerializerFormatters() //support xml input/output formatter 
+            .ConfigureApiBehaviorOptions(setupAction => {
+
+                setupAction.InvalidModelStateResponseFactory = context =>
+                {
+                    var problemDetails = new ValidationProblemDetails(context.ModelState)
+                    {
+                        Type = "https://safetylibrary.com/modelvalidationproblem",
+                        Title = "One or more validation erros opccured",
+                        Status = StatusCodes.Status422UnprocessableEntity,
+                        Detail = "See the errors property for details",
+                        Instance = context.HttpContext.Request.Path
+                    };
+
+                    problemDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+                    return new UnprocessableEntityObjectResult(problemDetails)
+                    {
+                        ContentTypes = { "application/problem+json" }
+                    };
+
+                };
+
+            }); 
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

@@ -10,6 +10,7 @@ using AutoMapper;
 using FmsbwebCoreApi.ResourceParameters.Safety;
 using FmsbwebCoreApi.Entity.Safety;
 using FmsbwebCoreApi.Helpers;
+using FmsbwebCoreApi.Models.Safety.Incident;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {

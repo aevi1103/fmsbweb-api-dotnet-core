@@ -9,6 +9,7 @@ using FmsbwebCoreApi.Models.Safety;
 using AutoMapper;
 using FmsbwebCoreApi.Entity.Safety;
 using System.Text;
+using FmsbwebCoreApi.Models.Safety.Attachment;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {

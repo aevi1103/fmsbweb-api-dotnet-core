@@ -3,12 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
 
 using FmsbwebCoreApi.Services.Safety;
-using FmsbwebCoreApi.Models.Safety;
-using AutoMapper;
+using FmsbwebCoreApi.Models.Safety.Incident;
 using FmsbwebCoreApi.ResourceParameters.Safety;
 using FmsbwebCoreApi.Entity.Safety;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {
@@ -52,12 +57,94 @@ namespace FmsbwebCoreApi.Controllers.Safety
         [HttpPost]
         public ActionResult<IncidentDto> CreateIncident(IncidentForCreationDto incident)
         {
+            if (incident == null)
+            {
+                return BadRequest();
+            }
+
             var incidentEntity = _mapper.Map<Incidence>(incident);
             _safetyLibraryRepository.AddIncident(incidentEntity);
             _safetyLibraryRepository.Save();
 
             var incidentToReturn = _mapper.Map<IncidentDto>(incidentEntity);
             return CreatedAtRoute("GetIncident", new { id = incidentToReturn.Id }, incidentToReturn);
+        }
+
+        //PUT updates all fields, so if the client pass a incomplete payload the values will set to its default value
+        [HttpPut("{id}")]
+        public ActionResult UpdateIncident(int id, IncidentForUpdateDto incident)
+        {
+            if (incident == null)
+            {
+                return BadRequest();
+            }
+
+            var incidentFromRepo = _safetyLibraryRepository.GetIncent(id);
+
+            //map the entity to a incidentforupdatedto
+            //apply the udpated field values to that dto
+            //map then dto back to entity
+            _mapper.Map(incident, incidentFromRepo);
+            _safetyLibraryRepository.UpdateIncident(incidentFromRepo);
+            _safetyLibraryRepository.Save();
+            return NoContent();
+        }
+
+        [HttpPatch("{id}")]
+        public ActionResult PartiallyUpdateIncident(int id, JsonPatchDocument<IncidentForUpdateDto> patchDocument)
+        {
+            if (patchDocument == null)
+            {
+                return BadRequest();
+            }
+
+            var incidentFromRepo = _safetyLibraryRepository.GetIncent(id);
+
+            var incidentToPatch = _mapper.Map<IncidentForUpdateDto>(incidentFromRepo); //map incidentFromRepo to IncidentForUpdateDto
+
+            //add validation
+            patchDocument.ApplyTo(incidentToPatch, ModelState);
+
+            if (!TryValidateModel(incidentToPatch))
+            {
+                return ValidationProblem(ModelState);
+            };
+
+            _mapper.Map(incidentToPatch, incidentFromRepo);
+            _safetyLibraryRepository.UpdateIncident(incidentFromRepo);
+            _safetyLibraryRepository.Save();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public ActionResult DeleteIncident(int id)
+        {
+            var incidentFromRepo = _safetyLibraryRepository.GetIncent(id);
+
+            if (incidentFromRepo == null)
+            {
+                return NotFound();
+            }
+
+            _safetyLibraryRepository.DeleteIncident(incidentFromRepo);
+            _safetyLibraryRepository.Save();
+
+            return NoContent();
+        }
+
+        [HttpOptions]
+        public IActionResult GetIncidentOptions()
+        {
+            Response.Headers.Add("Allow", "GET,OPTIONS,POST");
+            return Ok();
+        }
+
+        public override ActionResult ValidationProblem(
+            [ActionResultObjectValue] ModelStateDictionary modelStateDictionary)
+        {
+            var options = HttpContext.RequestServices
+                .GetRequiredService<IOptions<ApiBehaviorOptions>>();
+            return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
         }
     }
 }

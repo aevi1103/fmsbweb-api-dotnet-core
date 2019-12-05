@@ -15,6 +15,8 @@ namespace FmsbwebCoreApi.Services.Safety
         Incidence GetIncent(int id);
         IEnumerable<Incidence> GetIncents(IEnumerable<int> ids);
         void AddIncident(Incidence incident);
+        void UpdateIncident(Incidence incident);
+        void DeleteIncident(Incidence incident);
         void AddIncidentCollection(IEnumerable<Incidence> incidents);
         bool IncidentExists(int id);
         IEnumerable<Attachments> GetAttachments(int id);

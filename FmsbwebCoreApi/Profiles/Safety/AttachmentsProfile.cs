@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using FmsbwebCoreApi.Entity.Safety;
 using FmsbwebCoreApi.Models.Safety;
+using FmsbwebCoreApi.Models.Safety.Attachment;
 
 namespace FmsbwebCoreApi.Profiles.Safety
 {
