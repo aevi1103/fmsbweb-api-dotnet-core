@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Entity.Safety;
+using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.ResourceParameters.Safety;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,32 +32,29 @@ namespace FmsbwebCoreApi.Services.Safety
                     .ToList<Incidence>();
         }
 
-        public IEnumerable<Incidence> GetIncents(IncidentsResourceParameter incidentsResourceParameter)
+        public PagedList<Incidence> GetIncents(IncidentsResourceParameter incidentsResourceParameter)
         {
             if (incidentsResourceParameter == null)
             {
                 throw new ArgumentNullException(nameof(incidentsResourceParameter));
             }
 
-            var dept = incidentsResourceParameter.Dept;
-            var searchQuery = incidentsResourceParameter.SearchQuery;
+            var p = incidentsResourceParameter;
 
-            if (string.IsNullOrWhiteSpace(dept) && string.IsNullOrWhiteSpace(searchQuery))
+            // convert set to iqueryable
+            var collection = _context.Incidence as IQueryable<Incidence>; //builds the sql commands
+
+            //check if not dept is not emnpty the apply filter
+            if (!string.IsNullOrWhiteSpace(p.Dept))
             {
-                return GetIncents();
-            }
-
-            var collection = _context.Incidence as IQueryable<Incidence>;
-
-            if (!string.IsNullOrWhiteSpace(dept))
-            {
-                dept = dept.Trim();
-                collection = collection.Where(x => x.Dept.Trim() == dept.Trim());
+                p.Dept = p.Dept.Trim();
+                collection = collection.Where(x => x.Dept.Trim() == p.Dept.Trim());
             };
 
-            if(!string.IsNullOrWhiteSpace(searchQuery))
+            //check if not qry string is empty, if yes apply search to all string props
+            if(!string.IsNullOrWhiteSpace(p.SearchQuery))
             {
-                searchQuery = searchQuery.Trim();
+                p.SearchQuery = p.SearchQuery.Trim();
                 collection = collection.Search(
                                     x => x.Dept,
                                     x => x.Fname,
@@ -71,16 +69,16 @@ namespace FmsbwebCoreApi.Services.Safety
                                     x => x.FinalCorrectiveAction,
                                     x => x.ReasonSupportingOrirstat,
                                     x => x.FmTipsNumber
-                                ).Containing(searchQuery);
+                                ).Containing(p.SearchQuery);
             };
 
-            return collection
-                    .Include(injury => injury.Injury)
-                    .Include(body => body.BodyPart)
-                    .Include(attach => attach.Attachments)
-                    .OrderBy(x => x.AccidentDate)
-                    .ToList();
+            //apply joins
+            collection = collection
+                        .Include(injury => injury.Injury)
+                        .Include(body => body.BodyPart)
+                        .Include(attach => attach.Attachments);
 
+            return PagedList<Incidence>.Create(collection, p.PageNumber, p.PageSize);
         }
 
         public Incidence GetIncent(int id)

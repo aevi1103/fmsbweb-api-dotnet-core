@@ -68,13 +68,16 @@ namespace FmsbwebCoreApi
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));
+                options.UseSqlServer(Configuration.GetConnectionString("fmsbConn"))
+            );
 
             services.AddDbContext<SafetyContext>(options =>
-               options.UseSqlServer(Configuration.GetConnectionString("safetyConn")));
+               options.UseSqlServer(Configuration.GetConnectionString("safetyConn"))
+            );
 
             services.AddDbContext<SapContext>(options =>
-               options.UseSqlServer(Configuration.GetConnectionString("sapConn")));
+               options.UseSqlServer(Configuration.GetConnectionString("sapConn"))
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

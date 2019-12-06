@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using FmsbwebCoreApi.Helpers;
+using System.Text.Json;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {
@@ -34,11 +36,31 @@ namespace FmsbwebCoreApi.Controllers.Safety
                 throw new ArgumentNullException(nameof(mapper));
         }
 
-        [HttpGet()]
+        [HttpGet(Name = "GetIncents")]
         [HttpHead]
         public ActionResult<IEnumerable<IncidentDto>> GetIncents([FromQuery] IncidentsResourceParameter incidentsResourceParameter)
         {
             var incidentsFromRepo = _safetyLibraryRepository.GetIncents(incidentsResourceParameter);
+
+            var previousPageLink = incidentsFromRepo.HasPrevious ?
+                                    CreateIncidentResourceUri(incidentsResourceParameter, ResourceUriType.PreviousPage) : null;
+
+            var nextPageLink = incidentsFromRepo.HasNext ?
+                                    CreateIncidentResourceUri(incidentsResourceParameter, ResourceUriType.NextPage) : null;
+
+            var paginationMetaData = new
+            {
+                totalCount = incidentsFromRepo.TotalCount,
+                pageSize = incidentsFromRepo.PageSize,
+                currentPage = incidentsFromRepo.CurrentPage,
+                totalPages = incidentsFromRepo.TotalPages,
+                previousPageLink,
+                nextPageLink
+            };
+
+            Response.Headers.Add("X-Pagination",
+                JsonSerializer.Serialize(paginationMetaData));
+
             return Ok(_mapper.Map<IEnumerable<IncidentDto>>(incidentsFromRepo));
         }
 
@@ -145,6 +167,47 @@ namespace FmsbwebCoreApi.Controllers.Safety
             var options = HttpContext.RequestServices
                 .GetRequiredService<IOptions<ApiBehaviorOptions>>();
             return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
+        }
+
+        private string CreateIncidentResourceUri(
+            IncidentsResourceParameter incidentResourceParameters,
+            ResourceUriType type)
+        {
+            switch (type)
+            {
+                case ResourceUriType.PreviousPage:
+
+                    return Url.Link("GetIncents",
+                        new
+                        {
+                            pageNumber = incidentResourceParameters.PageNumber - 1,
+                            pageSize = incidentResourceParameters.PageSize,
+                            dept = incidentResourceParameters.Dept,
+                            searchQuery = incidentResourceParameters.SearchQuery
+                        });
+
+                case ResourceUriType.NextPage:
+
+                    return Url.Link("GetIncents",
+                        new
+                        {
+                            pageNumber = incidentResourceParameters.PageNumber + 1,
+                            pageSize = incidentResourceParameters.PageSize,
+                            dept = incidentResourceParameters.Dept,
+                            searchQuery = incidentResourceParameters.SearchQuery
+                        });
+
+                default:
+
+                    return Url.Link("GetIncents",
+                        new
+                        {
+                            pageNumber = incidentResourceParameters.PageNumber,
+                            pageSize = incidentResourceParameters.PageSize,
+                            dept = incidentResourceParameters.Dept,
+                            searchQuery = incidentResourceParameters.SearchQuery
+                        });
+            }
         }
     }
 }

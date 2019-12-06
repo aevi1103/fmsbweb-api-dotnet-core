@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using FmsbwebCoreApi.Entity.Safety;
+using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.ResourceParameters.Safety;
 
 namespace FmsbwebCoreApi.Services.Safety
@@ -11,7 +12,7 @@ namespace FmsbwebCoreApi.Services.Safety
     public interface ISafetyLibraryRepository
     {
         IEnumerable<Incidence> GetIncents();
-        IEnumerable<Incidence> GetIncents(IncidentsResourceParameter incidentsResourceParameter);
+        PagedList<Incidence> GetIncents(IncidentsResourceParameter incidentsResourceParameter);
         Incidence GetIncent(int id);
         IEnumerable<Incidence> GetIncents(IEnumerable<int> ids);
         void AddIncident(Incidence incident);
