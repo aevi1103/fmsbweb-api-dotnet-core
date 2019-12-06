@@ -13,7 +13,6 @@ using System;
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
-using FmsbwebCoreApi.Services.Safety;
 
 namespace FmsbwebCoreApi
 {
@@ -59,12 +58,18 @@ namespace FmsbwebCoreApi
 
                 };
 
-            }); 
+            });
+
+            //register safety property mapping service
+            services.AddTransient<Services.Safety.IPropertyMappingService, Services.Safety.PropertyMappingService>();
+
+            //register property checker service
+            services.AddTransient<Services.IPropertyCheckerService, Services.PropertyCheckerService>();
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             //inject safety lib repo
-            services.AddScoped<ISafetyLibraryRepository, SafetyLibraryRepository>(); 
+            services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>(); 
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>

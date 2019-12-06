@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using FmsbwebCoreApi.Helpers;
 using System.Text.Json;
+using FmsbwebCoreApi.Services;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {
@@ -25,21 +26,44 @@ namespace FmsbwebCoreApi.Controllers.Safety
     {
         private readonly ISafetyLibraryRepository _safetyLibraryRepository;
         private readonly IMapper _mapper;
+        private readonly IPropertyMappingService _propertyMappingService;
+        private readonly IPropertyCheckerService _propertyCheckerService;
 
-        public IncidentsController(ISafetyLibraryRepository safetyLibraryRepository,
-            IMapper mapper)
+        public IncidentsController(
+            ISafetyLibraryRepository safetyLibraryRepository,
+            IMapper mapper,
+            IPropertyMappingService propertyMappingService,
+            IPropertyCheckerService propertyCheckerService)
         {
             _safetyLibraryRepository = safetyLibraryRepository ??
                 throw new ArgumentNullException(nameof(safetyLibraryRepository));
 
             _mapper = mapper ??
                 throw new ArgumentNullException(nameof(mapper));
+
+            _propertyMappingService = propertyMappingService ??
+                throw new ArgumentNullException(nameof(propertyMappingService));
+
+            _propertyCheckerService = propertyCheckerService ??
+                throw new ArgumentNullException(nameof(propertyCheckerService));
+
         }
 
         [HttpGet(Name = "GetIncents")]
         [HttpHead]
-        public ActionResult<IEnumerable<IncidentDto>> GetIncents([FromQuery] IncidentsResourceParameter incidentsResourceParameter)
+        public IActionResult GetIncents([FromQuery] IncidentsResourceParameter incidentsResourceParameter)
         {
+
+            if(!_propertyMappingService.ValidMappingExistsFor<IncidentDto, Incidence>(incidentsResourceParameter.OrderBy))
+            {
+                return BadRequest();
+            }
+
+            if (!_propertyCheckerService.TypeHasProperties<IncidentDto>(incidentsResourceParameter.Fields))
+            {
+                return BadRequest();
+            }
+
             var incidentsFromRepo = _safetyLibraryRepository.GetIncents(incidentsResourceParameter);
 
             var previousPageLink = incidentsFromRepo.HasPrevious ?
@@ -61,11 +85,13 @@ namespace FmsbwebCoreApi.Controllers.Safety
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetaData));
 
-            return Ok(_mapper.Map<IEnumerable<IncidentDto>>(incidentsFromRepo));
+            return Ok(_mapper.Map<IEnumerable<IncidentDto>>(incidentsFromRepo)
+                        .ShapeData(incidentsResourceParameter.Fields));
+                        
         }
 
         [HttpGet("{id}", Name = "GetIncident")]
-        public ActionResult<IncidentDto> GetIncident(int id)
+        public ActionResult<IncidentDto> GetIncident(int id, string fields)
         {
             var incidentFromRepo = _safetyLibraryRepository.GetIncent(id);
             if (incidentFromRepo == null)
@@ -73,7 +99,12 @@ namespace FmsbwebCoreApi.Controllers.Safety
                 return NotFound();
             }
 
-            return Ok(_mapper.Map<IncidentDto>(incidentFromRepo));
+            if (!_propertyCheckerService.TypeHasProperties<IncidentDto>(fields))
+            {
+                return BadRequest();
+            }
+
+            return Ok(_mapper.Map<IncidentDto>(incidentFromRepo).ShapeData(fields));
         }
 
         [HttpPost]
@@ -173,6 +204,9 @@ namespace FmsbwebCoreApi.Controllers.Safety
             IncidentsResourceParameter incidentResourceParameters,
             ResourceUriType type)
         {
+
+            var p = incidentResourceParameters;
+
             switch (type)
             {
                 case ResourceUriType.PreviousPage:
@@ -180,10 +214,12 @@ namespace FmsbwebCoreApi.Controllers.Safety
                     return Url.Link("GetIncents",
                         new
                         {
-                            pageNumber = incidentResourceParameters.PageNumber - 1,
-                            pageSize = incidentResourceParameters.PageSize,
-                            dept = incidentResourceParameters.Dept,
-                            searchQuery = incidentResourceParameters.SearchQuery
+                            fields= p.Fields,
+                            orderBy = p.OrderBy,
+                            pageNumber = p.PageNumber - 1,
+                            pageSize = p.PageSize,
+                            dept = p.Dept,
+                            searchQuery = p.SearchQuery
                         });
 
                 case ResourceUriType.NextPage:
@@ -191,10 +227,12 @@ namespace FmsbwebCoreApi.Controllers.Safety
                     return Url.Link("GetIncents",
                         new
                         {
-                            pageNumber = incidentResourceParameters.PageNumber + 1,
-                            pageSize = incidentResourceParameters.PageSize,
-                            dept = incidentResourceParameters.Dept,
-                            searchQuery = incidentResourceParameters.SearchQuery
+                            fields = p.Fields,
+                            orderBy = p.OrderBy,
+                            pageNumber = p.PageNumber + 1,
+                            pageSize = p.PageSize,
+                            dept = p.Dept,
+                            searchQuery = p.SearchQuery
                         });
 
                 default:
@@ -202,10 +240,12 @@ namespace FmsbwebCoreApi.Controllers.Safety
                     return Url.Link("GetIncents",
                         new
                         {
-                            pageNumber = incidentResourceParameters.PageNumber,
-                            pageSize = incidentResourceParameters.PageSize,
-                            dept = incidentResourceParameters.Dept,
-                            searchQuery = incidentResourceParameters.SearchQuery
+
+                            orderBy = p.OrderBy,
+                            pageNumber = p.PageNumber,
+                            pageSize = p.PageSize,
+                            dept = p.Dept,
+                            searchQuery = p.SearchQuery
                         });
             }
         }

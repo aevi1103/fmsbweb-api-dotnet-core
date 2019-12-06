@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Entity.Safety;
 using FmsbwebCoreApi.Helpers;
+using FmsbwebCoreApi.Models.Safety.Incident;
 using FmsbwebCoreApi.ResourceParameters.Safety;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,10 +16,12 @@ namespace FmsbwebCoreApi.Services.Safety
     public class SafetyLibraryRepository : ISafetyLibraryRepository, IDisposable
     {
         private readonly SafetyContext _context;
+        private readonly IPropertyMappingService _propertyMappingService;
 
-        public SafetyLibraryRepository(SafetyContext context)
+        public SafetyLibraryRepository(SafetyContext context, IPropertyMappingService propertyMappingService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _propertyMappingService = propertyMappingService ?? throw new ArgumentNullException(nameof(propertyMappingService));
         }
 
         public IEnumerable<Incidence> GetIncents()
@@ -71,6 +74,14 @@ namespace FmsbwebCoreApi.Services.Safety
                                     x => x.FmTipsNumber
                                 ).Containing(p.SearchQuery);
             };
+
+            //sorting
+            if (!string.IsNullOrWhiteSpace(p.OrderBy))
+            {
+                //get property mapping dictionary
+                var incidentPropertyMappingDictionary = _propertyMappingService.GetPropertyMapping<IncidentDto, Incidence>();
+                collection = collection.ApplySort(p.OrderBy, incidentPropertyMappingDictionary);
+            }
 
             //apply joins
             collection = collection

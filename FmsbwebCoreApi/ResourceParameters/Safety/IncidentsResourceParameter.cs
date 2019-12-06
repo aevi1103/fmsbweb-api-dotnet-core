@@ -19,5 +19,7 @@ namespace FmsbwebCoreApi.ResourceParameters.Safety
             set => _pageSize = (value > maxPageSize) ? maxPageSize : value;
         }
 
+        public string OrderBy { get; set; } = "IncidentDate";
+        public string Fields { get; set; }
     }
 }
