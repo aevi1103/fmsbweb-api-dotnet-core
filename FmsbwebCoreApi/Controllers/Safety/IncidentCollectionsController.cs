@@ -15,7 +15,7 @@ using FmsbwebCoreApi.Models.Safety.Incident;
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
-    [Route("api/incidentscollections")]
+    [Route("api/safety/incidentscollections")]
     public class IncidentCollectionsController : ControllerBase
     {
         private readonly ISafetyLibraryRepository _safetyLibraryRepository;

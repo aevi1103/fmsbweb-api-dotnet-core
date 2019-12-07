@@ -8,6 +8,7 @@ namespace FmsbwebCoreApi.Helpers
     public enum ResourceUriType
     {
         PreviousPage,
-        NextPage
+        NextPage,
+        Current
     }
 }

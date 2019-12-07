@@ -13,6 +13,8 @@ using System;
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace FmsbwebCoreApi
 {
@@ -28,16 +30,36 @@ namespace FmsbwebCoreApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers(setupAction => {
+            services.AddHttpCacheHeaders((expirationModelOPtions) =>
+            {
+                expirationModelOPtions.MaxAge = 60;
+                expirationModelOPtions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Public;
+            },
+            (validationModelOptions) =>
+            {
+                validationModelOptions.MustRevalidate = true;
+            }
+            );
+
+            services.AddResponseCaching(); //register http caching
+
+            services.AddControllers(setupAction =>
+            {
                 //content negotation
                 setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
+                setupAction.CacheProfiles.Add("240SecCacheProfile",
+                    new CacheProfile
+                    {
+                        Duration = 240
+                    });
             })
             .AddNewtonsoftJson(setupAction =>
             {
                 setupAction.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver(); //enabled patch format in .net core
             })
             .AddXmlDataContractSerializerFormatters() //support xml input/output formatter 
-            .ConfigureApiBehaviorOptions(setupAction => {
+            .ConfigureApiBehaviorOptions(setupAction =>
+            {
 
                 setupAction.InvalidModelStateResponseFactory = context =>
                 {
@@ -60,6 +82,16 @@ namespace FmsbwebCoreApi
 
             });
 
+            //add suport of custom accept header
+            services.Configure<MvcOptions>(config =>
+            {
+                var newtonsoftOutputFormatter = config.OutputFormatters.OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
+                if (newtonsoftOutputFormatter != null)
+                {
+                    newtonsoftOutputFormatter.SupportedMediaTypes.Add("application/vnd.fmsbweb.hateoas+json");
+                }
+            });
+
             //register safety property mapping service
             services.AddTransient<Services.Safety.IPropertyMappingService, Services.Safety.PropertyMappingService>();
 
@@ -69,7 +101,7 @@ namespace FmsbwebCoreApi
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             //inject safety lib repo
-            services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>(); 
+            services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>
@@ -91,10 +123,11 @@ namespace FmsbwebCoreApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-            } 
+            }
             else
             {
-                app.UseExceptionHandler(appBuilder => {
+                app.UseExceptionHandler(appBuilder =>
+                {
 
                     appBuilder.Run(async context =>
                     {
@@ -104,6 +137,19 @@ namespace FmsbwebCoreApi
 
                 });
             }
+
+            //if we want to implement Etag validation comment 'app.UseResponseCaching()'
+            //then on the client side request header add a 'If-None-Match' with the lates E-Tag generated' if the E tag does not
+            //match from the current E-tag generated it will it will hit the API
+            //else it will response a '304 not-modified'
+
+            //if we want to implement concurrency
+            //on the client side request header add 'If-Match' with the client current 'E-tag' generated from the latest 'GET' request
+            //if the client does not have the latest E-Tag it will response with '412 precondition failed'
+
+            app.UseResponseCaching(); //use cachine store middleware
+
+            app.UseHttpCacheHeaders();
 
             app.UseHttpsRedirection();
 

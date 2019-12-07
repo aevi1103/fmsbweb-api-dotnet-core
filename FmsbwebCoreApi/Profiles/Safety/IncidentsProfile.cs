@@ -38,6 +38,34 @@ namespace FmsbwebCoreApi.Profiles.Safety
                         opt => opt.MapFrom(src => src.Attachments.Count())
                     );
 
+            CreateMap<Incidence, IncidentFullDto>()
+                   .ForMember(
+                       dest => dest.FirstName,
+                       opt => opt.MapFrom(src => src.Fname))
+                   .ForMember(
+                       dest => dest.LastName,
+                       opt => opt.MapFrom(src => src.Lname))
+                   .ForMember(
+                       dest => dest.IncidentDate,
+                       opt => opt.MapFrom(src => src.AccidentDate)
+                   )
+                   .ForMember(
+                       dest => dest.Injury,
+                       opt => opt.MapFrom(src => src.Injury.InjuryName)
+                   )
+                   .ForMember(
+                       dest => dest.BodyPart,
+                       opt => opt.MapFrom(src => src.BodyPart.BodyPart1)
+                   )
+                   .ForMember(
+                       dest => dest.InjuryStatus,
+                       opt => opt.MapFrom(src => src.InjuryStatId)
+                   )
+                   .ForMember(
+                       dest => dest.NumberOfAttachments,
+                       opt => opt.MapFrom(src => src.Attachments.Count())
+                   );
+
             CreateMap<IncidentForCreationDto, Incidence>();
             CreateMap<IncidentForUpdateDto, Incidence>();
             CreateMap<Incidence, IncidentForUpdateDto>();

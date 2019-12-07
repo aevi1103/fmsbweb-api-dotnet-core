@@ -17,11 +17,16 @@ using Microsoft.Extensions.Options;
 using FmsbwebCoreApi.Helpers;
 using System.Text.Json;
 using FmsbwebCoreApi.Services;
+using FmsbwebCoreApi.Models;
+using Microsoft.Net.Http.Headers;
+using System.Dynamic;
+using Marvin.Cache.Headers;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
-    [Route("api/incidents")]
+    [Route("api/safety/incidents")]
+    //[ResponseCache(CacheProfileName = "240SecCacheProfile")]
     public class IncidentsController : ControllerBase
     {
         private readonly ISafetyLibraryRepository _safetyLibraryRepository;
@@ -49,12 +54,32 @@ namespace FmsbwebCoreApi.Controllers.Safety
 
         }
 
+        //list of accept headers
+        [Produces(
+            "application/json",
+            "application/xml",
+            "application/vnd.fmsbweb.hateoas+json",
+            "application/vnd.fmsbweb.incident.full+json",
+            "application/vnd.fmsbweb.incident.full.hateoas+json",
+            "application/vnd.fmsbweb.incident.friendly+json",
+            "application/vnd.fmsbweb.incident.friendly.hateoas+json"
+            )]
         [HttpGet(Name = "GetIncents")]
         [HttpHead]
-        public IActionResult GetIncents([FromQuery] IncidentsResourceParameter incidentsResourceParameter)
+        //[HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 1000)]
+        //[HttpCacheValidation(MustRevalidate = false)]
+        public IActionResult GetIncents(
+            [FromQuery] IncidentsResourceParameter incidentsResourceParameter,
+            [FromHeader(Name = "Accept")] string mediaType)
         {
 
-            if(!_propertyMappingService.ValidMappingExistsFor<IncidentDto, Incidence>(incidentsResourceParameter.OrderBy))
+            //checks if valid media type
+            if (!MediaTypeHeaderValue.TryParse(mediaType, out MediaTypeHeaderValue parsedMediaType))
+            {
+                return BadRequest();
+            }
+
+            if (!_propertyMappingService.ValidMappingExistsFor<IncidentDto, Incidence>(incidentsResourceParameter.OrderBy))
             {
                 return BadRequest();
             }
@@ -66,33 +91,86 @@ namespace FmsbwebCoreApi.Controllers.Safety
 
             var incidentsFromRepo = _safetyLibraryRepository.GetIncents(incidentsResourceParameter);
 
-            var previousPageLink = incidentsFromRepo.HasPrevious ?
-                                    CreateIncidentResourceUri(incidentsResourceParameter, ResourceUriType.PreviousPage) : null;
-
-            var nextPageLink = incidentsFromRepo.HasNext ?
-                                    CreateIncidentResourceUri(incidentsResourceParameter, ResourceUriType.NextPage) : null;
-
             var paginationMetaData = new
             {
                 totalCount = incidentsFromRepo.TotalCount,
                 pageSize = incidentsFromRepo.PageSize,
                 currentPage = incidentsFromRepo.CurrentPage,
-                totalPages = incidentsFromRepo.TotalPages,
-                previousPageLink,
-                nextPageLink
+                totalPages = incidentsFromRepo.TotalPages
             };
 
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetaData));
 
-            return Ok(_mapper.Map<IEnumerable<IncidentDto>>(incidentsFromRepo)
-                        .ShapeData(incidentsResourceParameter.Fields));
-                        
+            
+
+            //check if media type include hateoas
+            var includeLinks = parsedMediaType.SubTypeWithoutSuffix.EndsWith("hateoas", StringComparison.InvariantCultureIgnoreCase);
+            IEnumerable<LinkDto> links = new List<LinkDto>();
+
+            if (includeLinks)
+            {
+                links = CreateLinksForIncidents(incidentsResourceParameter, incidentsFromRepo.HasNext, incidentsFromRepo.HasPrevious);
+            }
+
+            var primaryMediaType = includeLinks
+                ? parsedMediaType.SubTypeWithoutSuffix.Substring(0, parsedMediaType.SubTypeWithoutSuffix.Length - 8) //remove '.hateoas' in the accept header
+                : parsedMediaType.SubTypeWithoutSuffix;
+
+            var resourceToReturn = new List<ExpandoObject>();
+
+            //full incidents representation
+            if (primaryMediaType == "vnd.fmsbweb.incident.full")
+            {
+                resourceToReturn = _mapper.Map<IEnumerable<IncidentFullDto>>(incidentsFromRepo).ShapeData(incidentsResourceParameter.Fields).ToList();    
+            } else
+            {
+                resourceToReturn = _mapper.Map<IEnumerable<IncidentDto>>(incidentsFromRepo).ShapeData(incidentsResourceParameter.Fields).ToList();
+            }
+
+            if (!includeLinks)
+            {
+                return Ok(resourceToReturn);
+            }
+            else
+            {
+                var resourceToReturnWithLinks = resourceToReturn.Select(incident =>
+                {
+                    var incidentAsDictionary = incident as IDictionary<string, object>;
+                    var incidentLinks = CreateLinksForIncident((int)incidentAsDictionary["Id"], null);
+                    incidentAsDictionary.Add("links", incidentLinks);
+                    return incidentAsDictionary;
+                });
+
+                return Ok(new
+                {
+                    value = resourceToReturnWithLinks,
+                    links
+                });
+            }
+
+
         }
 
+        //list of accept headers
+        [Produces(
+            "application/json",
+            "application/xml",
+            "application/vnd.fmsbweb.hateoas+json",
+            "application/vnd.fmsbweb.incident.full+json",
+            "application/vnd.fmsbweb.incident.full.hateoas+json",
+            "application/vnd.fmsbweb.incident.friendly+json",
+            "application/vnd.fmsbweb.incident.friendly.hateoas+json"
+            )]
         [HttpGet("{id}", Name = "GetIncident")]
-        public ActionResult<IncidentDto> GetIncident(int id, string fields)
+        public ActionResult<IncidentDto> GetIncident(int id, string fields, [FromHeader(Name = "Accept")] string mediaType)
         {
+            //checks if valid media type
+            if (!MediaTypeHeaderValue.TryParse(mediaType, out MediaTypeHeaderValue parsedMediaType))
+            {
+                return BadRequest();
+            }
+
             var incidentFromRepo = _safetyLibraryRepository.GetIncent(id);
             if (incidentFromRepo == null)
             {
@@ -104,10 +182,43 @@ namespace FmsbwebCoreApi.Controllers.Safety
                 return BadRequest();
             }
 
-            return Ok(_mapper.Map<IncidentDto>(incidentFromRepo).ShapeData(fields));
+            //check if media type include hateoas
+            var includeLinks = parsedMediaType.SubTypeWithoutSuffix.EndsWith("hateoas", StringComparison.InvariantCultureIgnoreCase);
+            IEnumerable<LinkDto> links = new List<LinkDto>();
+            
+            if (includeLinks) 
+            {
+                links = CreateLinksForIncident(id, fields); //store links in a variable if harteoas exist
+            }
+
+            var primaryMediaType = includeLinks
+                ? parsedMediaType.SubTypeWithoutSuffix.Substring(0, parsedMediaType.SubTypeWithoutSuffix.Length - 8) //remove '.hateoas' in the accept header
+                : parsedMediaType.SubTypeWithoutSuffix;
+
+            //full incident representation
+            if (primaryMediaType == "vnd.fmsbweb.incident.full")
+            {
+                var fullResourceToReturn = _mapper.Map<IncidentFullDto>(incidentFromRepo).ShapeData(fields) as IDictionary<string, object>;
+                if (includeLinks)
+                {
+                    fullResourceToReturn.Add("links", links);
+                }
+
+                return Ok(fullResourceToReturn);
+            }
+
+            //friendy representaion
+            var friendlyResourceToReturn = _mapper.Map<IncidentDto>(incidentFromRepo).ShapeData(fields) as IDictionary<string, object>;
+            if (includeLinks)
+            {
+                friendlyResourceToReturn.Add("links", links);
+            }
+
+            return Ok(friendlyResourceToReturn);
+
         }
 
-        [HttpPost]
+        [HttpPost(Name = "CreateIncident")]
         public ActionResult<IncidentDto> CreateIncident(IncidentForCreationDto incident)
         {
             if (incident == null)
@@ -120,11 +231,16 @@ namespace FmsbwebCoreApi.Controllers.Safety
             _safetyLibraryRepository.Save();
 
             var incidentToReturn = _mapper.Map<IncidentDto>(incidentEntity);
-            return CreatedAtRoute("GetIncident", new { id = incidentToReturn.Id }, incidentToReturn);
+
+            var links = CreateLinksForIncident(incidentToReturn.Id, null);
+            var linkedResourceToReturn = incidentToReturn.ShapeData(null) as IDictionary<string, object>;
+            linkedResourceToReturn.Add("links", links);
+
+            return CreatedAtRoute("GetIncident", new { id = linkedResourceToReturn["Id"] }, linkedResourceToReturn);
         }
 
         //PUT updates all fields, so if the client pass a incomplete payload the values will set to its default value
-        [HttpPut("{id}")]
+        [HttpPut("{id}", Name = "UpdateIncident")]
         public ActionResult UpdateIncident(int id, IncidentForUpdateDto incident)
         {
             if (incident == null)
@@ -143,7 +259,7 @@ namespace FmsbwebCoreApi.Controllers.Safety
             return NoContent();
         }
 
-        [HttpPatch("{id}")]
+        [HttpPatch("{id}", Name = "PartiallyUpdateIncident")]
         public ActionResult PartiallyUpdateIncident(int id, JsonPatchDocument<IncidentForUpdateDto> patchDocument)
         {
             if (patchDocument == null)
@@ -169,7 +285,7 @@ namespace FmsbwebCoreApi.Controllers.Safety
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}", Name = "DeleteIncident")]
         public ActionResult DeleteIncident(int id)
         {
             var incidentFromRepo = _safetyLibraryRepository.GetIncent(id);
@@ -214,7 +330,7 @@ namespace FmsbwebCoreApi.Controllers.Safety
                     return Url.Link("GetIncents",
                         new
                         {
-                            fields= p.Fields,
+                            fields = p.Fields,
                             orderBy = p.OrderBy,
                             pageNumber = p.PageNumber - 1,
                             pageSize = p.PageSize,
@@ -235,6 +351,7 @@ namespace FmsbwebCoreApi.Controllers.Safety
                             searchQuery = p.SearchQuery
                         });
 
+                case ResourceUriType.Current:
                 default:
 
                     return Url.Link("GetIncents",
@@ -248,6 +365,94 @@ namespace FmsbwebCoreApi.Controllers.Safety
                             searchQuery = p.SearchQuery
                         });
             }
+        }
+
+        private IEnumerable<LinkDto> CreateLinksForIncident(int id, string fields)
+        {
+            var links = new List<LinkDto>();
+
+            if (string.IsNullOrWhiteSpace(fields))
+            {
+                links.Add(
+                    new LinkDto(Url.Link("GetIncident", new { id }),
+                    "self",
+                    "GET"
+                    ));
+            }
+            else
+            {
+                links.Add(
+                    new LinkDto(Url.Link("GetIncident", new { id, fields }),
+                    "self",
+                    "GET"
+                    ));
+            }
+
+            links.Add(
+                new LinkDto(Url.Link("UpdateIncident", new { id }),
+                "update_incident",
+                "PUT"
+                ));
+
+            links.Add(
+                new LinkDto(Url.Link("PartiallyUpdateIncident", new { id }),
+                "partially_update_incident",
+                "PATCH"
+                ));
+
+            links.Add(
+                new LinkDto(Url.Link("DeleteIncident", new { id }),
+                "delete_incident",
+                "DELETE"
+                ));
+
+
+            links.Add(
+                new LinkDto(Url.Link("CreateAttachmentForIncident", new { id }),
+                "add_attachment_for_incident",
+                "POST"
+                ));
+
+            links.Add(
+                new LinkDto(Url.Link("GetAtachmentsForIncident", new { id }),
+                "get_attachments_for_incident",
+                "GET"
+                ));
+
+            return links;
+        }
+
+        private IEnumerable<LinkDto> CreateLinksForIncidents(IncidentsResourceParameter incidentResourceParameters, bool hasNext, bool hasPrevious)
+        {
+            var links = new List<LinkDto>
+            {
+                //self
+                new LinkDto(CreateIncidentResourceUri(incidentResourceParameters, ResourceUriType.Current),
+                "self",
+                "GET"
+                )
+            };
+
+            if (hasNext)
+            {
+                links.Add(
+                    new LinkDto(CreateIncidentResourceUri(incidentResourceParameters, ResourceUriType.NextPage),
+                    "next_page",
+                    "GET"
+                    ));
+            }
+
+
+            if (hasPrevious)
+            {
+                links.Add(
+                    new LinkDto(CreateIncidentResourceUri(incidentResourceParameters, ResourceUriType.PreviousPage),
+                    "previous_page",
+                    "GET"
+                    ));
+            }
+
+            return links;
         }
     }
 }

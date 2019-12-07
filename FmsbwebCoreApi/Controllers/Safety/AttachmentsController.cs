@@ -14,7 +14,7 @@ using FmsbwebCoreApi.Models.Safety.Attachment;
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
-    [Route("api/incidents/{id}/attachments")]
+    [Route("api/safety/incidents/{id}/attachments")]
     public class AttachmentsController : ControllerBase
     {
         private readonly ISafetyLibraryRepository _safetyLibraryRepository;
@@ -30,7 +30,7 @@ namespace FmsbwebCoreApi.Controllers.Safety
                 throw new ArgumentNullException(nameof(mapper));
         }
 
-        [HttpGet()]
+        [HttpGet(Name = "GetAtachmentsForIncident")]
         public ActionResult<IEnumerable<AttachmentDto>> GetAtachmentsForIncident(int id)
         {
             if (!_safetyLibraryRepository.IncidentExists(id))
@@ -60,8 +60,8 @@ namespace FmsbwebCoreApi.Controllers.Safety
             return Ok(_mapper.Map<AttachmentDto>(attachmentFromRepo));
         }
 
-        [HttpPost]
-        public ActionResult<AttachmentDto> CreateAttachment(int id, AttachmentForCreationDto attachment)
+        [HttpPost(Name = "CreateAttachmentForIncident")]
+        public ActionResult<AttachmentDto> CreateAttachmentForIncident(int id, AttachmentForCreationDto attachment)
         {
             if (!_safetyLibraryRepository.IncidentExists(id))
             {
