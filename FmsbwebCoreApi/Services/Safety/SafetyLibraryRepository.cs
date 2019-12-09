@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Entity.Safety;
+using FmsbwebCoreApi.Enums;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Models.Safety.Incident;
 using FmsbwebCoreApi.ResourceParameters.Safety;
@@ -54,8 +55,13 @@ namespace FmsbwebCoreApi.Services.Safety
                 collection = collection.Where(x => x.Dept.Trim() == p.Dept.Trim());
             };
 
+            if (!string.IsNullOrWhiteSpace(p.Start.ToShortDateString()) && !string.IsNullOrWhiteSpace(p.End.ToShortDateString()))
+            {
+                collection = collection.Where(x => x.AccidentDate >= p.Start && x.AccidentDate <= p.End);
+            };
+
             //check if not qry string is empty, if yes apply search to all string props
-            if(!string.IsNullOrWhiteSpace(p.SearchQuery))
+            if (!string.IsNullOrWhiteSpace(p.SearchQuery))
             {
                 p.SearchQuery = p.SearchQuery.Trim();
                 collection = collection.Search(
@@ -120,7 +126,7 @@ namespace FmsbwebCoreApi.Services.Safety
                     .Include(injury => injury.Injury)
                     .Include(body => body.BodyPart)
                     .Include(attach => attach.Attachments)
-                    .ToList();           
+                    .ToList();
         }
 
         public void AddIncident(Incidence incident)
@@ -204,6 +210,148 @@ namespace FmsbwebCoreApi.Services.Safety
             _context.Attachments.Add(attachment);
         }
 
+        public IEnumerable<MonthlyIncidentRateDto> GetMonthlyIncidentRate(DateTime start, DateTime end)
+        {
+
+            var recordables = _context
+                                .Incidence
+                                .Where(x => x.AccidentDate >= start && x.AccidentDate <= end)
+                                .Where(x => x.InjuryStatId.ToLower().Contains("recordable"))
+                                .GroupBy(x => new { x.AccidentDate.Month, x.AccidentDate, x.InjuryStatId })
+                                .Select(x => new
+                                {
+                                    x.Key.Month,
+                                    x.Key.AccidentDate,
+                                    x.Key.InjuryStatId
+                                })
+                                .OrderBy(x => x.Month)
+                                .ToList();
+
+            var manHours = _context
+                            .ManHours
+                            .Where(x => x.MosDte >= start && x.MosDte <= end)
+                            .GroupBy(x => new { x.MosDte.Month })
+                            .Select(x => new
+                            {
+                                x.Key.Month,
+                                ManHOurs = x.Sum(s => s.Manhrs)
+                            })
+                            .ToList();
+
+            var monthlyIncidentRates = new List<MonthlyIncidentRateDto>();
+
+            foreach (var month in Enum.GetValues(typeof(MonthEnum)).Cast<MonthEnum>())
+            {
+                var monthInt = (int)month;
+                var isExist = recordables.Any(x => x.Month == monthInt);
+
+                if (isExist)
+                {
+                    monthlyIncidentRates.Add(new MonthlyIncidentRateDto
+                    {
+                        MonthNumber = monthInt,
+                        Month = month.ToString(),
+                        NumberOfRecordable = recordables.Where(x => x.Month == monthInt).Count(),
+                        ManHours = (int)manHours.FirstOrDefault(x => x.Month == monthInt).ManHOurs,
+                        IncidentRate = new SafetyFormula().CalculateIncidentRates(
+                                            recordables.Where(x => x.Month == monthInt).Count(),
+                                            (double)manHours.FirstOrDefault(x => x.Month == monthInt).ManHOurs)
+                    });
+                }
+                else
+                {
+                    monthlyIncidentRates.Add(new MonthlyIncidentRateDto
+                    {
+                        MonthNumber = monthInt,
+                        Month = month.ToString(),
+                        NumberOfRecordable = 0,
+                        ManHours = manHours.Any(x => x.Month == monthInt) ? (int)manHours.FirstOrDefault(x => x.Month == monthInt).ManHOurs : 0,
+                        IncidentRate = 0
+                    });
+                }
+            }
+
+            return monthlyIncidentRates.OrderBy(x => x.MonthNumber);
+        }
+
+        public IncidentsByDepartmentForChartDto GetIncidedentsByDepartment(DateTime start, DateTime end)
+        {
+            var exclude = new List<string> { "Property Damage", "N/A", "Personal Med" };
+
+            var data = _context
+                        .Incidence
+                        .Where(x => x.AccidentDate >= start && x.AccidentDate <= end)
+                        .Where(x => !exclude.Contains(x.InjuryStatId))
+                        .ToList();
+
+            var depts = data.Select(x => x.Dept).Distinct();
+            var distinctInjuryStat = _context.InjuryStat
+                                        .Where(x => !exclude.Contains(x.InjuryStat1))
+                                        .Select(x => new InjuryStatusDto { InjuryStatus = x.InjuryStat1, ColorCode = x.Color } ).ToList();
+
+            var injuryStats = data.GroupBy(x => new { x.Dept, x.InjuryStatId })
+                                .Select(x => new
+                                {
+                                    x.Key.Dept,
+                                    x.Key.InjuryStatId,
+                                    Count = x.Count()
+                                })
+                                .ToList();
+
+            var injuryStatColors = _context.InjuryStat.ToList();
+
+            var listOfIncidentsByDept = new List<IncidentsByDepartmentDto>();
+            foreach (var dept in depts)
+            {
+
+                var listOfInjuryStats = new List<InjuryStatusDto>();
+                foreach (var injuryStat in distinctInjuryStat)
+                {
+                    var isExist = injuryStats.Any(x => x.InjuryStatId == injuryStat.InjuryStatus && x.Dept == dept);
+
+                    if (isExist)
+                    {
+                        var stat = injuryStats.Where(x => x.InjuryStatId == injuryStat.InjuryStatus && x.Dept == dept).FirstOrDefault();
+                        listOfInjuryStats.Add(new InjuryStatusDto
+                        {
+                            InjuryStatus = injuryStat.InjuryStatus,
+                            NumberOfIncidents = stat.Count,
+                            ColorCode = injuryStatColors.Any(c => c.InjuryStat1 == injuryStat.InjuryStatus)
+                                        ? injuryStatColors.Where(c => c.InjuryStat1 == injuryStat.InjuryStatus).FirstOrDefault().Color
+                                        : ""
+                        });
+                    }
+                    else
+                    {
+                        listOfInjuryStats.Add(new InjuryStatusDto
+                        {
+                            InjuryStatus = injuryStat.InjuryStatus,
+                            NumberOfIncidents = 0,
+                            ColorCode = injuryStatColors.Any(c => c.InjuryStat1 == injuryStat.InjuryStatus)
+                                        ? injuryStatColors.Where(c => c.InjuryStat1 == injuryStat.InjuryStatus).FirstOrDefault().Color
+                                        : ""
+                        });
+                    }
+                }
+
+                listOfIncidentsByDept.Add(new IncidentsByDepartmentDto
+                {
+                    Department = dept,
+                    Total = !injuryStats.Any(i => i.Dept == dept) ? 0 : injuryStats.Where(i => i.Dept == dept).Sum(i => i.Count),
+                    Injuries = listOfInjuryStats
+                });
+            }
+
+            var result = new IncidentsByDepartmentForChartDto
+            {
+                Categories = depts,
+                Series = distinctInjuryStat,
+                Data = listOfIncidentsByDept
+            };
+
+            return result;
+        }
+
         public bool Save()
         {
             return (_context.SaveChanges() >= 0);
@@ -223,6 +371,6 @@ namespace FmsbwebCoreApi.Services.Safety
             }
         }
 
-        
+
     }
 }

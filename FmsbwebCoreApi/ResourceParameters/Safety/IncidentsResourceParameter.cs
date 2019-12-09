@@ -7,8 +7,10 @@ namespace FmsbwebCoreApi.ResourceParameters.Safety
 {
     public class IncidentsResourceParameter
     {
-        const int maxPageSize = 20;
+        const int maxPageSize = 100;
         public string Dept { get; set; }
+        public DateTime Start { get; set; } = new DateTime(DateTime.Today.Year, 1, 1);
+        public DateTime End { get; set; } = DateTime.Now;
         public string SearchQuery { get; set; }
         public int PageNumber { get; set; } = 1;
 

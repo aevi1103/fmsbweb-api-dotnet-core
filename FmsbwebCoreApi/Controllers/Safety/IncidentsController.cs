@@ -102,8 +102,6 @@ namespace FmsbwebCoreApi.Controllers.Safety
             Response.Headers.Add("X-Pagination",
                 JsonSerializer.Serialize(paginationMetaData));
 
-            
-
             //check if media type include hateoas
             var includeLinks = parsedMediaType.SubTypeWithoutSuffix.EndsWith("hateoas", StringComparison.InvariantCultureIgnoreCase);
             IEnumerable<LinkDto> links = new List<LinkDto>();

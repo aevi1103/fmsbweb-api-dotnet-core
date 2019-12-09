@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using FmsbwebCoreApi.Entity.Safety;
 using FmsbwebCoreApi.Helpers;
+using FmsbwebCoreApi.Models.Safety.Incident;
 using FmsbwebCoreApi.ResourceParameters.Safety;
 
 namespace FmsbwebCoreApi.Services.Safety
@@ -23,6 +24,8 @@ namespace FmsbwebCoreApi.Services.Safety
         IEnumerable<Attachments> GetAttachments(int id);
         Attachments GetAttachment(int id, int attachmentId);
         void AddAttachment(int id, Attachments attachment);
+        IEnumerable<MonthlyIncidentRateDto> GetMonthlyIncidentRate(DateTime start, DateTime end);
+        IncidentsByDepartmentForChartDto GetIncidedentsByDepartment(DateTime start, DateTime end);
         bool Save();
     }
 }
