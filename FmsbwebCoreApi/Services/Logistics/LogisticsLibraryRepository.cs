@@ -21,7 +21,6 @@ namespace FmsbwebCoreApi.Services.Logistics
         private readonly List<string> valuationClass = new List<string>() { "Finished products", "Semifinished products" };
         private readonly List<string> partTypes = new List<string>() { "P5C", "P4H", "P3M", "P2F", "P2A", "P1A" };
         private readonly int dailyAvg = 50000;
-        private readonly int costTarget = 8000000;
 
         public LogisticsLibraryRepository(SapContext context, Fmsb2Context fmsb2Context, IMapper mapper)
         {

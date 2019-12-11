@@ -15,6 +15,7 @@ using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using FmsbwebCoreApi.Context.Intranet;
 
 namespace FmsbwebCoreApi
 {
@@ -118,6 +119,9 @@ namespace FmsbwebCoreApi
             //inject logistics lib repo
             services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
 
+            //inject sap lib repo
+            services.AddScoped<Services.SAP.ISapLibraryRepository, Services.SAP.SapLibraryRepository>();
+
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("fmsbConn"))
@@ -129,6 +133,10 @@ namespace FmsbwebCoreApi
 
             services.AddDbContext<SapContext>(options =>
                options.UseSqlServer(Configuration.GetConnectionString("sapConn"))
+            );
+
+            services.AddDbContext<IntranetContext>(options =>
+               options.UseSqlServer(Configuration.GetConnectionString("intranet"))
             );
         }
 
