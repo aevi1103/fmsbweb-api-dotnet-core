@@ -12,5 +12,6 @@ namespace FmsbwebCoreApi.Models.Logistics
         public IEnumerable<InventoryStatusDto> InventoryStatus { get; set; }
         public IEnumerable<InventoryCostDto> InventoryCost { get; set; }
         public IEnumerable<CustomerCommentsDto> CustomerComments { get; set; }
+        public IEnumerable<InventoryDaysOnHandDto> DaysOnHand { get; set; }
     }
 }

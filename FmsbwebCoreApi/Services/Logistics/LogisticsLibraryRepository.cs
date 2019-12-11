@@ -19,6 +19,9 @@ namespace FmsbwebCoreApi.Services.Logistics
         private readonly IMapper _mapper;
 
         private readonly List<string> valuationClass = new List<string>() { "Finished products", "Semifinished products" };
+        private readonly List<string> partTypes = new List<string>() { "P5C", "P4H", "P3M", "P2F", "P2A", "P1A" };
+        private readonly int dailyAvg = 50000;
+        private readonly int costTarget = 8000000;
 
         public LogisticsLibraryRepository(SapContext context, Fmsb2Context fmsb2Context, IMapper mapper)
         {
@@ -211,15 +214,12 @@ namespace FmsbwebCoreApi.Services.Logistics
                     }).ToList();
         }
 
-        public List<RawMatInv> GetRawMaterialsInventory(List<string> dmax, DateTime start, DateTime end)
+        public List<RawMatInv> GetRawMaterialsInventory(DateTime start, DateTime end)
         {
-            return _context.RawMatInv
-                    .Where(x => x.Date >= start && x.Date <= end)
-                    .Where(x => !dmax.Contains(x.Material))
-                    .ToList();
+            return _context.RawMatInv.Where(x => x.Date >= start && x.Date <= end).ToList();
         }
 
-        public IEnumerable<LogisticsDollarsDto> GetLogisticsDollars(DateTime start, DateTime end)
+        public List<LogisticsDollarsDto> GetLogisticsDollars(DateTime start, DateTime end)
         {
             var inboundOutbound = new List<string> { "Inbound", "Outbound" };
 
@@ -238,12 +238,12 @@ namespace FmsbwebCoreApi.Services.Logistics
 
         public IEnumerable<InventoryStatusDto> GetInventoryStatus(
                 List<SapDumpNewView> inventoryData,
-                List<string> dmax, 
+                List<string> dmax,
                 List<LogisticsCommentDto> logiticsComments)
         {
-            const int DAILY_AVG = 50000;
 
-            var foundry = inventoryData
+
+            var foundryCasting = inventoryData
                             .Where(x => x.TypeSap == "P5C")
                             .GroupBy(x => new { x.Date })
                             .Select(x => new InventoryStatusDto
@@ -252,10 +252,10 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Foundry Casting (0115, 0125)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DAILY_AVG
+                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
-            var mach = inventoryData
+            var machineWip = inventoryData
                             .Where(x => x.TypeSap == "P3M")
                             .GroupBy(x => new { x.Date })
                             .Select(x => new InventoryStatusDto
@@ -264,10 +264,10 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Machine WIP (0130)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DAILY_AVG
+                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
-            var fin = inventoryData
+            var finishing = inventoryData
                             .Where(x => x.TypeSap == "P2F")
                             .GroupBy(x => new { x.Date })
                             .Select(x => new InventoryStatusDto
@@ -276,10 +276,10 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Finishing (P2F)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DAILY_AVG
+                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
-            var assyExcludeDmax = inventoryData
+            var sbFinGood = inventoryData
                             .Where(x => x.TypeSap == "P1A")
                             .Where(x => !dmax.Contains(x.Material))
                             .GroupBy(x => new { x.Date })
@@ -289,10 +289,10 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "SB – Finish Goods",
                                 Total = (decimal)x.Sum(t => t._0300),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DAILY_AVG
+                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
-            var dmaxOnly = inventoryData
+            var sbtFinGood = inventoryData
                             .Where(x => x.TypeSap == "P1A")
                             .Where(x => dmax.Contains(x.Material))
                             .GroupBy(x => new { x.Date })
@@ -302,14 +302,14 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "SBT – Finish Goods",
                                 Total = (decimal)x.Sum(t => t._0300),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DAILY_AVG
+                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
-            var inventoryStaus = foundry
-                                .Concat(mach)
-                                .Concat(fin)
-                                .Concat(assyExcludeDmax)
-                                .Concat(dmaxOnly);
+            var inventoryStaus = foundryCasting
+                                .Concat(machineWip)
+                                .Concat(finishing)
+                                .Concat(sbFinGood)
+                                .Concat(sbtFinGood);
 
             var result = inventoryStaus
                             .Select(x => new InventoryStatusDto
@@ -318,7 +318,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Date,
                                 Category = x.Category,
                                 Total = x.Total,
-                                AvergageDays = Math.Round((x.Total / DAILY_AVG),1),
+                                AvergageDays = Math.Round((x.Total / dailyAvg), 1),
                                 Comments = logiticsComments.Any(c => c.Category == x.Category)
                                             ? logiticsComments.Where(c => c.Category == x.Category).First().Comments
                                             : ""
@@ -328,30 +328,232 @@ namespace FmsbwebCoreApi.Services.Logistics
             return result;
         }
 
-        public IEnumerable<InventoryCostDto> GetInventoryCost(List<SapDumpNewView> inventoryData, DateTime start, DateTime end)
+        public IEnumerable<InventoryCostDto> GetInventoryCost(
+            List<SapDumpNewView> data,
+            List<RawMatInv> rawMatData,
+            List<LogisticsDollarsDto> dollarsData,
+            List<string> dmax)
         {
-            throw new NotImplementedException();
+            var sbRawMaterial = rawMatData
+                                .Where(x => !dmax.Contains(x.Material))
+                                .GroupBy(x => new { x.Date })
+                                .Select(x => new InventoryCostDto
+                                {
+                                    Sort = 1,
+                                    Date = (DateTime)x.Key.Date,
+                                    Category = "SB – Raw Material",
+                                    Cost = x.Sum(c => (decimal)c.TotalUnrestInv),
+                                    Target = 8000000 //hard coded target need to put in db
+                                })
+                                .ToList();
+
+            var sbWip = data
+                            .Where(x => partTypes.Contains(x.TypeSap))
+                            .Where(x => !dmax.Contains(x.Material))
+                            .GroupBy(x => new { x.Date })
+                            .Select(x => new InventoryCostDto
+                            {
+                                Sort = 2,
+                                Date = (DateTime)x.Key.Date,
+                                Category = "SB – WIP",
+                                Cost = x.Sum(c => (decimal)c.InventoryNotIn03001),
+                                Target = 0
+                            })
+                            .ToList();
+
+            var sbFinGoods = data
+                            .Where(x => x.TypeSap == "P1A")
+                            .Where(x => !dmax.Contains(x.Material))
+                            .GroupBy(x => new { x.Date })
+                            .Select(x => new InventoryCostDto
+                            {
+                                Sort = 3,
+                                Date = (DateTime)x.Key.Date,
+                                Category = "SB – Finish Goods",
+                                Cost = x.Sum(c => (decimal)c._0300FinGdsSb),
+                                Target = 3200000 //hard coded target
+                            })
+                            .ToList();
+
+            var sbtRawMat = rawMatData
+                                .Where(x => dmax.Contains(x.Material))
+                                .GroupBy(x => new { x.Date })
+                                .Select(x => new InventoryCostDto
+                                {
+                                    Sort = 4,
+                                    Date = (DateTime)x.Key.Date,
+                                    Category = "SBT – Raw Material",
+                                    Cost = x.Sum(c => (decimal)c.TotalUnrestInv),
+                                    Target = 0
+                                })
+                                .ToList();
+
+            var sbtWip = data
+                            .Where(x => partTypes.Contains(x.TypeSap))
+                            .Where(x => dmax.Contains(x.Material))
+                            .GroupBy(x => new { x.Date })
+                            .Select(x => new InventoryCostDto
+                            {
+                                Sort = 5,
+                                Date = (DateTime)x.Key.Date,
+                                Category = "SBT – WIP",
+                                Cost = x.Sum(c => (decimal)c.InventoryNotIn03001),
+                                Target = 0
+                            })
+                            .ToList();
+
+            var sbtFinGoods = data
+                                .Where(x => x.TypeSap == "P1A")
+                                .Where(x => dmax.Contains(x.Material))
+                                .GroupBy(x => new { x.Date })
+                                .Select(x => new InventoryCostDto
+                                {
+                                    Sort = 6,
+                                    Date = (DateTime)x.Key.Date,
+                                    Category = "SBT – Finish Goods",
+                                    Cost = x.Sum(c => (decimal)c._0300FinGdsSb),
+                                    Target = 3200000 //hard coded target
+                                })
+                                .ToList();
+
+            var inboundOutbound = dollarsData.Select(x => new InventoryCostDto
+            {
+                Sort = 7,
+                Date = x.Date,
+                Category = x.Category,
+                Cost = x.Cost,
+                Target = (double)x.Target
+            });
+
+            var cost = sbRawMaterial
+                        .Concat(sbWip)
+                        .Concat(sbFinGoods)
+                        .Concat(sbtRawMat)
+                        .Concat(sbtWip)
+                        .Concat(sbtFinGoods)
+                        .Concat(inboundOutbound);
+
+            return cost.ToList();
+        }
+
+        public IEnumerable<CustomerCommentsDto> GetCustomerComments(DateTime start, DateTime end)
+        {
+            return (from c in _fmsb2Context.LogisticsCustomer
+                    join m in _fmsb2Context.LogisticsMm
+                    on c.LogisticsId equals m.Id
+                    where m.Date >= start && m.Date <= end
+                    select new CustomerCommentsDto
+                    {
+                        Date = (DateTime)m.Date,
+                        Customer = c.Customer,
+                        Comments = c.Comment
+                    }).ToList();
+        }
+
+        public DaysOnHandColorCode DaysOnHandStatusColor(decimal daysOnHand, int InvQty)
+        {
+            var bgColor = "#FAFAFA"; //white
+            var fontColor = "#f44336"; //red
+
+            if (InvQty > 0)
+            {
+                if (daysOnHand >= 0 && daysOnHand < 2)
+                {
+                    bgColor = "#e33545"; //red
+                    fontColor = "#FAFAFA"; //white
+                }
+                else if (daysOnHand >= 2 && daysOnHand <= 3)
+                {
+                    bgColor = "#ffc107"; //yellow
+                    fontColor = "#212121"; //black
+                }
+                else if (daysOnHand > 3 && daysOnHand <= 5)
+                {
+                    bgColor = "#28a745"; //green
+                    fontColor = "#FAFAFA"; //white
+                }
+                else if (daysOnHand > 5)
+                {
+                    bgColor = "#2196F3"; //blue
+                    fontColor = "#FAFAFA"; //white
+                }
+                else
+                {
+                    bgColor = "#546e7a"; //white
+                    fontColor = "#f44336"; //red
+                }
+            }
+
+            var res = new DaysOnHandColorCode
+            {
+                BgColor = bgColor,
+                FontColor = fontColor
+            };
+
+            return res;
+        }
+
+        public IEnumerable<InventoryDaysOnHandDto> GetInventoryDaysOnHand(DateTime start, DateTime end)
+        {
+
+            var avgShip = (from d in _context.SapDumpNewView
+                           from v in _context.AvgShipDayPart
+                               .Where(m => m.Material == d.Material).DefaultIfEmpty()
+                           where d.Date >= start && d.Date <= end && ((v.Show == null ? false : v.Show) == true)
+                           select new
+                           {
+                               d.Date,
+                               d.Material,
+                               d.TotalUnrestInv,
+                               d._0300,
+                               AvgShipDay = v.AvgShipDay == null ? 0 : v.AvgShipDay
+                           })
+                              .ToList();
+
+            var logisticsParts = _fmsb2Context.LogisticsParts.ToList();
+
+            var result = avgShip
+                            .Select(x => new InventoryDaysOnHandDto
+                            {
+                                Date = (DateTime)x.Date,
+                                Sort = logisticsParts.Any(p => p.Part == x.Material) ? (int)logisticsParts.Where(p => p.Part == x.Material).First().Sort : -1,
+                                Program = logisticsParts.Any(p => p.Part == x.Material) ? logisticsParts.Where(p => p.Part == x.Material).First().Program : null,
+                                Material = x.Material,
+                                TotalUnreistrictedQty = (int)x.TotalUnrestInv,
+                                FinGoodIn0300 = (int)x._0300,
+                                AvgShipDay = (int)x.AvgShipDay,
+                                DaysOnHand = x.AvgShipDay == 0 ? 0 : Math.Floor(((decimal)x._0300 / (decimal)x.AvgShipDay)),
+                                ColorCode = DaysOnHandStatusColor(x.AvgShipDay == 0 ? 0 : Math.Floor(((decimal)x._0300 / (decimal)x.AvgShipDay)), (int)x._0300)
+                            })
+                            .Where(x => x.Program != null)
+                            .OrderBy(x => x.Sort)
+                            .ToList();
+
+            return result;
         }
 
         public StockStatusDto GetStockStatus(DateTime start, DateTime end)
         {
-            var inventoryData = GetInventory(start, end);
+            var inventoryData = GetInventory(start, end); //sap dump view 
             var dmax = GetDmaxParts();
             var comments = GetLogisticsComments(start, end);
+            var rawMat = GetRawMaterialsInventory(start, end);
+            var dollars = GetLogisticsDollars(start, end);
+            var customerComments = GetCustomerComments(start, end);
+
+            var daysOnHand = GetInventoryDaysOnHand(start, end);
 
             return new StockStatusDto
             {
                 Start = start,
                 End = end,
-                InventoryStatus = GetInventoryStatus(inventoryData, dmax, comments)
+                InventoryStatus = GetInventoryStatus(inventoryData, dmax, comments),
+                InventoryCost = GetInventoryCost(inventoryData, rawMat, dollars, dmax),
+                CustomerComments = customerComments,
+                DaysOnHand = daysOnHand
             };
         }
 
-        
 
-        public IEnumerable<CustomerCommentsDto> GetCustomerComments(DateTime start, DateTime end)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
