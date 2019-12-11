@@ -15,28 +15,12 @@ namespace FmsbwebCoreApi.Controllers.Safety
     public class IncidentByDepartmentController : ControllerBase
     {
         private readonly ISafetyLibraryRepository _safetyLibraryRepository;
-        private readonly IMapper _mapper;
-        private readonly IPropertyMappingService _propertyMappingService;
-        private readonly IPropertyCheckerService _propertyCheckerService;
 
         public IncidentByDepartmentController(
-            ISafetyLibraryRepository safetyLibraryRepository,
-            IMapper mapper,
-            IPropertyMappingService propertyMappingService,
-            IPropertyCheckerService propertyCheckerService)
+            ISafetyLibraryRepository safetyLibraryRepository)
         {
             _safetyLibraryRepository = safetyLibraryRepository ??
                 throw new ArgumentNullException(nameof(safetyLibraryRepository));
-
-            _mapper = mapper ??
-                throw new ArgumentNullException(nameof(mapper));
-
-            _propertyMappingService = propertyMappingService ??
-                throw new ArgumentNullException(nameof(propertyMappingService));
-
-            _propertyCheckerService = propertyCheckerService ??
-                throw new ArgumentNullException(nameof(propertyCheckerService));
-
         }
 
         [HttpGet(Name = "GetIncidentByDepartment")]
@@ -44,6 +28,11 @@ namespace FmsbwebCoreApi.Controllers.Safety
         public IActionResult GetIncidentByDepartment(
             [FromQuery] IncidentByDepartmentResouceParameter resourceparameter)
         {
+            if (resourceparameter == null)
+            {
+                return BadRequest();
+            }
+
             var incidentByDepartment = _safetyLibraryRepository.GetIncidedentsByDepartment(
                                             resourceparameter.Start, resourceparameter.End);
 

@@ -57,7 +57,7 @@ namespace FmsbwebCoreApi.Services.Safety
 
             if (!string.IsNullOrWhiteSpace(p.Start.ToShortDateString()) && !string.IsNullOrWhiteSpace(p.End.ToShortDateString()))
             {
-                collection = collection.Where(x => x.AccidentDate >= p.Start && x.AccidentDate <= p.End);
+                collection = collection.Where(x => x.AccidentDate.Date >= p.Start && x.AccidentDate.Date <= p.End);
             };
 
             //check if not qry string is empty, if yes apply search to all string props
@@ -215,7 +215,7 @@ namespace FmsbwebCoreApi.Services.Safety
 
             var recordables = _context
                                 .Incidence
-                                .Where(x => x.AccidentDate >= start && x.AccidentDate <= end)
+                                .Where(x => x.AccidentDate.Date >= start && x.AccidentDate.Date <= end)
                                 .Where(x => x.InjuryStatId.ToLower().Contains("recordable"))
                                 .GroupBy(x => new { x.AccidentDate.Month, x.AccidentDate, x.InjuryStatId })
                                 .Select(x => new
@@ -280,7 +280,7 @@ namespace FmsbwebCoreApi.Services.Safety
 
             var data = _context
                         .Incidence
-                        .Where(x => x.AccidentDate >= start && x.AccidentDate <= end)
+                        .Where(x => x.AccidentDate.Date >= start && x.AccidentDate.Date <= end)
                         .Where(x => !exclude.Contains(x.InjuryStatId))
                         .ToList();
 
