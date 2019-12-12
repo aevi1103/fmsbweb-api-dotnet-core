@@ -122,6 +122,9 @@ namespace FmsbwebCoreApi
             //inject sap lib repo
             services.AddScoped<Services.SAP.ISapLibraryRepository, Services.SAP.SapLibraryRepository>();
 
+            //inject fmsab2 lib repo
+            services.AddScoped<Services.FMSB2.IFmsb2LibraryRepository, Services.FMSB2.FmsbLibraryRepository>();
+
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("fmsbConn"))

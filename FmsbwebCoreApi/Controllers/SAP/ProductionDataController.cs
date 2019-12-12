@@ -22,7 +22,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetProductionData")]
         [HttpHead]
-        public IActionResult GetProductionData(
+        public async Task<IActionResult> GetProductionData(
         [FromQuery] SapResouceParameter resourceParameter)
         {
             if (resourceParameter == null)
@@ -30,7 +30,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 return BadRequest();
             }
 
-            var prodData = _sapLibRepo.GetProductionData(resourceParameter.Start, resourceParameter.End);
+            var prodData = await _sapLibRepo.GetProductionData(resourceParameter.Start, resourceParameter.End);
 
             return Ok(prodData);
         }

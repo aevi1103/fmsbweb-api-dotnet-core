@@ -9,6 +9,7 @@ using FmsbwebCoreApi.Context.SAP;
 using FmsbwebCoreApi.Context.Fmsb2;
 using AutoMapper;
 using FmsbwebCoreApi.Entity.SAP;
+using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Services.Logistics
 {
@@ -189,9 +190,9 @@ namespace FmsbwebCoreApi.Services.Logistics
             }
         }
 
-        public List<SapDumpNewView> GetInventory(DateTime start, DateTime end)
+        public async Task<List<SapDumpNewView>> GetInventory(DateTime start, DateTime end)
         {
-            return _context.SapDumpNewView.Where(x => x.Date >= start && x.Date <= end).ToList();
+            return await _context.SapDumpNewView.Where(x => x.Date >= start && x.Date <= end).ToListAsync();
         }
 
         public List<string> GetDmaxParts()
@@ -199,30 +200,30 @@ namespace FmsbwebCoreApi.Services.Logistics
             return _context.DmaxParts.Select(x => x.MaterialDmax).ToList();
         }
 
-        public List<LogisticsCommentDto> GetLogisticsComments(DateTime start, DateTime end)
+        public async Task<List<LogisticsCommentDto>> GetLogisticsComments(DateTime start, DateTime end)
         {
-            return (from inv in _fmsb2Context.LogisticsInventory
-                    join mm in _fmsb2Context.LogisticsMm
-                    on inv.LogisticsId equals mm.Id
-                    where mm.Date >= start && mm.Date <= end
-                    select new LogisticsCommentDto
-                    {
-                        Date = (DateTime)mm.Date,
-                        Category = inv.Category,
-                        Comments = inv.Comments
-                    }).ToList();
+            return await (from inv in _fmsb2Context.LogisticsInventory
+                            join mm in _fmsb2Context.LogisticsMm
+                            on inv.LogisticsId equals mm.Id
+                            where mm.Date >= start && mm.Date <= end
+                            select new LogisticsCommentDto
+                            {
+                                Date = (DateTime)mm.Date,
+                                Category = inv.Category,
+                                Comments = inv.Comments
+                            }).ToListAsync();
         }
 
-        public List<RawMatInv> GetRawMaterialsInventory(DateTime start, DateTime end)
+        public async Task<List<RawMatInv>> GetRawMaterialsInventory(DateTime start, DateTime end)
         {
-            return _context.RawMatInv.Where(x => x.Date >= start && x.Date <= end).ToList();
+            return await _context.RawMatInv.Where(x => x.Date >= start && x.Date <= end).ToListAsync();
         }
 
-        public List<LogisticsDollarsDto> GetLogisticsDollars(DateTime start, DateTime end)
+        public async Task<List<LogisticsDollarsDto>> GetLogisticsDollars(DateTime start, DateTime end)
         {
             var inboundOutbound = new List<string> { "Inbound", "Outbound" };
 
-            return (from d in _fmsb2Context.LogisticsDollars
+            return await (from d in _fmsb2Context.LogisticsDollars
                     join m in _fmsb2Context.LogisticsMm
                     on d.LogisticsId equals m.Id
                     where m.Date >= start && m.Date <= end && inboundOutbound.Contains(d.Category)
@@ -232,7 +233,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                         Category = d.Category,
                         Cost = (decimal)d.Actual,
                         Target = (decimal)d.Target
-                    }).ToList();
+                    }).ToListAsync();
         }
 
         public IEnumerable<InventoryStatusDto> GetInventoryStatus(
@@ -435,9 +436,9 @@ namespace FmsbwebCoreApi.Services.Logistics
             return cost.ToList();
         }
 
-        public IEnumerable<CustomerCommentsDto> GetCustomerComments(DateTime start, DateTime end)
+        public async Task<IEnumerable<CustomerCommentsDto>> GetCustomerComments(DateTime start, DateTime end)
         {
-            return (from c in _fmsb2Context.LogisticsCustomer
+            return await (from c in _fmsb2Context.LogisticsCustomer
                     join m in _fmsb2Context.LogisticsMm
                     on c.LogisticsId equals m.Id
                     where m.Date >= start && m.Date <= end
@@ -446,7 +447,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                         Date = (DateTime)m.Date,
                         Customer = c.Customer,
                         Comments = c.Comment
-                    }).ToList();
+                    }).ToListAsync();
         }
 
         public DaysOnHandColorCode DaysOnHandStatusColor(decimal daysOnHand, int InvQty)
@@ -492,10 +493,10 @@ namespace FmsbwebCoreApi.Services.Logistics
             return res;
         }
 
-        public IEnumerable<InventoryDaysOnHandDto> GetInventoryDaysOnHand(DateTime start, DateTime end)
+        public async Task<IEnumerable<InventoryDaysOnHandDto>> GetInventoryDaysOnHand(DateTime start, DateTime end)
         {
 
-            var avgShip = (from d in _context.SapDumpNewView
+            var avgShip = await (from d in _context.SapDumpNewView
                            from v in _context.AvgShipDayPart
                                .Where(m => m.Material == d.Material).DefaultIfEmpty()
                            where d.Date >= start && d.Date <= end && ((v.Show == null ? false : v.Show) == true)
@@ -507,9 +508,9 @@ namespace FmsbwebCoreApi.Services.Logistics
                                d._0300,
                                AvgShipDay = v.AvgShipDay == null ? 0 : v.AvgShipDay
                            })
-                              .ToList();
+                              .ToListAsync();
 
-            var logisticsParts = _fmsb2Context.LogisticsParts.ToList();
+            var logisticsParts = await _fmsb2Context.LogisticsParts.ToListAsync();
 
             var result = avgShip
                             .Select(x => new InventoryDaysOnHandDto
@@ -531,16 +532,16 @@ namespace FmsbwebCoreApi.Services.Logistics
             return result;
         }
 
-        public StockStatusDto GetStockStatus(DateTime start, DateTime end)
+        public async Task<StockStatusDto> GetStockStatus(DateTime start, DateTime end)
         {
-            var inventoryData = GetInventory(start, end); //sap dump view 
+            var inventoryData = await GetInventory(start, end); //sap dump view 
             var dmax = GetDmaxParts();
-            var comments = GetLogisticsComments(start, end);
-            var rawMat = GetRawMaterialsInventory(start, end);
-            var dollars = GetLogisticsDollars(start, end);
-            var customerComments = GetCustomerComments(start, end);
+            var comments = await GetLogisticsComments(start, end);
+            var rawMat = await GetRawMaterialsInventory(start, end);
+            var dollars = await GetLogisticsDollars(start, end);
+            var customerComments = await GetCustomerComments(start, end);
 
-            var daysOnHand = GetInventoryDaysOnHand(start, end);
+            var daysOnHand = await GetInventoryDaysOnHand(start, end);
 
             return new StockStatusDto
             {

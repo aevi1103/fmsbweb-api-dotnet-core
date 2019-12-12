@@ -22,7 +22,7 @@ namespace FmsbwebCoreApi.Controllers.Logistics
 
         [HttpGet(Name = "GetStatus")]
         [HttpHead]
-        public IActionResult GetStatus(
+        public async Task<IActionResult> GetStatus(
                 [FromQuery] StockOverviewResouceParameter resourceParameter)
         {
             if (resourceParameter == null)
@@ -30,7 +30,7 @@ namespace FmsbwebCoreApi.Controllers.Logistics
                 return BadRequest();
             }
 
-            var inventoryStatus = _logisticsLibRepo
+            var inventoryStatus = await _logisticsLibRepo
                                     .GetStockStatus(resourceParameter.Start.AddDays(1), resourceParameter.End.AddDays(1));
 
             return Ok(inventoryStatus);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FmsbwebCoreApi.Models.FMSB2;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,5 +24,7 @@ namespace FmsbwebCoreApi.Models.SAP
         public IEnumerable<ScrapByCodeDto> SbScrapByCode { get; set; }
         public IEnumerable<ScrapByCodeDto> PurchaseScrapByCode { get; set; }
         public IEnumerable<DepartmentScrapDto> DepartmentScrap { get; set; }
+        public IEnumerable<SapProductionByTypeDto> SapProductionByType { get; set; }
+        public ProductionLaborHoursDto LaborHours { get; set; }
     }
 }
