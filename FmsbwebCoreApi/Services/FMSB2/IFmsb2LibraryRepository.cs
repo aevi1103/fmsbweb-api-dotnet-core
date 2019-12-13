@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Models.FMSB2;
+using FmsbwebCoreApi.Models.SAP;
 
 namespace FmsbwebCoreApi.Services.FMSB2
 {
@@ -16,11 +17,12 @@ namespace FmsbwebCoreApi.Services.FMSB2
         Task<List<FinanceLaborHoursView>> GetLaborHoursData(DateTime start, DateTime end);
         ProductionLaborHoursDto GetLaborHours(List<FinanceLaborHoursView> laborHrs, string dept = "");
         ProductionLaborHoursDto GetRollingDaysPPMH(
-            ProdScrapForLaborHours prodScrapData,
+            IEnumerable<SapProdDto> prodData,
+            IEnumerable<Scrap> scrapData,
             List<FinanceLaborHoursView> laborHrs,
             DateTime start,
             DateTime end,
             string area);
-        Task<ProdScrapForLaborHours> GetProdScrapForLaborHrs(DateTime start, DateTime end);
+        Task<ProdScrapForLaborHours> GetProdScrapForLaborHrs(DateTime start, DateTime end, string area);
     }
 }

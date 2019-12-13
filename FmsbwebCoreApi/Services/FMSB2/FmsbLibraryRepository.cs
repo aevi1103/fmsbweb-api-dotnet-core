@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using FmsbwebCoreApi.Context.Fmsb2;
+﻿using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.SAP;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Models.FMSB2;
 using FmsbwebCoreApi.Models.SAP;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Services.FMSB2
 {
@@ -125,6 +124,118 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
             var total = regularTotal + overtimeTotal + doubletimeTotal + orientationTotal;
 
+            var details = new List<LaborHoursDetailsByType>();
+
+            //regular
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Regular",
+                Role = "Inspector",
+                Hours = regular_q
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Regular",
+                Role = "PSO",
+                Hours = regular_pso
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Regular",
+                Role = "Other",
+                Hours = regular
+            });
+
+            //overtime
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Overtime",
+                Role = "Inspector",
+                Hours = overtime_q
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Overtime",
+                Role = "PSO",
+                Hours = overtime_pso
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Overtime",
+                Role = "Other",
+                Hours = overtime
+            });
+
+            //doubletime
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Double Time",
+                Role = "Inspector",
+                Hours = doubleTime_q
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Double Time",
+                Role = "PSO",
+                Hours = doubleTime_pso
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Double Time",
+                Role = "Other",
+                Hours = doubleTime
+            });
+
+            //orientation
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Orientation",
+                Role = "Inspector",
+                Hours = orientation_q
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Orientation",
+                Role = "PSO",
+                Hours = orientation_pso
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Orientation",
+                Role = "Other",
+                Hours = orientation
+            });
+
+            //overall
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Orientation",
+                Role = "Inspector",
+                Hours = regular_q + overtime_q + doubleTime_q + orientation_q
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Orientation",
+                Role = "PSO",
+                Hours = regular_pso + overtime_pso + doubleTime_pso + orientation_pso
+            });
+
+            details.Add(new LaborHoursDetailsByType
+            {
+                Type = "Orientation",
+                Role = "Other",
+                Hours = regular + overtime + doubleTime + orientation
+            });
+
             return new ProductionLaborHoursDto
             {
                 Regular = regularTotal,
@@ -133,7 +244,9 @@ namespace FmsbwebCoreApi.Services.FMSB2
                 Orientation = orientationTotal,
                 OverAll = total,
 
-                InspectorDetails = new ProductionLaborHoursDto
+                Details = details,
+
+                InspectorDetails = new LabourHoursDetails
                 {
                     Regular = regular_q,
                     Overtime = overtime_q,
@@ -142,7 +255,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
                     OverAll = regular_q + overtime_q + doubleTime_q + orientation_q
                 },
 
-                PSODetails = new ProductionLaborHoursDto
+                PSODetails = new LabourHoursDetails
                 {
                     Regular = regular_pso,
                     Overtime = overtime_pso,
@@ -151,27 +264,24 @@ namespace FmsbwebCoreApi.Services.FMSB2
                     OverAll = regular_pso + overtime_pso + doubleTime_pso + orientation_pso
                 },
 
-                OtherDetails = new ProductionLaborHoursDto
+                OtherDetails = new LabourHoursDetails
                 {
                     Regular = regular,
                     Overtime = overtime,
                     DoubleTime = doubleTime,
                     Orientation = orientation,
                     OverAll = regular + overtime + doubleTime + orientation
-                }
+                },
+
+
             };
         }
 
-        public async Task<ProdScrapForLaborHours> GetProdScrapForLaborHrs(DateTime start, DateTime end)
+        public async Task<ProdScrapForLaborHours> GetProdScrapForLaborHrs(DateTime start, DateTime end, string area)
         {
-            var yesterday = DateTime.Today.AddDays(-1);
-            if (start == yesterday)
-            {
-                start = end.AddDays(-6);
-            }
-
             var prod = await _sapContext.Production2Summary
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                .Where(x => x.Area == area)
                                 .GroupBy(x => new { x.Area })
                                 .Select(x => new SapProdDto
                                 {
@@ -183,6 +293,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
             var scrap = await _sapContext.Scrap2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                                 .Where(x => x.ScrapCode != "8888")
+                                .Where(x => x.Area == area)
                                 .GroupBy(x => new { x.Area })
                                 .Select(x => new Scrap
                                 {
@@ -198,7 +309,13 @@ namespace FmsbwebCoreApi.Services.FMSB2
             };
         }
 
-        public ProductionLaborHoursDto GetRollingDaysPPMH(ProdScrapForLaborHours prodScrapData, List<FinanceLaborHoursView> laborHrs, DateTime start, DateTime end, string area)
+        public ProductionLaborHoursDto GetRollingDaysPPMH(
+            IEnumerable<SapProdDto> prodData,
+            IEnumerable<Scrap> scrapData,
+            List<FinanceLaborHoursView> laborHrs,
+            DateTime start,
+            DateTime end,
+            string area)
         {
 
             if (area == "Skirt Coat")
@@ -230,8 +347,8 @@ namespace FmsbwebCoreApi.Services.FMSB2
                 title = $"Last 7 days Kronos Hours <b>({start.ToString("M/d/yy")} - {end.ToString("M/d/yy")})</b>";
             }
 
-            var prod = prodScrapData.Prod.Where(x => x.Area == area).Sum(x => x.Qty);
-            var scrap = prodScrapData.Scrap.Where(x => x.Area == area).Sum(x => x.Qty);
+            var prod = prodData.Where(x => x.Area == area).Sum(x => x.Qty);
+            var scrap = scrapData.Where(x => x.Area == area).Sum(x => x.Qty);
             var sapGross = prod + scrap;
 
             var hours = GetLaborHours(laborHrs, area);
@@ -250,9 +367,11 @@ namespace FmsbwebCoreApi.Services.FMSB2
                 EndDate = end.ToShortDateString(),
                 LaborTitle = title,
 
+                Details = hours.Details,
+
                 InspectorDetails = hours.InspectorDetails,
                 OtherDetails = hours.OtherDetails,
-                PSODetails = hours.PSODetails
+                PSODetails = hours.PSODetails,
             };
 
         }

@@ -21,10 +21,10 @@ namespace FmsbwebCoreApi.Models.SAP
         public int HxHNet { get; set; }
         public decimal SapOae { get; set; }
         public decimal HxhOae { get; set; }
-        public IEnumerable<ScrapByCodeDto> SbScrapByCode { get; set; }
-        public IEnumerable<ScrapByCodeDto> PurchaseScrapByCode { get; set; }
-        public IEnumerable<DepartmentScrapDto> DepartmentScrap { get; set; }
-        public IEnumerable<SapProductionByTypeDto> SapProductionByType { get; set; }
+        public ScrapByCodeDto SbScrapByCode { get; set; }
+        public ScrapByCodeDto PurchaseScrapByCode { get; set; }
+        public DepartmentScrapDto DepartmentScrap { get; set; }
+        public SapProductionByTypeDto SapProductionByType { get; set; }
         public ProductionLaborHoursDto LaborHours { get; set; }
     }
 }

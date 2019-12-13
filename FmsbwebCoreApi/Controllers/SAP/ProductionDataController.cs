@@ -30,7 +30,15 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 return BadRequest();
             }
 
-            var prodData = await _sapLibRepo.GetProductionData(resourceParameter.Start, resourceParameter.End);
+            if (string.IsNullOrWhiteSpace(resourceParameter.Area))
+            {
+                return BadRequest();
+            }
+
+            var prodData = await _sapLibRepo.GetProductionData(
+                resourceParameter.Start,
+                resourceParameter.End,
+                resourceParameter.Area);
 
             return Ok(prodData);
         }

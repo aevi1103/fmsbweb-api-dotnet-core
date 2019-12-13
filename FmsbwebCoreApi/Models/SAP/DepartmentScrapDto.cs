@@ -7,10 +7,9 @@ namespace FmsbwebCoreApi.Models.SAP
 {
     public class DepartmentScrapDto
     {
-        public string Area { get; set; }
-        public string ScrapType { get; set; }
-        public int Qty { get; set; }
-        public int SapGross { get; set; } // total dept scrap + sap net
+        public int Total { get; set; }
+        public int SapGross { get; set; }
         public decimal ScrapRate { get; set; }
+        public IEnumerable<DepartmentScrapDetailsDto> Details { get; set; }
     }
 }

@@ -9,5 +9,6 @@ namespace FmsbwebCoreApi.ResourceParameters.SAP
     {
         public DateTime Start { get; set; } = DateTime.Today.AddDays(-1);
         public DateTime End { get; set; } = DateTime.Today.AddDays(-1);
+        public string Area { get; set; }
     }
 }

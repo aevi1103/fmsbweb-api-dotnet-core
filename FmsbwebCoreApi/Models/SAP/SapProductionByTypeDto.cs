@@ -7,8 +7,7 @@ namespace FmsbwebCoreApi.Models.SAP
 {
     public class SapProductionByTypeDto
     {
-        public string Area { get; set; }
-        public string SapType { get; set; }
-        public int SapNet { get; set; }
+        public int Total { get; set; }
+        public IEnumerable<SapProductionTypeDetailsDto> Details { get; set; }
     }
 }
