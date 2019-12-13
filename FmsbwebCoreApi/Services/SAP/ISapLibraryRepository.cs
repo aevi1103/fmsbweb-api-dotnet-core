@@ -20,6 +20,8 @@ namespace FmsbwebCoreApi.Services.SAP
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<SapProdDto>> GetSapProdByTypeFromDb(DateTime start, DateTime end, string area);
+        IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget(string area, string type);
+        string GetColorCode(string area, string type, decimal? value);
 
     }
 }

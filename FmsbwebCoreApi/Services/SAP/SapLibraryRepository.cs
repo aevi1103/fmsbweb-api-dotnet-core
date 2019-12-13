@@ -46,6 +46,110 @@ namespace FmsbwebCoreApi.Services.SAP
                 throw new ArgumentNullException(nameof(fmsb2Repo));
         }
 
+        public IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget(string area, string type)
+        {
+            var kpis = new List<Models.SAP.KpiTargets>
+            {
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Foundry",
+                    Kpi = "OAE",
+                    Min = .65m,
+                    Max = .7m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Foundry",
+                    Kpi = "Scrap",
+                    Min = .08m,
+                    Max = .08m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Foundry",
+                    Kpi = "PPMH",
+                    Min = 65,
+                    Max = 75
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Machining",
+                    Kpi = "OAE",
+                    Min = .6m,
+                    Max = .7m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Machining",
+                    Kpi = "Scrap",
+                    Min = .05m,
+                    Max = .05m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Machining",
+                    Kpi = "PPMH",
+                    Min = 40,
+                    Max = 50
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Finishing",
+                    Kpi = "OAE",
+                    Min = .4m,
+                    Max = .55m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Finishing",
+                    Kpi = "Scrap",
+                    Min = .035m,
+                    Max = .035m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Finishing",
+                    Kpi = "PPMH",
+                    Min = 40,
+                    Max = 46
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Assembly",
+                    Kpi = "OAE",
+                    Min = .4m,
+                    Max = .55m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Assembly",
+                    Kpi = "Scrap",
+                    Min = .035m,
+                    Max = .035m
+                },
+
+                new Models.SAP.KpiTargets
+                {
+                    Area = "Assembly",
+                    Kpi = "PPMH",
+                    Min = 40,
+                    Max = 46
+                }
+            };
+
+            return kpis;
+        }
+
         public IEnumerable<Scrap2Summary2> GetScrap(DateTime start, DateTime end)
         {
             return _context.Scrap2Summary2.Where(x => x.ShiftDate >= start && x.ShiftDate <= end).ToList();
@@ -343,6 +447,54 @@ namespace FmsbwebCoreApi.Services.SAP
                             }).ToListAsync();
         }
 
+        public string GetColorCode(string area, string type, decimal? value)
+        {
+            if (value == null)
+            {
+                return "#262626";
+            }
+
+            var targets = GetInMemoryKpiTarget(area, type).FirstOrDefault();
+
+            var red = "#FF4136";
+            var yellow = "#FFB700";
+            var green = "#19A974";
+
+            if (type == "oae" || type == "ppmh")
+            {
+                if (value < targets.Min)
+                {
+                    return red;
+                }
+                else if (value >= targets.Min && value <= targets.Max)
+                {
+                    return yellow;
+                }
+                else
+                {
+                    return green;
+                }
+            }
+
+            if (type == "scrap")
+            {
+                if (value < targets.Min)
+                {
+                    return green;
+                }
+                else if (value >= targets.Min && value <= targets.Max)
+                {
+                    return yellow;
+                }
+                else
+                {
+                    return red;
+                }
+            }
+
+            return "#262626";
+        }
+
         public async Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area)
         {
             //load data from db
@@ -394,19 +546,20 @@ namespace FmsbwebCoreApi.Services.SAP
 
             //labor hours
             var prodForLaborHours = new List<SapProdDto>();
-            var scrapForLaborHours = new List<Models.SAP.Scrap>();        
+            var scrapForLaborHours = new List<Models.SAP.Scrap>();
             var laborHrs = new List<FinanceLaborHoursView>();
             var startDayForLaborHorsIfYesterday = end.AddDays(-6);
             if (start.IsYesterday()) //check if date is yesterday, if yes subtract -6 day from end day and store in a variable
             {
                 //get data from the db with the new date range
-                var prodScrapForLaborHrs = await _fmsb2Repo.GetProdScrapForLaborHrs(startDayForLaborHorsIfYesterday, end, area); 
+                var prodScrapForLaborHrs = await _fmsb2Repo.GetProdScrapForLaborHrs(startDayForLaborHorsIfYesterday, end, area);
                 prodForLaborHours = prodScrapForLaborHrs.Prod.ToList();
                 scrapForLaborHours = prodScrapForLaborHrs.Scrap.ToList();
 
                 //get labor hrs data from db
                 laborHrs = await _fmsb2Repo.GetLaborHoursData(startDayForLaborHorsIfYesterday, end);
-            } else 
+            }
+            else
             {
                 //use the original db request for prod and scrap
                 prodForLaborHours = sapProdByArea;
@@ -440,7 +593,16 @@ namespace FmsbwebCoreApi.Services.SAP
 
                                 SapProductionByType = GetSapProductionByType(sapProdByType, x.Area),
 
-                                LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area)
+                                LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area),
+
+                                SapOaeColorCode = GetColorCode(x.Area, "oae", (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target),
+                                ScrapByCodeColorCode = GetColorCode(x.Area, "scrap",
+                                                        GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate
+                                                        ),
+                                PpmhColorCode = GetColorCode(x.Area, "ppmh",
+                                                        _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area).PPMH
+                                                        ),
+
                             })
                             .FirstOrDefault();
 

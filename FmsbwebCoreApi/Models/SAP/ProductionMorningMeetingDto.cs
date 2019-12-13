@@ -26,5 +26,10 @@ namespace FmsbwebCoreApi.Models.SAP
         public DepartmentScrapDto DepartmentScrap { get; set; }
         public SapProductionByTypeDto SapProductionByType { get; set; }
         public ProductionLaborHoursDto LaborHours { get; set; }
+
+        public string SapOaeColorCode { get; set; }
+        public string HxhOaeColorCode { get; set; }
+        public string ScrapByCodeColorCode { get; set; }
+        public string PpmhColorCode { get; set; }
     }
 }
