@@ -46,7 +46,19 @@ namespace FmsbwebCoreApi.Services.SAP
                 throw new ArgumentNullException(nameof(fmsb2Repo));
         }
 
-        public IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget(string area, string type)
+        public string MapAreaTopScrapArea(string area)
+        {
+            switch (area.ToLower().Trim())
+            {
+                case "foundry cell":
+                    return "foundry";
+                case "machine line":
+                    return "machining";
+                default:
+                    return area;
+            }
+        }
+        public IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget()
         {
             var kpis = new List<Models.SAP.KpiTargets>
             {
@@ -70,8 +82,8 @@ namespace FmsbwebCoreApi.Services.SAP
                 {
                     Area = "Foundry",
                     Kpi = "PPMH",
-                    Min = 65,
-                    Max = 75
+                    Min = 50,
+                    Max = 50
                 },
 
                 new Models.SAP.KpiTargets
@@ -94,7 +106,7 @@ namespace FmsbwebCoreApi.Services.SAP
                 {
                     Area = "Machining",
                     Kpi = "PPMH",
-                    Min = 40,
+                    Min = 50,
                     Max = 50
                 },
 
@@ -118,8 +130,8 @@ namespace FmsbwebCoreApi.Services.SAP
                 {
                     Area = "Finishing",
                     Kpi = "PPMH",
-                    Min = 40,
-                    Max = 46
+                    Min = 50,
+                    Max = 50
                 },
 
                 new Models.SAP.KpiTargets
@@ -142,12 +154,12 @@ namespace FmsbwebCoreApi.Services.SAP
                 {
                     Area = "Assembly",
                     Kpi = "PPMH",
-                    Min = 40,
-                    Max = 46
+                    Min = 50,
+                    Max = 50
                 }
             };
 
-            return kpis;
+            return kpis; ;
         }
 
         public IEnumerable<Scrap2Summary2> GetScrap(DateTime start, DateTime end)
@@ -449,12 +461,34 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public string GetColorCode(string area, string type, decimal? value)
         {
+            var black = "#262626";
+
             if (value == null)
             {
-                return "#262626";
+                return black;
             }
 
-            var targets = GetInMemoryKpiTarget(area, type).FirstOrDefault();
+            if (area.ToLower().Trim() == "foundry cell")
+            {
+                area = "foundry";
+            }
+
+            if (area.ToLower().Trim() == "machine line")
+            {
+                area = "machining";
+            }
+
+            if (area.ToLower().Trim() == "skirt coat")
+            {
+                area = "finishing";
+            }
+
+            var targets = GetInMemoryKpiTarget().Where(x => x.Area.ToLower().Trim() == area.ToLower().Trim() && x.Kpi.ToLower().Trim() == type.ToLower().Trim()).FirstOrDefault();
+
+            if (targets == null)
+            {
+                return black;
+            }
 
             var red = "#FF4136";
             var yellow = "#FFB700";
@@ -462,11 +496,11 @@ namespace FmsbwebCoreApi.Services.SAP
 
             if (type == "oae" || type == "ppmh")
             {
-                if (value < targets.Min)
+                if (value <= targets.Min)
                 {
                     return red;
                 }
-                else if (value >= targets.Min && value <= targets.Max)
+                else if (value > targets.Min && value < targets.Max)
                 {
                     return yellow;
                 }
@@ -478,11 +512,11 @@ namespace FmsbwebCoreApi.Services.SAP
 
             if (type == "scrap")
             {
-                if (value < targets.Min)
+                if (value <= targets.Min)
                 {
                     return green;
                 }
-                else if (value >= targets.Min && value <= targets.Max)
+                else if (value > targets.Min && value < targets.Max)
                 {
                     return yellow;
                 }
@@ -492,7 +526,7 @@ namespace FmsbwebCoreApi.Services.SAP
                 }
             }
 
-            return "#262626";
+            return black;
         }
 
         public async Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area)
@@ -622,6 +656,138 @@ namespace FmsbwebCoreApi.Services.SAP
             {
                 // dispose resources when needed
             }
+        }
+
+        public async Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(DateTime start, DateTime end, string area)
+        {
+            var production = await _context.Production2
+                                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                .Where(x => x.Area == area)
+                                .GroupBy(x => new { x.ShiftDate })
+                                .Select(x => new
+                                {
+                                    x.Key.ShiftDate,
+                                    TotalProd = x.Sum(s => s.QtyProd)
+                                })
+                                .ToListAsync();
+
+            var scrapData = await _context.Scrap2
+                                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                .Where(x => x.ScrapAreaName == MapAreaTopScrapArea(area))
+                                .Where(x => x.ScrapCode != "8888")
+                                .Where(x => x.IsPurchashedExclude == false)
+                                .GroupBy(x => new { x.ShiftDate, x.ScrapAreaName })
+                                .Select(x => new
+                                {
+                                    x.Key.ScrapAreaName,
+                                    x.Key.ShiftDate,
+                                    TotalScrap = x.Sum(s => s.Qty)
+                                })
+                                .ToListAsync();
+
+            var data = scrapData
+                        .Select(x => new DailyScrapByShiftDateDto
+                        {
+                            ScrapArea = x.ScrapAreaName,
+                            ShiftDate = (DateTime)x.ShiftDate,
+                            TotalScrap = (int)x.TotalScrap,
+                            SapGross = production.Any(p => p.ShiftDate == x.ShiftDate)
+                                        ? (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
+                                        : 0,
+
+                            ScrapRate = (production.Any(p => p.ShiftDate == x.ShiftDate)
+                                        ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
+                                        : 0) == 0
+
+                                        ? 0
+
+                                        : (decimal)x.TotalScrap / (decimal)(production.Any(p => p.ShiftDate == x.ShiftDate)
+                                            ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (decimal)x.TotalScrap
+                                            : 0)
+                        })
+                        .OrderBy(x => x.ShiftDate)
+                        .ToList();
+
+            return data;
+        }
+
+        public async Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area)
+        {
+            //get data from db
+            var production = await _context.Production2
+                               .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                               .Where(x => x.Area == area)
+                               .GroupBy(x => new { x.ShiftDate, x.Area })
+                               .Select(x => new
+                               {
+                                   x.Key.Area,
+                                   x.Key.ShiftDate,
+                                   TotalProd = x.Sum(s => s.QtyProd)
+                               })
+                               .ToListAsync();
+
+            var scrapData = await _context.Scrap2
+                                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                .Where(x => x.Area == area)
+                                .Where(x => x.ScrapCode != "8888")
+                                .GroupBy(x => new { x.ShiftDate, x.Area })
+                                .Select(x => new
+                                {
+                                    x.Key.Area,
+                                    x.Key.ShiftDate,
+                                    TotalScrap = x.Sum(s => s.Qty)
+                                })
+                                .ToListAsync();
+
+            var target = await _intranetRepo.DailyHxHTargetByArea(start, end, area);
+
+            //transform data
+            var result = production
+                            .Select(x => new DepartmentKpiDto
+                            {
+                                Area = x.Area,
+                                ShiftDate = (DateTime)x.ShiftDate,
+                                TotalProduction = (int)x.TotalProd,
+
+                                TotalAreaScrap = !scrapData.Any(s => s.ShiftDate == x.ShiftDate)
+                                                    ? 0
+                                                    : (int)scrapData.Where(s => s.ShiftDate == x.ShiftDate).Sum(s => s.TotalScrap),
+
+                                Target = !target.Any(s => s.ShiftDate == x.ShiftDate)
+                                            ? 0
+                                            : target.Where(s => s.ShiftDate == x.ShiftDate).Sum(s => s.Target)
+                            })
+                            .Select(x => new DepartmentKpiDto
+                            {
+                                Area = x.Area,
+                                ShiftDate = x.ShiftDate,
+                                TotalProduction = x.TotalProduction,
+                                TotalAreaScrap = x.TotalAreaScrap,
+                                Target = x.Target,
+                                SapGross = x.TotalAreaScrap + x.TotalProduction
+                            })
+                            .Select(x => new DepartmentKpiDto
+                            {
+                                Area = x.Area,
+                                ShiftDate = x.ShiftDate,
+                                TotalProduction = x.TotalProduction,
+                                TotalAreaScrap = x.TotalAreaScrap,
+                                Target = x.Target,
+                                SapGross = x.SapGross,
+
+                                SapOae = x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target,
+                                ScrapRate = x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross,
+                                DowntimeRate = (1  - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross)
+                                                   - (x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target)) < 0 
+                                                ? 0 
+                                                : (1 
+                                                    - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross) 
+                                                    - (x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target))
+                            })
+                            .OrderBy(x => x.ShiftDate)
+                            .ToList();
+
+            return result;
         }
     }
 }

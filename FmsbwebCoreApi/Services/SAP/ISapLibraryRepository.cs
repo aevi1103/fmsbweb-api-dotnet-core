@@ -15,13 +15,19 @@ namespace FmsbwebCoreApi.Services.SAP
         ScrapByCodeDto GetScrapByCode(List<Models.SAP.Scrap> scrap, string area, bool isSbScrap, int sapNet);
         DepartmentScrapDto GetDepartmentScrap(List<Models.SAP.Scrap> scrap, string area, int sapNet);
         SapProductionByTypeDto GetSapProductionByType(List<SapProdDto> sapProd, string area);
-
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByScrapAreaFromDb(DateTime start, DateTime end, string area);
+
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<SapProdDto>> GetSapProdByTypeFromDb(DateTime start, DateTime end, string area);
-        IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget(string area, string type);
+        IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget();
         string GetColorCode(string area, string type, decimal? value);
+
+        string MapAreaTopScrapArea(string area);
+
+        //charts
+        Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(DateTime start, DateTime end, string area);
+        Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area);
 
     }
 }

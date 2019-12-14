@@ -124,117 +124,119 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
             var total = regularTotal + overtimeTotal + doubletimeTotal + orientationTotal;
 
-            var details = new List<LaborHoursDetailsByType>();
-
-            //regular
-            details.Add(new LaborHoursDetailsByType
+            var details = new List<LaborHoursDetailsByType>
             {
-                Type = "Regular",
-                Role = "Inspector",
-                Hours = regular_q
-            });
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Regular",
-                Role = "PSO",
-                Hours = regular_pso
-            });
+                //regular
+                new LaborHoursDetailsByType
+                {
+                    Type = "Regular",
+                    Role = "Inspector",
+                    Hours = regular_q
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Regular",
-                Role = "Other",
-                Hours = regular
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Regular",
+                    Role = "PSO",
+                    Hours = regular_pso
+                },
 
-            //overtime
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Overtime",
-                Role = "Inspector",
-                Hours = overtime_q
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Regular",
+                    Role = "Other",
+                    Hours = regular
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Overtime",
-                Role = "PSO",
-                Hours = overtime_pso
-            });
+                //overtime
+                new LaborHoursDetailsByType
+                {
+                    Type = "Overtime",
+                    Role = "Inspector",
+                    Hours = overtime_q
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Overtime",
-                Role = "Other",
-                Hours = overtime
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Overtime",
+                    Role = "PSO",
+                    Hours = overtime_pso
+                },
 
-            //doubletime
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Double Time",
-                Role = "Inspector",
-                Hours = doubleTime_q
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Overtime",
+                    Role = "Other",
+                    Hours = overtime
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Double Time",
-                Role = "PSO",
-                Hours = doubleTime_pso
-            });
+                //doubletime
+                new LaborHoursDetailsByType
+                {
+                    Type = "Double Time",
+                    Role = "Inspector",
+                    Hours = doubleTime_q
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Double Time",
-                Role = "Other",
-                Hours = doubleTime
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Double Time",
+                    Role = "PSO",
+                    Hours = doubleTime_pso
+                },
 
-            //orientation
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Orientation",
-                Role = "Inspector",
-                Hours = orientation_q
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Double Time",
+                    Role = "Other",
+                    Hours = doubleTime
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Orientation",
-                Role = "PSO",
-                Hours = orientation_pso
-            });
+                //orientation
+                new LaborHoursDetailsByType
+                {
+                    Type = "Orientation",
+                    Role = "Inspector",
+                    Hours = orientation_q
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Orientation",
-                Role = "Other",
-                Hours = orientation
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Orientation",
+                    Role = "PSO",
+                    Hours = orientation_pso
+                },
 
-            //overall
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Orientation",
-                Role = "Inspector",
-                Hours = regular_q + overtime_q + doubleTime_q + orientation_q
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Orientation",
+                    Role = "Other",
+                    Hours = orientation
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Orientation",
-                Role = "PSO",
-                Hours = regular_pso + overtime_pso + doubleTime_pso + orientation_pso
-            });
+                //overall
+                new LaborHoursDetailsByType
+                {
+                    Type = "Overall",
+                    Role = "Inspector",
+                    Hours = regular_q + overtime_q + doubleTime_q + orientation_q
+                },
 
-            details.Add(new LaborHoursDetailsByType
-            {
-                Type = "Orientation",
-                Role = "Other",
-                Hours = regular + overtime + doubleTime + orientation
-            });
+                new LaborHoursDetailsByType
+                {
+                    Type = "Overall",
+                    Role = "PSO",
+                    Hours = regular_pso + overtime_pso + doubleTime_pso + orientation_pso
+                },
+
+                new LaborHoursDetailsByType
+                {
+                    Type = "Overall",
+                    Role = "Other",
+                    Hours = regular + overtime + doubleTime + orientation
+                }
+            };
 
             return new ProductionLaborHoursDto
             {
@@ -352,7 +354,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
             var sapGross = prod + scrap;
 
             var hours = GetLaborHours(laborHrs, area);
-            var ppmh = hours.OverAll == 0 ? 0 : (sapGross / hours.OverAll);
+            var ppmh = hours.OverAll == 0 ? 0 : sapGross / hours.OverAll;
 
             return new ProductionLaborHoursDto
             {

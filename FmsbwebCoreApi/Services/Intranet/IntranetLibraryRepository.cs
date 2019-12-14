@@ -47,6 +47,19 @@ namespace FmsbwebCoreApi.Services.Intranet
                             }).ToListAsync();
         }
 
+        public async Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime start, DateTime end, string area)
+        {
+            return await _context.FmsbMasterProdPartsCopyDashboard
+                            .Where(x => x.Date >= start && x.Date <= end)
+                            .Where(x => x.Area == area)
+                            .GroupBy(x => new { x.Area, x.Date })
+                            .Select(x => new DailyHxHTargetDto
+                            {
+                                Area = x.Key.Area,
+                                ShiftDate = (DateTime)x.Key.Date,
+                                Target = (int)x.Sum(s => s.OeeTarget)
+                            }).ToListAsync();
+        }
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
