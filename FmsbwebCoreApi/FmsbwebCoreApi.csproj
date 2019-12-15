@@ -6,6 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="7.0.0" />
+    <PackageReference Include="Fluent.DateTimeExtensions" Version="2.0.4" />
+    <PackageReference Include="FluentDateTime" Version="2.0.0" />
+    <PackageReference Include="FluentTime" Version="0.1.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="8.6.0" />
     <PackageReference Include="Marvin.Cache.Headers" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="3.1.0" />

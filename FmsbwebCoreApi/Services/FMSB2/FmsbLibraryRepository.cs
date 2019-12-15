@@ -349,8 +349,8 @@ namespace FmsbwebCoreApi.Services.FMSB2
                 title = $"Last 7 days Kronos Hours <b>({start.ToString("M/d/yy")} - {end.ToString("M/d/yy")})</b>";
             }
 
-            var prod = prodData.Where(x => x.Area == area).Sum(x => x.Qty);
-            var scrap = scrapData.Where(x => x.Area == area).Sum(x => x.Qty);
+            var prod = prodData.Where(x => x.Area.ToLower().Trim() == area.ToLower().Trim()).Sum(x => x.Qty);
+            var scrap = scrapData.Where(x => x.Area.ToLower().Trim() == area.ToLower().Trim()).Sum(x => x.Qty);
             var sapGross = prod + scrap;
 
             var hours = GetLaborHours(laborHrs, area);
@@ -375,6 +375,64 @@ namespace FmsbwebCoreApi.Services.FMSB2
                 OtherDetails = hours.OtherDetails,
                 PSODetails = hours.PSODetails,
             };
+
+        }
+
+        public async Task<IEnumerable<WeeklyProductionLaborHoursDto>> GetWeeklyProdScrapForLaborHrs(DateTime start, DateTime end, string area)
+        {
+            var prods = await _sapContext.Production2Summary
+                                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                .Where(x => x.Area == area)
+                                .GroupBy(x => new { x.WeeekNumber, x.Area })
+                                .Select(x => new SapProdDto
+                                {
+                                    WeekNumber = (int)x.Key.WeeekNumber,
+                                    Area = x.Key.Area,
+                                    Qty = (int)x.Sum(s => s.Qty)
+                                })
+                                .ToListAsync();
+
+            var scraps = await _sapContext.Scrap2
+                            .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                            .Where(x => x.Area == area)
+                            .Where(x => x.ScrapCode != "8888")
+                            .GroupBy(x => new { x.WeekNumber, x.Area })
+                            .Select(x => new Scrap
+                            {
+                                WeekNumber = (int)x.Key.WeekNumber,
+                                Area = x.Key.Area,
+                                Qty = (int)x.Sum(s => s.Qty)
+                            })
+                            .ToListAsync();
+
+            var labors = await _context.FinanceLaborHoursView
+                            .Where(x => x.DateIn >= start && x.DateIn <= end)
+                            .ToListAsync();
+
+
+            var prodWeeks = prods.Select(x => x.WeekNumber).Distinct();
+            var scrapWeeks = scraps.Select(x => x.WeekNumber).Distinct();
+            var weeks = prodWeeks.Concat(scrapWeeks).Distinct().OrderBy(x => x);
+
+            var list = new List<WeeklyProductionLaborHoursDto>();
+            foreach (var week in weeks)
+            {
+                var prod = prods.Where(x => x.WeekNumber == week);
+                var scrap = scraps.Where(x => x.WeekNumber == week);
+                var labor = labors.Where(x => x.WeekNumber == week).ToList();
+
+                var details = GetRollingDaysPPMH(prod, scrap, labor, start, end, area);
+
+                list.Add(new WeeklyProductionLaborHoursDto
+                {
+                    WeekNumber = week,
+                    Details = details
+                });
+
+            }
+
+            return list.OrderBy(x => x.WeekNumber).ToList();
+
 
         }
     }

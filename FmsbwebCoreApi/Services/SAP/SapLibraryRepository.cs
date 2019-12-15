@@ -691,6 +691,7 @@ namespace FmsbwebCoreApi.Services.SAP
                             ScrapArea = x.ScrapAreaName,
                             ShiftDate = (DateTime)x.ShiftDate,
                             TotalScrap = (int)x.TotalScrap,
+                            SapNet = (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd),
                             SapGross = production.Any(p => p.ShiftDate == x.ShiftDate)
                                         ? (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
                                         : 0,
@@ -699,9 +700,9 @@ namespace FmsbwebCoreApi.Services.SAP
                                         ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
                                         : 0) == 0
 
-                                        ? 0
+                                        ? null
 
-                                        : (decimal)x.TotalScrap / (decimal)(production.Any(p => p.ShiftDate == x.ShiftDate)
+                                        : x.TotalScrap / (production.Any(p => p.ShiftDate == x.ShiftDate)
                                             ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (decimal)x.TotalScrap
                                             : 0)
                         })
@@ -775,14 +776,16 @@ namespace FmsbwebCoreApi.Services.SAP
                                 Target = x.Target,
                                 SapGross = x.SapGross,
 
-                                SapOae = x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target,
-                                ScrapRate = x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross,
-                                DowntimeRate = (1  - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross)
+                                SapOae = Math.Round((x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target),2),
+                                ScrapRate = Math.Round((x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross),2),
+                                DowntimeRate =  Math.Round((
+                                                (1  - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross)
                                                    - (x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target)) < 0 
                                                 ? 0 
                                                 : (1 
                                                     - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross) 
                                                     - (x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target))
+                                                ),2) 
                             })
                             .OrderBy(x => x.ShiftDate)
                             .ToList();

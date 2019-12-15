@@ -10,7 +10,8 @@ namespace FmsbwebCoreApi.Models.SAP
         public string ScrapArea { get; set; }
         public DateTime ShiftDate { get; set; }
         public int SapGross { get; set; }
+        public int SapNet { get; set; }
         public int TotalScrap { get; set; }
-        public decimal ScrapRate { get; set; }
+        public decimal? ScrapRate { get; set; }
     }
 }

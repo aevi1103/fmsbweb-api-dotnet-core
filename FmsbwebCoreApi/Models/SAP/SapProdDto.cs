@@ -10,5 +10,6 @@ namespace FmsbwebCoreApi.Models.SAP
         public string SapType { get; set; }
         public string Area { get; set; }
         public int Qty { get; set; }
+        public int WeekNumber { get; set; } = 0;
     }
 }

@@ -31,11 +31,22 @@ namespace FmsbwebCoreApi.Controllers.SAP
             }
 
             var prodData = await _sapLibRepo.GetDailyKpiChart(
-                resourceParameter.Start,
-                resourceParameter.End,
-                resourceParameter.Area);
+                                    resourceParameter.Start,
+                                    resourceParameter.End,
+                                    resourceParameter.Area);
 
-            return Ok(prodData);
+
+            var category = prodData.Select(x => x.ShiftDate.ToShortDateString()).Distinct();
+            var series = new List<string> { "OAE %", "Downtime %", "Scrap % by Dept" };
+
+            var result = new
+            {
+                categories = category,
+                series,
+                data = prodData
+            };
+
+            return Ok(result);
         }
     }
 }
