@@ -397,7 +397,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
                             .Where(x => x.Area == area)
                             .Where(x => x.ScrapCode != "8888")
                             .GroupBy(x => new { x.WeekNumber, x.Area })
-                            .Select(x => new Scrap
+                            .Select(x => new WeeklyScrap
                             {
                                 WeekNumber = (int)x.Key.WeekNumber,
                                 Area = x.Key.Area,

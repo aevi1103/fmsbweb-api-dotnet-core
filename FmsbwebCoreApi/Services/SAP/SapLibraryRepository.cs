@@ -776,21 +776,102 @@ namespace FmsbwebCoreApi.Services.SAP
                                 Target = x.Target,
                                 SapGross = x.SapGross,
 
-                                SapOae = Math.Round((x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target),2),
-                                ScrapRate = Math.Round((x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross),2),
-                                DowntimeRate =  Math.Round((
-                                                (1  - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross)
-                                                   - (x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target)) < 0 
-                                                ? 0 
-                                                : (1 
-                                                    - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross) 
+                                SapOae = Math.Round((x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target), 2),
+                                ScrapRate = Math.Round((x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross), 2),
+                                DowntimeRate = Math.Round((
+                                                (1 - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross)
+                                                   - (x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target)) < 0
+                                                ? 0
+                                                : (1
+                                                    - (x.SapGross == 0 ? 0 : x.TotalAreaScrap / (decimal)x.SapGross)
                                                     - (x.Target == 0 ? 0 : x.TotalProduction / (decimal)x.Target))
-                                                ),2) 
+                                                ), 2)
                             })
                             .OrderBy(x => x.ShiftDate)
                             .ToList();
 
             return result;
+        }
+
+        public async Task<GetSapProdAndScrapDto> GetSapProdAndScrap(DateTime start, DateTime end, string area)
+        {
+            //get data from db
+            var prod = _context.Production2
+                            .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                            .Where(x => x.Area == area)
+                            .GroupBy(x => new { x.ShiftDate, x.Area })
+                            .Select(x => new DailySapProdDto
+                            {
+                                ShiftDate = (DateTime)x.Key.ShiftDate,
+                                Area = x.Key.Area,
+                                Qty = (int)x.Sum(s => s.QtyProd)
+                            })
+                            .OrderBy(x => x.ShiftDate)
+                            .ToList();
+
+            var scrap = _context.Scrap2
+                            .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                            .Where(x => x.ScrapAreaName == MapAreaTopScrapArea(area))
+                            .Where(x => x.ScrapCode != "8888")
+                            .GroupBy(x => new
+                            {
+                                x.ScrapAreaName,
+                                x.Area,
+                                x.IsPurchashedExclude,
+                                x.IsPurchashedExclude2
+                            })
+                            .Select(x => new ScrapByCodeDetailsDto
+                            {
+                                Area = x.Key.Area,
+                                ScrapType = x.Key.IsPurchashedExclude2,
+                                ScrapAreaName = x.Key.ScrapAreaName,
+                                IsPurchaseScrap = (bool)x.Key.IsPurchashedExclude,
+                                Qty = (int)x.Sum(s => s.Qty)
+                            })
+                            .OrderByDescending(x => x.Qty)
+                            .ToList();
+
+            var targets = (await _intranetRepo.GetHxhProduction(start, end, area)).ToList();
+
+            //transform data
+            var sbScrapList = scrap.Where(x => x.IsPurchaseScrap == false).OrderByDescending(x => x.Qty).ToList();
+            var purchaseScrapList = scrap.Where(x => x.IsPurchaseScrap == true).OrderByDescending(x => x.Qty).ToList();
+
+            var target = targets.Sum(x => x.Target);
+            var sapProd = prod.Sum(x => x.Qty);
+            var sbScrap = sbScrapList.Sum(x => x.Qty);
+            var purchasedScrap = purchaseScrapList.Sum(x => x.Qty);
+
+            var sapGross = sapProd + sbScrap;
+            var sbScrapRate = sapGross == 0 ? 0 : sbScrap / (decimal)sapGross;
+            var purchaseScrapRate = sapGross == 0 ? 0 : purchasedScrap / (decimal)sapGross;
+            var sapOae = target == 0 ? 0 : sapProd / target;
+
+            return new GetSapProdAndScrapDto
+            {
+                Target = (int)target,
+                SapProd = sapProd,
+                SbScrap = sbScrap,
+                PurchasedScrap = purchasedScrap,
+                SapGross = sapGross,
+                SbScrapRate = sbScrapRate,
+                PurchaseScrapRate = purchaseScrapRate,
+                SapOae = sapOae,
+                DailySapProd = prod,
+                SbScrapDetail = sbScrapList
+                                    .Select(x => new ScrapByCodeDetailsDto
+                                    {
+                                        Area = x.Area,
+                                        ScrapType = x.ScrapType,
+                                        ScrapAreaName = x.ScrapAreaName,
+                                        IsPurchaseScrap = x.IsPurchaseScrap,
+                                        Qty = x.Qty,
+                                        SapGross = sapProd + x.Qty,
+                                        ScrapRate = (sapProd + x.Qty) == 0 ? 0 : (decimal)x.Qty / (decimal)(sapProd + x.Qty)
+                                    }),
+                PurchaseScrapDetail = purchaseScrapList
+            };
+
         }
     }
 }
