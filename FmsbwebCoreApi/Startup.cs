@@ -16,6 +16,7 @@ using FmsbwebCoreApi.Context.SAP;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using FmsbwebCoreApi.Context.Intranet;
+using FmsbwebCoreApi.Context.FmsbQuality;
 
 namespace FmsbwebCoreApi
 {
@@ -143,6 +144,10 @@ namespace FmsbwebCoreApi
 
             services.AddDbContext<IntranetContext>(options =>
                options.UseSqlServer(Configuration.GetConnectionString("intranet"))
+            );
+
+            services.AddDbContext<fmsbQualityContext>(options =>
+               options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality"))
             );
         }
 
