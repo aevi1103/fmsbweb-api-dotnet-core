@@ -19,11 +19,11 @@ namespace FmsbwebCoreApi.Models.FMSB2
         public string EndDate { get; set; }
         public string LaborTitle { get; set; }
 
-        public LabourHoursDetails InspectorDetails { get; set; }
-        public LabourHoursDetails PSODetails { get; set; }
-        public LabourHoursDetails OtherDetails { get; set; }
+        public LabourHoursDetails InspectorDetails { get; set; } = new LabourHoursDetails();
+        public LabourHoursDetails PSODetails { get; set; } = new LabourHoursDetails();
+        public LabourHoursDetails OtherDetails { get; set; } = new LabourHoursDetails();
 
-        public IEnumerable<LaborHoursDetailsByType> Details { get; set; }
+        public IEnumerable<LaborHoursDetailsByType> Details { get; set; } = new List<LaborHoursDetailsByType>();
 
     }
 }

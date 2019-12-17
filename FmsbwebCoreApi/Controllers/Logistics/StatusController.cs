@@ -31,7 +31,7 @@ namespace FmsbwebCoreApi.Controllers.Logistics
             }
 
             var inventoryStatus = await _logisticsLibRepo
-                                    .GetStockStatus(resourceParameter.Start.AddDays(1), resourceParameter.End.AddDays(1));
+                                    .GetStockStatus(resourceParameter.Start, resourceParameter.End);
 
             return Ok(inventoryStatus);
         }

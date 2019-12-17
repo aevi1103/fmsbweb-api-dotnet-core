@@ -10,6 +10,6 @@ namespace FmsbwebCoreApi.Models.SAP
         public int Total { get; set; }
         public int SapGross { get; set; }
         public decimal ScrapRate { get; set; }
-        public IEnumerable<ScrapByCodeDetailsDto> Details { get; set; }
+        public IEnumerable<ScrapByCodeDetailsDto> Details { get; set; } = new List<ScrapByCodeDetailsDto>();
     }
 }

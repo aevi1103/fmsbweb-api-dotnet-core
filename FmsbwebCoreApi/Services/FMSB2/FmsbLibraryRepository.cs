@@ -435,5 +435,30 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
 
         }
+
+        public async Task<IEnumerable<FinanceDailyKpi>> GetFinanceDailyKpi(DateTime date)
+        {
+            return await _context.FinanceDailyKpi.Where(x => x.Date == date).ToListAsync();
+        }
+
+        public async Task<IEnumerable<FinanceDeptFcst>> GetFinanceDeptForecast(int year, int month)
+        {
+            return await _context.FinanceDeptFcst.Where(x => x.Year == year && x.MonthNum == month).ToListAsync();
+        }
+
+        public async Task<IEnumerable<FinanceFlashProjections>> GetFinanceFlashProjections(int year, int month)
+        {
+            return await _context.FinanceFlashProjections.Where(x => x.Year == year && x.MonthNum == month).ToListAsync();
+        }
+
+        public async Task<FinaceKpiDto> GetFinanceKpi(DateTime date)
+        {
+            return new FinaceKpiDto
+            {
+                DailyKpi = await GetFinanceDailyKpi(date),
+                MonthlyForecast = await GetFinanceDeptForecast(date.Year, date.Month),
+                MonthlyFlashProjections = await GetFinanceFlashProjections(date.Year, date.Month)
+            };
+        }
     }
 }

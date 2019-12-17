@@ -7,7 +7,7 @@ namespace FmsbwebCoreApi.Models.Safety.Incident
 {
     public class IncidentsByDepartmentDto : DepartmentDto
     {
-        public IEnumerable<InjuryStatusDto> Injuries { get; set; }
+        public IEnumerable<InjuryStatusDto> Injuries { get; set; } = new List<InjuryStatusDto>();
         public int Total { get; set; }
     }
 

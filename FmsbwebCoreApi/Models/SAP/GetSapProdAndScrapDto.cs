@@ -15,8 +15,8 @@ namespace FmsbwebCoreApi.Models.SAP
         public decimal SbScrapRate { get; set; }
         public decimal PurchaseScrapRate { get; set; }
         public decimal SapOae { get; set; }
-        public IEnumerable<DailySapProdDto> DailySapProd { get; set; }
-        public IEnumerable<ScrapByCodeDetailsDto> SbScrapDetail { get; set; }
-        public IEnumerable<ScrapByCodeDetailsDto> PurchaseScrapDetail { get; set; }
-    }
+        public IEnumerable<DailySapProdDto> DailySapProd { get; set; } = new List<DailySapProdDto>();
+        public IEnumerable<ScrapByCodeDetailsDto> SbScrapDetail { get; set; } = new List<ScrapByCodeDetailsDto>();
+        public IEnumerable<ScrapByCodeDetailsDto> PurchaseScrapDetail { get; set; } = new List<ScrapByCodeDetailsDto>();
+    } 
 }

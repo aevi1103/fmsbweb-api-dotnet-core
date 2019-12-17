@@ -8,7 +8,7 @@ namespace FmsbwebCoreApi.Models.FMSB2
 {
     public class ProdScrapForLaborHours
     {
-        public IEnumerable<SapProdDto> Prod { get; set; }
-        public IEnumerable<Scrap> Scrap { get; set; }
+        public IEnumerable<SapProdDto> Prod { get; set; } = new List<SapProdDto>();
+        public IEnumerable<Scrap> Scrap { get; set; } = new List<Scrap>();
     }
 }
