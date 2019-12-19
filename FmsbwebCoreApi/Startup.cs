@@ -17,6 +17,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.FmsbQuality;
+using FmsbwebCoreApi.Context.Master;
 
 namespace FmsbwebCoreApi
 {
@@ -41,6 +42,7 @@ namespace FmsbwebCoreApi
                 builder =>
                 {
                     builder.WithOrigins("http://localhost:3000");
+                    builder.WithOrigins("http://10.129.224.149:82");
                 });
             });
 
@@ -129,6 +131,10 @@ namespace FmsbwebCoreApi
             //inject intranet lib repo
             services.AddScoped<Services.Intranet.IIntranetLibraryRepository, Services.Intranet.IntranetLibraryRepository>();
 
+            //inject fmsb quality lib repo
+            services.AddScoped<Services.FmsbQuality.IFmsbQualityLibraryRepository, Services.FmsbQuality.FmsbQualityLibraryRepository>();
+
+
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("fmsbConn"))
@@ -148,6 +154,10 @@ namespace FmsbwebCoreApi
 
             services.AddDbContext<fmsbQualityContext>(options =>
                options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality"))
+            );
+
+            services.AddDbContext<masterContext>(options =>
+               options.UseSqlServer(Configuration.GetConnectionString("fmoMaster"))
             );
         }
 
