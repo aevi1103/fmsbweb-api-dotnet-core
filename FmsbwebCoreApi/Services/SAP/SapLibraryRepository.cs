@@ -13,6 +13,7 @@ using FmsbwebCoreApi.Services.FMSB2;
 using FmsbwebCoreApi.Services.Intranet;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Entity.Fmsb2;
+using FmsbwebCoreApi.Models.Intranet;
 
 namespace FmsbwebCoreApi.Services.SAP
 {
@@ -160,11 +161,6 @@ namespace FmsbwebCoreApi.Services.SAP
             };
 
             return kpis; ;
-        }
-
-        public IEnumerable<Scrap2Summary2> GetScrap(DateTime start, DateTime end)
-        {
-            return _context.Scrap2Summary2.Where(x => x.ShiftDate >= start && x.ShiftDate <= end).ToList();
         }
 
         public ScrapByCodeDto GetScrapByCode(List<Models.SAP.Scrap> scrap, string area, bool isSbScrap, int sapNet)
@@ -398,6 +394,8 @@ namespace FmsbwebCoreApi.Services.SAP
                                 {
                                     Department = x.Department,
                                     Area = x.Area,
+                                    Line = x.MachineHxh,
+                                    Program = x.Program,
                                     ScrapAreaName = x.ScrapAreaName,
                                     ScrapCode = x.ScrapCode,
                                     IsPurchashedExclude = (bool)x.IsPurchashedExclude,
@@ -412,6 +410,7 @@ namespace FmsbwebCoreApi.Services.SAP
             return await _context.Production2Summary
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                                 .Where(x => x.Area == area)
+                                .Where(x => x.MachineHxh != "A10") //remove per ryan boyle
                                 .GroupBy(x => new { x.Area, sapType = x.Material.Substring(0, 3) })
                                 .Select(x => new SapProdDto
                                 {
@@ -426,6 +425,7 @@ namespace FmsbwebCoreApi.Services.SAP
             var qry = _context
                         .Production2Summary
                         .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                        .Where(x => x.MachineHxh != "A10") //remove per ryan boyle
                         .AsQueryable();
 
             if (area.ToLower().Trim() == "foundry cell")
@@ -603,7 +603,7 @@ namespace FmsbwebCoreApi.Services.SAP
                 laborHrs = await _fmsb2Repo.GetLaborHoursData(start, end);
             }
 
- 
+
             var result = hxh
                             .Select(x => new ProductionMorningMeetingDto
                             {
@@ -640,7 +640,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
                                 LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area),
 
-                                
+
                                 ScrapByCodeColorCode = GetColorCode(x.Area, "scrap",
                                                         GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate
                                                         ),
@@ -881,6 +881,365 @@ namespace FmsbwebCoreApi.Services.SAP
                                         ScrapRate = (sapProd + x.Qty) == 0 ? 0 : (decimal)x.Qty / (decimal)(sapProd + x.Qty)
                                     }),
                 PurchaseScrapDetail = purchaseScrapList
+            };
+
+        }
+
+        public IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(
+            IEnumerable<Models.SAP.Scrap> scrap,
+            IEnumerable<SapProdDetailDto> prod,
+            IEnumerable<HxHProductionByLineDto> hxh)
+        {
+
+            //distinct lines
+            var scrapLines = scrap.Select(x => x.Line).Distinct();
+            var sapProdLine = prod.Select(x => x.Line).Distinct();
+            var hxhLine = hxh.Select(x => x.Line).Distinct();
+            var distinctLines = (scrapLines.Concat(sapProdLine).Concat(hxhLine)).Distinct();
+
+            //transform data
+            var scrapByLine = scrap
+                                .GroupBy(x => new { x.Department, x.Area, x.Line, x.ScrapAreaName, x.ScrapCode, x.ScrapDesc, x.IsPurchashedExclude, x.IsPurchashedExclude2 })
+                                .Select(x => new Models.SAP.Scrap
+                                {
+                                    Department = x.Key.Department,
+                                    Area = x.Key.Area,
+                                    Line = x.Key.Line,
+                                    ScrapAreaName = x.Key.ScrapAreaName,
+                                    ScrapCode = x.Key.ScrapCode,
+                                    ScrapDesc = x.Key.ScrapDesc,
+                                    IsPurchashedExclude = x.Key.IsPurchashedExclude,
+                                    IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
+                                    Qty = x.Sum(s => s.Qty)
+                                })
+                                .OrderByDescending(x => x.Qty)
+                                .ToList();
+
+            var sbScrap = scrapByLine.Where(x => x.IsPurchashedExclude == false);
+            var purchasedScrap = scrapByLine.Where(x => x.IsPurchashedExclude == true);
+
+            //details
+            var result = distinctLines.Select(line => new ProductionByLineDto
+            {
+                Department = hxh.Any(x => x.Line == line) ? hxh.Where(x => x.Line == line).First().Department : "",
+                Area = hxh.Any(x => x.Line == line) ? hxh.Where(x => x.Line == line).First().Area : "",
+                Line = line,
+                Target = hxh.Any(x => x.Line == line) ? (int)hxh.Where(x => x.Line == line).First().Target : 0,
+
+                HxHGross = hxh.Any(x => x.Line == line) ? (int)hxh.Where(x => x.Line == line).First().Gross : 0,
+
+                SapNet = prod.Any(x => x.Line == line) ? prod.Where(x => x.Line == line).Sum(s => s.SapNet) : 0,
+                SapNetDetails = prod.Any(x => x.Line == line) ? prod.Where(x => x.Line == line).OrderBy(x => x.DateScanned).ToList() : new List<SapProdDetailDto>(),
+
+                TotalScrap = scrapByLine.Any(x => x.Line == line) ? scrapByLine.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
+                TotalSbScrap = sbScrap.Any(x => x.Line == line) ? sbScrap.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
+                TotalPurchaseScrap = purchasedScrap.Any(x => x.Line == line) ? purchasedScrap.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
+                SbScrapDetails = sbScrap.Any(x => x.Line == line) ? sbScrap.Where(x => x.Line == line).ToList() : new List<Models.SAP.Scrap>(),
+                PurchaseScrapDetails = purchasedScrap.Any(x => x.Line == line) ? purchasedScrap.Where(x => x.Line == line).ToList() : new List<Models.SAP.Scrap>(),
+            })
+            .Select(x => new ProductionByLineDto
+            {
+                Department = x.Department,
+                Area = x.Area,
+                Line = x.Line,
+                Target = x.Target,
+
+                HxHGross = x.HxHGross,
+                HxHNet = (x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "machine line") ? x.HxHGross - x.TotalScrap : x.HxHGross,
+                HxHOae = x.Target == 0 ? 0
+                            : (decimal)((x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "machine line") ? x.HxHGross - x.TotalScrap : x.HxHGross) / (decimal)x.Target,
+
+                SapNet = x.SapNet,
+                SapNetDetails = x.SapNetDetails,
+                SapGross = x.SapNet + x.TotalScrap,
+                SapOae = x.Target == 0 ? 0 : (decimal)x.SapNet / (decimal)x.Target,
+
+                TotalScrap = x.TotalScrap,
+                TotalSbScrap = x.TotalSbScrap,
+                TotalPurchaseScrap = x.TotalPurchaseScrap,
+
+                TotalSbScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalSbScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalPurchaseScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalPurchaseScrapRate / (decimal)(x.SapNet + x.TotalScrap),
+
+                SbScrapDetails = x.SbScrapDetails,
+                PurchaseScrapDetails = x.PurchaseScrapDetails,
+
+                SbScrapAreaDetails = sbScrap.Any(s => s.Line == x.Line) ?
+
+                                        sbScrap
+                                        .Where(s => s.Line == x.Line)
+                                        .GroupBy(s => new { s.Area, s.ScrapAreaName, s.IsPurchashedExclude2 })
+                                        .Select(s => new ScrapByCodeDetailsDto
+                                        {
+                                            Area = s.Key.Area,
+                                            ScrapType = s.Key.IsPurchashedExclude2,
+                                            ScrapAreaName = s.Key.ScrapAreaName,
+                                            Qty = s.Sum(s => s.Qty),
+                                            SapGross = (x.SapNet + x.TotalScrap),
+                                            ScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)s.Sum(s => s.Qty) / (decimal)(x.SapNet + x.TotalScrap),
+
+                                            Details = scrap
+                                                        .Where(d => d.IsPurchashedExclude == false)
+                                                        .Where(d => d.Line == x.Line)
+                                                        .Where(d => d.ScrapAreaName == s.Key.ScrapAreaName)
+                                                        .GroupBy(d => new { d.Department, d.Area, d.ScrapAreaName, d.ScrapCode, d.ScrapDesc, d.IsPurchashedExclude2 })
+                                                        .Select(d => new Models.SAP.Scrap
+                                                        {
+                                                            Department = d.Key.Department,
+                                                            Area = d.Key.Area,
+                                                            Line = x.Line,
+                                                            ScrapAreaName = d.Key.ScrapAreaName,
+                                                            IsPurchashedExclude2 = d.Key.IsPurchashedExclude2,
+                                                            ScrapCode = d.Key.ScrapCode,
+                                                            ScrapDesc = d.Key.ScrapDesc,
+                                                            Qty = d.Sum(q => q.Qty)
+                                                        })
+                                                        .OrderByDescending(d => d.Qty)
+                                        }).ToList()
+
+                                        : new List<ScrapByCodeDetailsDto>()
+
+            })
+            .ToList();
+
+            return result;
+        }
+
+        public IEnumerable<ProductionByProgramDto> GetDepartmentDetailsByProgram(
+            IEnumerable<Models.SAP.Scrap> scrap,
+            IEnumerable<SapProdDetailDto> prod,
+            IEnumerable<HxhProductionByProgramDto> hxh)
+        {
+            //distinct program
+            var scrapProgram = scrap.Select(x => x.Program).Distinct();
+            var sapProdProgram = prod.Select(x => x.Program).Distinct();
+            var hxhProgram = hxh.Select(x => x.Program).Distinct();
+            var distinctProgram = (scrapProgram.Concat(sapProdProgram).Concat(hxhProgram)).Distinct();
+
+            //transform data
+            var scrapByProgram = scrap
+                                .GroupBy(x => new { x.Department, x.Area, x.Program, x.ScrapAreaName, x.ScrapCode, x.ScrapDesc, x.IsPurchashedExclude, x.IsPurchashedExclude2 })
+                                .Select(x => new Models.SAP.Scrap
+                                {
+                                    Department = x.Key.Department,
+                                    Area = x.Key.Area,
+                                    Program = x.Key.Program,
+                                    ScrapAreaName = x.Key.ScrapAreaName,
+                                    ScrapCode = x.Key.ScrapCode,
+                                    ScrapDesc = x.Key.ScrapDesc,
+                                    IsPurchashedExclude = x.Key.IsPurchashedExclude,
+                                    IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
+                                    Qty = x.Sum(s => s.Qty)
+                                })
+                                .OrderByDescending(x => x.Qty)
+                                .ToList();
+
+            var sbScrap = scrapByProgram.Where(x => x.IsPurchashedExclude == false);
+            var purchasedScrap = scrapByProgram.Where(x => x.IsPurchashedExclude == true);
+
+            //details
+            var result = distinctProgram.Select(program => new ProductionByProgramDto
+            {
+                Department = hxh.Any(x => x.Program == program) ? hxh.Where(x => x.Program == program).First().Department : "",
+                Area = hxh.Any(x => x.Program == program) ? hxh.Where(x => x.Program == program).First().Area : "",
+                Program = program,
+                Target = hxh.Any(x => x.Program == program) ? (int)hxh.Where(x => x.Program == program).First().Target : 0,
+
+                HxHGross = hxh.Any(x => x.Program == program) ? (int)hxh.Where(x => x.Program == program).First().Gross : 0,
+
+                SapNet = prod.Any(x => x.Program == program) ? prod.Where(x => x.Program == program).Sum(s => s.SapNet) : 0,
+                SapNetDetails = prod.Any(x => x.Program == program) ? prod.Where(x => x.Program == program).OrderBy(x => x.DateScanned).ToList() : new List<SapProdDetailDto>(),
+
+                TotalScrap = scrapByProgram.Any(x => x.Program == program) ? scrapByProgram.Where(x => x.Program == program).Sum(s => s.Qty) : 0,
+                TotalSbScrap = sbScrap.Any(x => x.Program == program) ? sbScrap.Where(x => x.Program == program).Sum(s => s.Qty) : 0,
+                TotalPurchaseScrap = purchasedScrap.Any(x => x.Program == program) ? purchasedScrap.Where(x => x.Program == program).Sum(s => s.Qty) : 0,
+                SbScrapDetails = sbScrap.Any(x => x.Program == program) ? sbScrap.Where(x => x.Program == program).ToList() : new List<Models.SAP.Scrap>(),
+                PurchaseScrapDetails = purchasedScrap.Any(x => x.Program == program) ? purchasedScrap.Where(x => x.Program == program).ToList() : new List<Models.SAP.Scrap>(),
+            })
+            .Select(x => new ProductionByProgramDto
+            {
+                Department = x.Department,
+                Area = x.Area,
+                Program = x.Program,
+                Target = x.Target,
+
+                HxHGross = x.HxHGross,
+                HxHNet = (x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "machine line") ? x.HxHGross - x.TotalScrap : x.HxHGross,
+                HxHOae = x.Target == 0 ? 0 
+                            : (decimal)((x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "machine line") ? x.HxHGross - x.TotalScrap : x.HxHGross) / (decimal)x.Target,
+
+                SapNet = x.SapNet,
+                SapNetDetails = x.SapNetDetails,
+                SapGross = x.SapNet + x.TotalScrap,
+                SapOae = x.Target == 0 ? 0 : (decimal)x.SapNet / (decimal)x.Target,
+
+                TotalScrap = x.TotalScrap,
+                TotalSbScrap = x.TotalSbScrap,
+                TotalPurchaseScrap = x.TotalPurchaseScrap,
+
+                TotalSbScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalSbScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalPurchaseScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalPurchaseScrapRate / (decimal)(x.SapNet + x.TotalScrap),
+
+                SbScrapDetails = x.SbScrapDetails,
+                PurchaseScrapDetails = x.PurchaseScrapDetails,
+
+                SbScrapAreaDetails = sbScrap.Any(s => s.Program == x.Program) ?
+
+                                        sbScrap
+                                        .Where(s => s.Program == x.Program)
+                                        .GroupBy(s => new { s.Area, s.ScrapAreaName, s.IsPurchashedExclude2 })
+                                        .Select(s => new ScrapByCodeDetailsDto
+                                        {
+                                            Area = s.Key.Area,
+                                            ScrapType = s.Key.IsPurchashedExclude2,
+                                            ScrapAreaName = s.Key.ScrapAreaName,
+                                            Qty = s.Sum(s => s.Qty),
+                                            SapGross = (x.SapNet + x.TotalScrap),
+                                            ScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)s.Sum(s => s.Qty) / (decimal)(x.SapNet + x.TotalScrap),
+
+                                            Details = scrap
+                                                        .Where(d => d.IsPurchashedExclude == false)
+                                                        .Where(d => d.Program == x.Program)
+                                                        .Where(d => d.ScrapAreaName == s.Key.ScrapAreaName)
+                                                        .GroupBy(d => new { d.Department, d.Area, d.ScrapAreaName, d.ScrapCode, d.ScrapDesc, d.IsPurchashedExclude2 })
+                                                        .Select(d => new Models.SAP.Scrap
+                                                        {
+                                                            Department = d.Key.Department,
+                                                            Area = d.Key.Area,
+                                                            Program = x.Program,
+                                                            ScrapAreaName = d.Key.ScrapAreaName,
+                                                            IsPurchashedExclude2 = d.Key.IsPurchashedExclude2,
+                                                            ScrapCode = d.Key.ScrapCode,
+                                                            ScrapDesc = d.Key.ScrapDesc,
+                                                            Qty = d.Sum(q => q.Qty)
+                                                        })
+                                                        .OrderByDescending(d => d.Qty)
+                                        }).ToList()
+
+                                        : new List<ScrapByCodeDetailsDto>()
+
+            })
+            .ToList();
+
+            return result;
+        }
+
+        public async Task<DepartmentDetailsDto> GetDepartmentDetails(DateTime start, DateTime end, string area)
+        {
+            //get data from db
+            var scrap = (await GetScrapDataByDepartmentFromDb(start, end, area)).Where(x => x.ScrapCode != "8888").ToList();
+
+            var prod = await _context.Production2
+                                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                .Where(x => x.Area == area)
+                                .Where(x => x.MachineHxh != "A10") //remove per ryan boyle
+                                .GroupBy(x => new { x.LocalDateTime, x.ShiftDate, x.Shift, x.Program, x.Material, x.MachineHxh, x.EnteredUser })
+                                .Select(x => new SapProdDetailDto
+                                {
+                                    DateScanned = (DateTime)x.Key.LocalDateTime,
+                                    ShiftDate = (DateTime)x.Key.ShiftDate,
+                                    Shift = x.Key.Shift,
+                                    Line = x.Key.MachineHxh,
+                                    Program = x.Key.Program,
+                                    Part = x.Key.Material,
+                                    User = x.Key.EnteredUser,
+                                    SapNet = (int)x.Sum(s => s.QtyProd)
+                                })
+                                .ToListAsync();
+
+            var hxh = await _intranetRepo.GetHxhProdByLineAndProgram(start, end, area);
+
+            //get overall total
+            var target = hxh.LineDetails.Sum(x => x.Target);
+            var sapNet = prod.Sum(x => x.SapNet);
+            var totalScrap = scrap.Sum(x => x.Qty);
+            var totalSbScrap = scrap.Where(x => x.IsPurchashedExclude == false).Sum(x => x.Qty);
+            var totalPurchasedScrap = scrap.Where(x => x.IsPurchashedExclude == true).Sum(x => x.Qty);
+            var sapGross = sapNet + totalScrap;
+            var totalScrapRate = sapGross == 0 ? 0 : (decimal)totalScrap / (decimal)sapGross;
+            var totalSbScrapRate = sapGross == 0 ? 0 : (decimal)totalSbScrap / (decimal)sapGross;
+            var totalPurchasedScrapRate = sapGross == 0 ? 0 : (decimal)totalPurchasedScrap / (decimal)sapGross;
+            var sapOae = target == 0 ? 0 : (decimal)sapNet / (decimal)target;
+
+            var hxhGross = hxh.LineDetails.Sum(x => x.Gross);
+            var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
+            var hxhOae = target == 0 ? 0 : (decimal)hxhNet / (decimal)target;
+
+            var scrapAreaDetails = scrap
+                                        .Where(s => s.IsPurchashedExclude == false)
+                                        .GroupBy(s => new { s.Area, s.ScrapAreaName, s.IsPurchashedExclude2 })
+                                        .Select(s => new ScrapByCodeDetailsDto
+                                        {
+                                            Area = s.Key.Area,
+                                            ScrapType = s.Key.IsPurchashedExclude2,
+                                            ScrapAreaName = s.Key.ScrapAreaName,
+                                            Qty = s.Sum(s => s.Qty),
+                                            SapGross = sapGross,
+                                            ScrapRate = sapGross == 0 ? 0 : (decimal)s.Sum(s => s.Qty) / (decimal)sapGross,
+                                            Details = scrap
+                                                        .Where(d => d.IsPurchashedExclude == false)
+                                                        .Where(d => d.ScrapAreaName == s.Key.ScrapAreaName)
+                                                        .GroupBy(d => new { d.Department, d.Area, d.ScrapAreaName, d.ScrapCode, d.ScrapDesc, d.IsPurchashedExclude2 })
+                                                        .Select(d => new Models.SAP.Scrap
+                                                        {
+                                                            Department = d.Key.Department,
+                                                            Area = d.Key.Area,
+                                                            ScrapAreaName = d.Key.ScrapAreaName,
+                                                            IsPurchashedExclude2 = d.Key.IsPurchashedExclude2,
+                                                            ScrapCode = d.Key.ScrapCode,
+                                                            ScrapDesc = d.Key.ScrapDesc,
+                                                            Qty = d.Sum(q => q.Qty)
+                                                        })
+                                                        .OrderByDescending(d => d.Qty)
+                                        }).ToList();
+
+            var scrapList = scrap
+                            .GroupBy(x => new { x.Department, x.Area, x.ScrapAreaName, x.ScrapCode, x.ScrapDesc, x.IsPurchashedExclude2, x.IsPurchashedExclude })
+                            .Select(x => new Models.SAP.Scrap
+                            {
+                                Department = x.Key.Department,
+                                Area = x.Key.Area,
+                                ScrapAreaName = x.Key.ScrapAreaName,
+                                ScrapCode = x.Key.ScrapCode,
+                                ScrapDesc = x.Key.ScrapDesc,
+                                IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
+                                IsPurchashedExclude = x.Key.IsPurchashedExclude,
+                                Qty = x.Sum(s => s.Qty)
+                            })
+                            .OrderByDescending(x => x.Qty).ToList();
+
+
+
+            return new DepartmentDetailsDto
+            {
+                Area = area,
+                Target = (int)target,
+                SapGross = sapGross,
+
+                SapNet = sapNet,
+                SapOae = sapOae,
+
+                HxhGross = hxhGross,
+                HxHNet = hxhNet,
+                HxHOae = hxhOae,
+
+                TotalScrap = totalScrap,
+                TotalSbScrap = totalSbScrap,
+                TotalPurchaseScrap = totalPurchasedScrap,
+
+                TotalScrapRate = totalScrapRate,
+                TotalSbScrapRate = totalSbScrapRate,
+                TotalPurchaseScrapRate = totalPurchasedScrapRate,
+
+                SbScrapAreaDetails = scrapAreaDetails,
+
+                DetailsByLine = GetDepartmentDetailsByLine(scrap, prod, hxh.LineDetails),
+                DetailsByProgram = GetDepartmentDetailsByProgram(scrap, prod, hxh.ProgramDetails),
+
+                SbScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == false),
+                PurchaseScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == true)
             };
 
         }

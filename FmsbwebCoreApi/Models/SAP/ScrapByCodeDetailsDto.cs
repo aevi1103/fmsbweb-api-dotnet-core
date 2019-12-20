@@ -14,5 +14,6 @@ namespace FmsbwebCoreApi.Models.SAP
         public int Qty { get; set; }
         public int SapGross { get; set; } // Sap net + total scrap by code
         public decimal ScrapRate { get; set; }
+        public IEnumerable<Scrap> Details { get; set; } = new List<Scrap>();
     }
 }

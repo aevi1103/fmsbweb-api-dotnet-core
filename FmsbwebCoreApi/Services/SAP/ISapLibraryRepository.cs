@@ -4,26 +4,46 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using FmsbwebCoreApi.Entity.SAP;
+using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Models.SAP;
 
 namespace FmsbwebCoreApi.Services.SAP
 {
     public interface ISapLibraryRepository
     {
-        IEnumerable<Scrap2Summary2> GetScrap(DateTime start, DateTime end);
-        Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area);
+        //scrap
         ScrapByCodeDto GetScrapByCode(List<Models.SAP.Scrap> scrap, string area, bool isSbScrap, int sapNet);
         DepartmentScrapDto GetDepartmentScrap(List<Models.SAP.Scrap> scrap, string area, int sapNet);
         SapProductionByTypeDto GetSapProductionByType(List<SapProdDto> sapProd, string area);
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByScrapAreaFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime start, DateTime end, string area);
+
+        //prod
         Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<SapProdDto>> GetSapProdByTypeFromDb(DateTime start, DateTime end, string area);
+        Task<GetSapProdAndScrapDto> GetSapProdAndScrap(DateTime start, DateTime end, string area);
+
+        //prod and scrap
+        Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area);
+
+        //prod, scrap, downtime, components
+        IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(
+            IEnumerable<Models.SAP.Scrap> scrap,
+            IEnumerable<SapProdDetailDto> prod,
+            IEnumerable<HxHProductionByLineDto> hxh);
+
+        IEnumerable<ProductionByProgramDto> GetDepartmentDetailsByProgram(
+            IEnumerable<Models.SAP.Scrap> scrap,
+            IEnumerable<SapProdDetailDto> prod,
+            IEnumerable<HxhProductionByProgramDto> hxh);
+
+        Task<DepartmentDetailsDto> GetDepartmentDetails(DateTime start, DateTime end, string area);
+
+        //targets
         IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget();
 
-        Task<GetSapProdAndScrapDto> GetSapProdAndScrap(DateTime start, DateTime end, string area);
+        //utils
         string GetColorCode(string area, string type, decimal? value);
-
         string MapAreaTopScrapArea(string area);
 
         //charts
