@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Models.SAP;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 
 namespace FmsbwebCoreApi.Services.SAP
 {
@@ -17,6 +18,7 @@ namespace FmsbwebCoreApi.Services.SAP
         SapProductionByTypeDto GetSapProductionByType(List<SapProdDto> sapProd, string area);
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByScrapAreaFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime start, DateTime end, string area);
+        Task<IEnumerable<DailyScrapByShiftDto>> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams);
 
         //prod
         Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime start, DateTime end, string area);
@@ -45,6 +47,7 @@ namespace FmsbwebCoreApi.Services.SAP
         //utils
         string GetColorCode(string area, string type, decimal? value);
         string MapAreaTopScrapArea(string area);
+        int MapShiftToShiftOrder(string shift);
 
         //charts
         Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(DateTime start, DateTime end, string area);

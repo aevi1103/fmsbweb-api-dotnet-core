@@ -14,6 +14,7 @@ using FmsbwebCoreApi.Services.Intranet;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Models.Intranet;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 
 namespace FmsbwebCoreApi.Services.SAP
 {
@@ -1242,6 +1243,66 @@ namespace FmsbwebCoreApi.Services.SAP
                 PurchaseScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == true)
             };
 
+        }
+
+        public int MapShiftToShiftOrder(string shift)
+        {
+            switch (shift)
+            {
+                case "A":
+                    return 1;
+                case "C":
+                    return 2;
+                case "B":
+                    return 1;
+                case "D":
+                    return 2;
+                case "3":
+                    return 1;
+                case "1":
+                    return 2;
+                case "2":
+                    return 3;
+                default:
+                    return 0;
+            }
+        }
+
+        public async Task<IEnumerable<DailyScrapByShiftDto>> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams)
+        {
+            var qry = _context.Scrap2Summary2
+                                .Where(x => x.ShiftDate >= resourceParams.Start && x.ShiftDate <= resourceParams.End)
+                                .Where(x => x.Area.ToLower() == resourceParams.Area.ToLower())
+                                .Where(x => x.IsPurchashedExclude2.ToLower() == resourceParams.ScrapType.ToLower())
+                                .Where(x => x.ScrapCode == resourceParams.ScrapCode)
+                                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(resourceParams.Line))
+            {
+                qry = qry.Where(x => x.MachineHxh.ToLower().Trim() == resourceParams.Line.ToLower().Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(resourceParams.Program))
+            {
+                qry = qry.Where(x => x.Program.ToLower().Trim() == resourceParams.Program.ToLower().Trim());
+            }
+
+            var data = (await qry.ToListAsync())
+                                .GroupBy(x => new { x.ShiftDate, x.Shift, x.ScrapCode, x.ScrapDesc })
+                                .Select(x => new DailyScrapByShiftDto
+                                {
+                                    ShiftDate = (DateTime)x.Key.ShiftDate,
+                                    Shift = x.Key.Shift,
+                                    ShiftOrder = MapShiftToShiftOrder(x.Key.Shift),
+                                    ScrapCode = x.Key.ScrapCode,
+                                    ScrapDesc = x.Key.ScrapDesc,
+                                    Qty = (int)x.Sum(s => s.Qty)
+                                })
+                                .OrderBy(x => x.ShiftDate)
+                                .ThenBy(x => x.ShiftOrder)
+                                .ToList();
+
+            return data;
         }
     }
 }
