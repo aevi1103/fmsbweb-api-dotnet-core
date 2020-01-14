@@ -236,6 +236,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<TemporaryLevelGetterOae> TemporaryLevelGetterOae { get; set; }
         public virtual DbSet<Users> Users { get; set; }
         public virtual DbSet<_24hours> _24hours { get; set; }
+        public virtual DbSet<SapBOM> SapBom { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
