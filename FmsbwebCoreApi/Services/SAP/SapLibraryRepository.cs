@@ -683,15 +683,17 @@ namespace FmsbwebCoreApi.Services.SAP
                                 })
                                 .ToListAsync();
 
+
+            var finScrap = new List<string> { "anodize", "skirt coat" };
+
             var scrapData = await _context.Scrap2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
-                                .Where(x => x.ScrapAreaName == MapAreaTopScrapArea(area))
                                 .Where(x => x.ScrapCode != "8888")
                                 .Where(x => x.IsPurchashedExclude == false)
-                                .GroupBy(x => new { x.ShiftDate, x.ScrapAreaName })
+                                .Where(x => area.ToLower() == "skirt coat" ? (finScrap.Contains(x.ScrapAreaName.ToLower())) : (x.ScrapAreaName == MapAreaTopScrapArea(area)))
+                                .GroupBy(x => new { x.ShiftDate })
                                 .Select(x => new
                                 {
-                                    x.Key.ScrapAreaName,
                                     x.Key.ShiftDate,
                                     TotalScrap = x.Sum(s => s.Qty)
                                 })
@@ -700,7 +702,6 @@ namespace FmsbwebCoreApi.Services.SAP
             var data = scrapData
                         .Select(x => new DailyScrapByShiftDateDto
                         {
-                            ScrapArea = x.ScrapAreaName,
                             ShiftDate = (DateTime)x.ShiftDate,
                             TotalScrap = (int)x.TotalScrap,
                             SapNet = (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd),
@@ -959,9 +960,9 @@ namespace FmsbwebCoreApi.Services.SAP
                 TotalSbScrap = x.TotalSbScrap,
                 TotalPurchaseScrap = x.TotalPurchaseScrap,
 
-                TotalSbScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalScrap / (decimal)(x.SapNet + x.TotalScrap),
-                TotalScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalSbScrap / (decimal)(x.SapNet + x.TotalScrap),
-                TotalPurchaseScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalPurchaseScrapRate / (decimal)(x.SapNet + x.TotalScrap),
+                TotalScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalSbScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalSbScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalPurchaseScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalPurchaseScrap / (decimal)(x.SapNet + x.TotalScrap),
 
                 SbScrapDetails = x.SbScrapDetails,
                 PurchaseScrapDetails = x.PurchaseScrapDetails,
@@ -1055,6 +1056,7 @@ namespace FmsbwebCoreApi.Services.SAP
                 TotalScrap = scrapByProgram.Any(x => x.Program == program) ? scrapByProgram.Where(x => x.Program == program).Sum(s => s.Qty) : 0,
                 TotalSbScrap = sbScrap.Any(x => x.Program == program) ? sbScrap.Where(x => x.Program == program).Sum(s => s.Qty) : 0,
                 TotalPurchaseScrap = purchasedScrap.Any(x => x.Program == program) ? purchasedScrap.Where(x => x.Program == program).Sum(s => s.Qty) : 0,
+
                 SbScrapDetails = sbScrap.Any(x => x.Program == program) ? sbScrap.Where(x => x.Program == program).ToList() : new List<Models.SAP.Scrap>(),
                 PurchaseScrapDetails = purchasedScrap.Any(x => x.Program == program) ? purchasedScrap.Where(x => x.Program == program).ToList() : new List<Models.SAP.Scrap>(),
             })
@@ -1079,9 +1081,9 @@ namespace FmsbwebCoreApi.Services.SAP
                 TotalSbScrap = x.TotalSbScrap,
                 TotalPurchaseScrap = x.TotalPurchaseScrap,
 
-                TotalSbScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalScrap / (decimal)(x.SapNet + x.TotalScrap),
-                TotalScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalSbScrap / (decimal)(x.SapNet + x.TotalScrap),
-                TotalPurchaseScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalPurchaseScrapRate / (decimal)(x.SapNet + x.TotalScrap),
+                TotalScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalSbScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalSbScrap / (decimal)(x.SapNet + x.TotalScrap),            
+                TotalPurchaseScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalPurchaseScrap / (decimal)(x.SapNet + x.TotalScrap),
 
                 SbScrapDetails = x.SbScrapDetails,
                 PurchaseScrapDetails = x.PurchaseScrapDetails,
@@ -1158,10 +1160,13 @@ namespace FmsbwebCoreApi.Services.SAP
             var totalScrap = scrap.Sum(x => x.Qty);
             var totalSbScrap = scrap.Where(x => x.IsPurchashedExclude == false).Sum(x => x.Qty);
             var totalPurchasedScrap = scrap.Where(x => x.IsPurchashedExclude == true).Sum(x => x.Qty);
+
             var sapGross = sapNet + totalScrap;
             var totalScrapRate = sapGross == 0 ? 0 : (decimal)totalScrap / (decimal)sapGross;
+
             var totalSbScrapRate = sapGross == 0 ? 0 : (decimal)totalSbScrap / (decimal)sapGross;
             var totalPurchasedScrapRate = sapGross == 0 ? 0 : (decimal)totalPurchasedScrap / (decimal)sapGross;
+
             var sapOae = target == 0 ? 0 : (decimal)sapNet / (decimal)target;
 
             var hxhGross = hxh.LineDetails.Sum(x => x.Gross);
