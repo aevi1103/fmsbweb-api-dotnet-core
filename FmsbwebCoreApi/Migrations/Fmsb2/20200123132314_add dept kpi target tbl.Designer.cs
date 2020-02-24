@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20200123132314_add dept kpi target tbl")]
+    partial class adddeptkpitargettbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -786,6 +788,36 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                         .HasName("NonClusteredIndex-20171108-154106");
 
                     b.ToTable("Department");
+                });
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.DepartmentKpiTargets", b =>
+                {
+                    b.Property<int>("DepartmentKpiTargetsId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("DepartmentName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("DowntimeRateTarget")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("MonthNumber")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("OaeTarget")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PpmhTarget")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ScrapRateTarget")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("DepartmentKpiTargetsId");
+
+                    b.ToTable("DepartmeKpiTarget");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.DepartmentalComments", b =>
@@ -2669,45 +2701,6 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.ToTable("Inspectors");
                 });
 
-            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.KpiTarget", b =>
-                {
-                    b.Property<int>("KpiTargetId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("DowntimeRateTarget")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("MonthNumber")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("OaeTarget")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("PpmhTarget")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("ScrapRateTarget")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Shift")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TargetType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("KpiTargetId");
-
-                    b.ToTable("KpiTarget");
-                });
-
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.LogisticsCustomer", b =>
                 {
                     b.Property<int>("Id")
@@ -3210,9 +3203,6 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.Property<int>("DeptId")
                         .HasColumnName("deptId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Line2")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("LineNumber")
                         .HasColumnName("lineNumber")

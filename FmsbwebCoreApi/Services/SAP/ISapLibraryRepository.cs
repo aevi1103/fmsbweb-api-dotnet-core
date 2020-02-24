@@ -32,7 +32,8 @@ namespace FmsbwebCoreApi.Services.SAP
         IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(
             IEnumerable<Models.SAP.Scrap> scrap,
             IEnumerable<SapProdDetailDto> prod,
-            IEnumerable<HxHProductionByLineDto> hxh);
+            IEnumerable<HxHProductionByLineDto> hxh,
+            IEnumerable<Models.SAP.Scrap> warmers);
 
         IEnumerable<ProductionByProgramDto> GetDepartmentDetailsByProgram(
             IEnumerable<Models.SAP.Scrap> scrap,

@@ -24,6 +24,8 @@ namespace FmsbwebCoreApi.Models.SAP
         public int TotalSbScrap { get; set; }
         public int TotalPurchaseScrap { get; set; }
 
+        public int TotalWarmers { get; set; }
+
         public decimal TotalScrapRate { get; set; }
         public decimal TotalSbScrapRate { get; set; }
         public decimal TotalPurchaseScrapRate { get; set; }

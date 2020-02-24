@@ -34,6 +34,8 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         [Column("lineNumber")]
         public int? LineNumber { get; set; }
 
+        public string Line2 { get; set; }
+
         [ForeignKey(nameof(DeptId))]
         [InverseProperty(nameof(Department.Machines))]
         public virtual Department Dept { get; set; }

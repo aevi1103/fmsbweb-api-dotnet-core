@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20200123140641_add time stamp col")]
+    partial class addtimestampcol
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3210,9 +3212,6 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.Property<int>("DeptId")
                         .HasColumnName("deptId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Line2")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("LineNumber")
                         .HasColumnName("lineNumber")
