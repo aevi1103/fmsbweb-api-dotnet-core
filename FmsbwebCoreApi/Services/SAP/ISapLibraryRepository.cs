@@ -54,5 +54,7 @@ namespace FmsbwebCoreApi.Services.SAP
         Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(DateTime start, DateTime end, string area);
         Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area);
 
+        MachineMapping GetMappedLineToWorkCenter(string line, string side);
+
     }
 }

@@ -41,25 +41,37 @@ namespace FmsbwebCoreApi
                 options.AddPolicy(MyAllowSpecificOrigins,
                 builder =>
                 {
-                    builder.WithOrigins("http://localhost:3000");
-                    builder.WithOrigins("http://10.129.224.149:82");
+                    builder.WithOrigins("http://localhost:3000",
+                                        "http://10.129.224.149:82",
+                                        "http://10.129.224.149")
+                                        .AllowAnyMethod()
+                                        .AllowAnyMethod();
+
                 });
             });
 
+            //services.AddCors(o => o.AddPolicy(MyAllowSpecificOrigins, builder =>
+            //{
+            //    builder.AllowAnyOrigin()
+            //           .AllowAnyMethod()
+            //           .AllowAnyHeader();
+            //}));
+
             services.AddHttpCacheHeaders((expirationModelOPtions) =>
             {
-                expirationModelOPtions.MaxAge = 60;
-                expirationModelOPtions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
+                expirationModelOPtions.MaxAge = 30;
+                expirationModelOPtions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Public;
             },
             (validationModelOptions) =>
             {
-                validationModelOptions.MustRevalidate = true;
+                validationModelOptions.MustRevalidate = false;
             }
             );
 
             services.AddResponseCaching(); //register http caching
 
-            services.AddControllers(setupAction =>
+            services
+            .AddControllers(setupAction =>
             {
                 //content negotation
                 setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
@@ -101,6 +113,7 @@ namespace FmsbwebCoreApi
             //add suport of custom accept header
             services.Configure<MvcOptions>(config =>
             {
+
                 var newtonsoftOutputFormatter = config.OutputFormatters.OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
                 if (newtonsoftOutputFormatter != null)
                 {

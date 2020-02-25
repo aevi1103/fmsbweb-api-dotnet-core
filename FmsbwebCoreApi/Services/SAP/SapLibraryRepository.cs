@@ -1346,5 +1346,16 @@ namespace FmsbwebCoreApi.Services.SAP
 
             return data;
         }
+
+        public MachineMapping GetMappedLineToWorkCenter(string line, string side = "n/a")
+        {
+            side = side.ToLower().Trim();
+            if (side == "n/a")
+            {
+                side = null;
+            }
+            var map = _context.MachineMapping.Where(x => x.Line.ToLower().Trim() == line.ToLower().Trim() && x.Side == side).FirstOrDefault();
+            return map;
+        }
     }
 }
