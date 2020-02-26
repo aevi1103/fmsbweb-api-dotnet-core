@@ -1,5 +1,6 @@
 ﻿using FmsbwebCoreApi.ResourceParameters.Finance;
 using FmsbwebCoreApi.Services.FMSB2;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 namespace FmsbwebCoreApi.Controllers.Finance
 {
     [ApiController]
+    [EnableCors]
     [Route("api/finance/kpi")]
     public class FinanceController : ControllerBase
     {

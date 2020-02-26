@@ -1,5 +1,6 @@
 ﻿using FmsbwebCoreApi.ResourceParameters.Quality;
 using FmsbwebCoreApi.Services.FmsbQuality;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using System.Threading.Tasks;
 namespace FmsbwebCoreApi.Controllers.Quality
 {
     [ApiController]
+    [EnableCors]
     [Route("api/quality/status")]
     public class QualityController : ControllerBase
     {

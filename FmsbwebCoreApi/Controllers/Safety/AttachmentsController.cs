@@ -10,10 +10,12 @@ using AutoMapper;
 using FmsbwebCoreApi.Entity.Safety;
 using System.Text;
 using FmsbwebCoreApi.Models.Safety.Attachment;
+using Microsoft.AspNetCore.Cors;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
+    [EnableCors]
     [Route("api/safety/incidents/{id}/attachments")]
     public class AttachmentsController : ControllerBase
     {

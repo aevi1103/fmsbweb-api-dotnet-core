@@ -41,30 +41,25 @@ namespace FmsbwebCoreApi
                 options.AddPolicy(MyAllowSpecificOrigins,
                 builder =>
                 {
-                    builder.WithOrigins("http://localhost:3000",
-                                        "http://10.129.224.149:82",
-                                        "http://10.129.224.149")
-                                        .AllowAnyMethod()
-                                        .AllowAnyMethod();
+                    builder.WithOrigins(
+                        "http://10.129.224.149:82",
+                        "http://10.129.224.149",
+                        "http://localhost:3000")
+                    .AllowAnyHeader().AllowAnyMethod().AllowCredentials();
 
                 });
             });
 
-            //services.AddCors(o => o.AddPolicy(MyAllowSpecificOrigins, builder =>
-            //{
-            //    builder.AllowAnyOrigin()
-            //           .AllowAnyMethod()
-            //           .AllowAnyHeader();
-            //}));
+            services.AddMvc();
 
             services.AddHttpCacheHeaders((expirationModelOPtions) =>
             {
                 expirationModelOPtions.MaxAge = 30;
-                expirationModelOPtions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Public;
+                expirationModelOPtions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
             },
             (validationModelOptions) =>
             {
-                validationModelOptions.MustRevalidate = false;
+                validationModelOptions.MustRevalidate = true;
             }
             );
 

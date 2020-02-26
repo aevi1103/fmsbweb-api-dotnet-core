@@ -1,5 +1,6 @@
 ﻿using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.SAP;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 namespace FmsbwebCoreApi.Controllers.SAP
 {
     [ApiController]
+    [EnableCors]
     [Route("api/sap/productiondata")]
     public class ProductionDataController : ControllerBase
     {

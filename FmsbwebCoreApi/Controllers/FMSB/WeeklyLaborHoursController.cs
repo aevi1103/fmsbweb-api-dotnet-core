@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentDateTime;
+using Microsoft.AspNetCore.Cors;
 
 namespace FmsbwebCoreApi.Controllers.FMSB
 {
     [ApiController]
+    [EnableCors]
     [Route("api/fmsb/weeklylaborhours")]
     public class WeeklyLaborHoursController : ControllerBase
     {

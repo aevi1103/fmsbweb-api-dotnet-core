@@ -4,6 +4,7 @@ using FmsbwebCoreApi.Models.Safety.Incident;
 using FmsbwebCoreApi.ResourceParameters.Safety;
 using FmsbwebCoreApi.Services;
 using FmsbwebCoreApi.Services.Safety;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
+    [EnableCors]
     [Route("api/safety/monthlyincidentrate")]
     public class MonthlyIncidentRateController : ControllerBase
     {

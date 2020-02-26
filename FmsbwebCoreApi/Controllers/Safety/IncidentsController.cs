@@ -21,10 +21,12 @@ using FmsbwebCoreApi.Models;
 using Microsoft.Net.Http.Headers;
 using System.Dynamic;
 using Marvin.Cache.Headers;
+using Microsoft.AspNetCore.Cors;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
+    [EnableCors]
     [Route("api/safety/incidents")]
     //[ResponseCache(CacheProfileName = "240SecCacheProfile")]
     public class IncidentsController : ControllerBase

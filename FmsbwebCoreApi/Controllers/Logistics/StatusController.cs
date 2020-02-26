@@ -1,5 +1,6 @@
 ﻿using FmsbwebCoreApi.ResourceParameters.Logistics;
 using FmsbwebCoreApi.Services.Logistics;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 namespace FmsbwebCoreApi.Controllers.Logistics
 {
     [ApiController]
+    [EnableCors]
     [Route("api/logistics/status")]
     public class StatusController : ControllerBase
     {

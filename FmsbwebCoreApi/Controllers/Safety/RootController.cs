@@ -1,4 +1,5 @@
 ﻿using FmsbwebCoreApi.Models;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
+    [EnableCors]
     [Route("api/safety")]
     public class RootController : ControllerBase
     {

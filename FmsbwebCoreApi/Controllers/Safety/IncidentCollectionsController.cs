@@ -11,10 +11,12 @@ using FmsbwebCoreApi.ResourceParameters.Safety;
 using FmsbwebCoreApi.Entity.Safety;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Models.Safety.Incident;
+using Microsoft.AspNetCore.Cors;
 
 namespace FmsbwebCoreApi.Controllers.Safety
 {
     [ApiController]
+    [EnableCors]
     [Route("api/safety/incidentscollections")]
     public class IncidentCollectionsController : ControllerBase
     {
