@@ -39,5 +39,11 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         #endregion
 
+        #region KPI Targets
+
+        Task<KpiTarget> GetTargets(string dept, DateTime endDate);
+
+        #endregion
+
     }
 }

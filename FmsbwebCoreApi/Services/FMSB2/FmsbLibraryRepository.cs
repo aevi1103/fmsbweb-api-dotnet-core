@@ -460,5 +460,10 @@ namespace FmsbwebCoreApi.Services.FMSB2
                 MonthlyFlashProjections = await GetFinanceFlashProjections(date.Year, date.Month)
             };
         }
+
+        public async Task<KpiTarget> GetTargets(string dept, DateTime endDate)
+        {
+            return await _context.KpiTarget.Where(x => x.Department.ToLower() == dept.ToLower() && x.MonthNumber == endDate.Month).FirstOrDefaultAsync();
+        }
     }
 }

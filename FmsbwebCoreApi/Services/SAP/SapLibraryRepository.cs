@@ -465,7 +465,7 @@ namespace FmsbwebCoreApi.Services.SAP
                             }).ToListAsync();
         }
 
-        public string GetColorCode(string area, string type, decimal? value)
+        public string GetColorCode(string area, string type, decimal? value, DateTime dateEnd)
         {
             var black = "#262626";
 
@@ -474,22 +474,22 @@ namespace FmsbwebCoreApi.Services.SAP
                 return black;
             }
 
-            if (area.ToLower().Trim() == "foundry cell")
+            area = area.ToLower().Trim();
+
+            if (area == "foundry cell")
             {
                 area = "foundry";
             }
 
-            if (area.ToLower().Trim() == "machine line")
+            if (area == "machine line")
             {
                 area = "machining";
             }
 
-            if (area.ToLower().Trim() == "skirt coat")
-            {
-                area = "finishing";
-            }
-
-            var targets = GetInMemoryKpiTarget().Where(x => x.Area.ToLower().Trim() == area.ToLower().Trim() && x.Kpi.ToLower().Trim() == type.ToLower().Trim()).FirstOrDefault();
+            //var targets = GetInMemoryKpiTarget().Where(x => x.Area.ToLower().Trim() == area.ToLower().Trim() && x.Kpi.ToLower().Trim() == type.ToLower().Trim()).FirstOrDefault();
+            var targetsTask = Task.Run(() => _fmsb2Repo.GetTargets(area, dateEnd));
+            Task.WhenAll(targetsTask);
+            var targets = targetsTask.Result;
 
             if (targets == null)
             {
@@ -497,39 +497,55 @@ namespace FmsbwebCoreApi.Services.SAP
             }
 
             var red = "#FF4136";
-            var yellow = "#FFB700";
             var green = "#19A974";
 
-            if (type == "oae" || type == "ppmh")
-            {
-                if (value <= targets.Min)
-                {
-                    return red;
-                }
-                else if (value > targets.Min && value < targets.Max)
-                {
-                    return yellow;
-                }
-                else
-                {
-                    return green;
-                }
-            }
+            value *= 100;
 
-            if (type == "scrap")
+            switch (type)
             {
-                if (value <= targets.Min)
-                {
-                    return green;
-                }
-                else if (value > targets.Min && value < targets.Max)
-                {
-                    return yellow;
-                }
-                else
-                {
-                    return red;
-                }
+                case "oae":
+
+                    if (value <= targets.OaeTarget)
+                    {
+                        return red;
+                    }
+                    else
+                    {
+                        return green;
+                    }
+
+                case "scrap":
+
+                    if (value <= targets.ScrapRateTarget)
+                    {
+                        return green;
+                    }
+                    else
+                    {
+                        return red;
+                    }
+
+                case "ppmh":
+
+                    if (value <= targets.PpmhTarget)
+                    {
+                        return red;
+                    }
+                    else
+                    {
+                        return green;
+                    }
+
+                case "downtime":
+
+                    if (value <= targets.DowntimeRateTarget)
+                    {
+                        return red;
+                    }
+                    else
+                    {
+                        return green;
+                    }
             }
 
             return black;
@@ -627,7 +643,11 @@ namespace FmsbwebCoreApi.Services.SAP
 
                                 SapNet = sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty),
                                 SapOae = (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target,
-                                SapOaeColorCode = GetColorCode(x.Area, "oae", (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target),
+                                SapOaeColorCode = GetColorCode(
+                                                        x.Area,
+                                                        "oae",
+                                                        (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target,
+                                                        end),
 
                                 HxHNet = x.Gross - ((x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "machine line")
                                                     ? scrapByDepartment.Where(s => s.ScrapCode != "8888").Sum(s => s.Qty)
@@ -638,6 +658,15 @@ namespace FmsbwebCoreApi.Services.SAP
                                                                 : 0))
                                                             / (decimal)x.Target,
 
+                                HxhOaeColorCode = GetColorCode(
+                                                        x.Area,
+                                                        "oae",
+                                                        (x.Target == 0 ? 0 : (decimal)(x.Gross - ((x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "foundry cell")
+                                                                ? scrapByDepartment.Where(s => s.ScrapCode != "8888").Sum(s => s.Qty)
+                                                                : 0))
+                                                            / (decimal)x.Target),
+                                                        end),
+
                                 SbScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
                                 PurchaseScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, false, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
                                 DepartmentScrap = GetDepartmentScrap(scrapByDepartment, x.Area, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
@@ -647,12 +676,16 @@ namespace FmsbwebCoreApi.Services.SAP
                                 LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area),
 
 
-                                ScrapByCodeColorCode = GetColorCode(x.Area, "scrap",
-                                                        GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate
-                                                        ),
-                                PpmhColorCode = GetColorCode(x.Area, "ppmh",
-                                                        _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area).PPMH
-                                                        ),
+                                ScrapByCodeColorCode = GetColorCode(
+                                                            x.Area,
+                                                            "scrap",
+                                                            GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate,
+                                                            end),
+                                PpmhColorCode = GetColorCode(
+                                                    x.Area,
+                                                    "ppmh",
+                                                    _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area).PPMH,
+                                                    end),
 
                             })
                             .FirstOrDefault();
@@ -1356,6 +1389,53 @@ namespace FmsbwebCoreApi.Services.SAP
             }
             var map = _context.MachineMapping.Where(x => x.Line.ToLower().Trim() == line.ToLower().Trim() && x.Side == side).FirstOrDefault();
             return map;
+        }
+
+        public async Task<List<MachineMappingDto>> GetWorkcentersByDept(string area)
+        {
+            var workcentersQry = _context.MachineMapping.AsQueryable();
+
+            var areas = new List<string>();
+
+            if (area == "foundry cell")
+            {
+                areas.Add("foundry cell");
+                areas.Add("heat treat");
+            }
+
+            if (area == "finishing")
+            {
+                areas.Add("anodize");
+                areas.Add("skirt coat");
+            }
+
+            if (area == "assembly")
+            {
+                areas.Add("assembly");
+                areas.Add("hand assembly");
+            }
+
+            if (area == "machine line")
+            {
+                areas.Add("machine line");
+            }
+
+            workcentersQry = workcentersQry.Where(x => areas.Contains(x.Area.ToLower().Trim()));
+            workcentersQry = workcentersQry.Where(x => x.Line != null);
+
+            var workcenters = await workcentersQry
+                                .Select(x => new MachineMappingDto
+                                {
+                                    WorkCenter = x.Machine,
+                                    Area = x.Area,
+                                    Line = x.Line,
+                                    Side = x.Side == null ? "n/a" : x.Side
+                                })
+                                .OrderBy(x => x.WorkCenter)
+                                .ToListAsync();
+
+            return workcenters;
+
         }
     }
 }

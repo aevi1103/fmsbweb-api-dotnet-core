@@ -46,7 +46,7 @@ namespace FmsbwebCoreApi.Services.SAP
         IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget();
 
         //utils
-        string GetColorCode(string area, string type, decimal? value);
+        string GetColorCode(string area, string type, decimal? value, DateTime dateEnd);
         string MapAreaTopScrapArea(string area);
         int MapShiftToShiftOrder(string shift);
 
@@ -55,6 +55,8 @@ namespace FmsbwebCoreApi.Services.SAP
         Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area);
 
         MachineMapping GetMappedLineToWorkCenter(string line, string side);
+
+        Task<List<MachineMappingDto>> GetWorkcentersByDept(string dept);
 
     }
 }

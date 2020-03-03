@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Web;
 using Microsoft.AspNetCore.Mvc;
 using RestSharp;
 using RestSharp.Authenticators;
 
 using Newtonsoft.Json;
 using FmsbwebCoreApi.Models.SAP;
-using Newtonsoft.Json.Linq;
 using AutoMapper;
 using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
@@ -112,7 +109,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
                  });
 
-                return Ok(res); ;
+                return Ok(res);
             }
             else
             {
