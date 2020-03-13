@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20200303214332_add anod checklist entries")]
+    partial class addanodchecklistentries
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -124,6 +126,9 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                         .HasColumnType("int");
 
                     b.Property<int?>("CreateHxHHrId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HrId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Stamp")

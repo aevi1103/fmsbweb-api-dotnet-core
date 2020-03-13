@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20200303212835_adding required fields for anodize checklist")]
+    partial class addingrequiredfieldsforanodizechecklist
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -76,10 +78,13 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.AnodizeChecklist", b =>
                 {
-                    b.Property<int>("AnodizeChecklistId")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -95,50 +100,24 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.Property<int>("MachineId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Max")
+                    b.Property<int>("Max")
                         .HasColumnType("int");
 
-                    b.Property<int?>("Min")
+                    b.Property<int>("Min")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Stamp")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Type")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AnodizeChecklistId");
-
-                    b.ToTable("AnodizeChecklist");
-                });
-
-            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.AnodizeChecklistEntries", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("AnodizeChecklistId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CreateHxHHrId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Stamp")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AnodizeChecklistId");
-
-                    b.HasIndex("CreateHxHHrId");
-
-                    b.ToTable("AnodizeChecklistEntries");
+                    b.ToTable("AnodizeChecklist");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.AssemblyChangeover", b =>
@@ -4622,19 +4601,6 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                         .HasColumnType("int");
 
                     b.ToTable("24Hours");
-                });
-
-            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.AnodizeChecklistEntries", b =>
-                {
-                    b.HasOne("FmsbwebCoreApi.Entity.Fmsb2.AnodizeChecklist", "AnodizeChecklist")
-                        .WithMany()
-                        .HasForeignKey("AnodizeChecklistId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FmsbwebCoreApi.Entity.Fmsb2.CreateHxH", "CreateHxH")
-                        .WithMany()
-                        .HasForeignKey("CreateHxHHrId");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.Defects", b =>

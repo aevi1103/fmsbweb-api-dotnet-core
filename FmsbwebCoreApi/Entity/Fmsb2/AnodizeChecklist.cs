@@ -9,16 +9,24 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
     public class AnodizeChecklist
     {
         [Key]
-        public int Id { get; set; }
+        public int AnodizeChecklistId { get; set; }
+
+        [Required]
         public int MachineId { get; set; }
+
+        [Required]
         public string Group { get; set; }
+
+        [Required]
         public string Description { get; set; }
-        public int Min { get; set; }
-        public int Max { get; set; }
+        public int? Min { get; set; }
+        public int? Max { get; set; }
+
+        [Required]
         public string Type { get; set; }
         public string DropDownList { get; set; }
-        public string Value { get; set; }
-        public string Comments { get; set; }
-        public DateTime Stamp { get; set; }
+
+        [Required]
+        public DateTime Stamp { get; set; } = DateTime.Now;
     }
 }
