@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.FmsbQuality;
 using FmsbwebCoreApi.Context.Master;
+using FmsbwebCoreApi.Context.FmsbMvc;
 
 namespace FmsbwebCoreApi
 {
@@ -148,6 +149,10 @@ namespace FmsbwebCoreApi
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("fmsbConn"))
+            );
+
+            services.AddDbContext<FmsbMvcContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("fmsbMvc"))
             );
 
             services.AddDbContext<SafetyContext>(options =>
