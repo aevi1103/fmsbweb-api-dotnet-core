@@ -145,6 +145,8 @@ namespace FmsbwebCoreApi
             //inject fmsb quality lib repo
             services.AddScoped<Services.FmsbQuality.IFmsbQualityLibraryRepository, Services.FmsbQuality.FmsbQualityLibraryRepository>();
 
+            //inject fmsb mvc lib repo
+            services.AddScoped<Services.FmsbMvc.IFmsbMvcLibraryRepository, Services.FmsbMvc.FmsbMvcLibraryRepository>();
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options =>

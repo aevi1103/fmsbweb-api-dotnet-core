@@ -49,7 +49,7 @@ namespace FmsbwebCoreApi.Context.FmsbMvc
         public virtual DbSet<JobTitle> JobTitle { get; set; }
         public virtual DbSet<Kpi> Kpi { get; set; }
         public virtual DbSet<KpiByProgram> KpiByProgram { get; set; }
-        public virtual DbSet<KpiByProgramView> KpiByProgramView { get; set; }
+        public virtual DbSet<KpiByProgram1> KpiByProgram1 { get; set; }
         public virtual DbSet<KpiTarget> KpiTarget { get; set; }
         public virtual DbSet<Kpitarget1> Kpitarget1 { get; set; }
         public virtual DbSet<Machine> Machine { get; set; }
@@ -73,7 +73,7 @@ namespace FmsbwebCoreApi.Context.FmsbMvc
         public virtual DbSet<ProcessTech> ProcessTech { get; set; }
         public virtual DbSet<ProcessTechCallbox> ProcessTechCallbox { get; set; }
         public virtual DbSet<ProcessTechName> ProcessTechName { get; set; }
-        public virtual DbSet<Program> Program { get; set; }
+        public virtual DbSet<Entity.FmsbMvc.Program> Program { get; set; }
         public virtual DbSet<QualityTechCallbox> QualityTechCallbox { get; set; }
         public virtual DbSet<ShiftNames> ShiftNames { get; set; }
         public virtual DbSet<SpGetClockNumbersResult> SpGetClockNumbersResult { get; set; }
@@ -705,6 +705,20 @@ namespace FmsbwebCoreApi.Context.FmsbMvc
 
             modelBuilder.Entity<KpiByProgram>(entity =>
             {
+                entity.HasNoKey();
+
+                entity.ToView("KPI_by_program");
+
+                entity.Property(e => e.AreaName).IsUnicode(false);
+
+                entity.Property(e => e.Kpiname).IsUnicode(false);
+            });
+
+            modelBuilder.Entity<KpiByProgram1>(entity =>
+            {
+                entity.HasKey(e => e.KpiByProgramId)
+                    .HasName("PK_FmsbWeb.KpiByProgram");
+
                 entity.HasIndex(e => e.ApplicationUserId)
                     .HasName("IX_ApplicationUserId");
 
@@ -718,38 +732,27 @@ namespace FmsbwebCoreApi.Context.FmsbMvc
                     .HasName("IX_ProgramId");
 
                 entity.HasOne(d => d.ApplicationUser)
-                    .WithMany(p => p.KpiByProgram)
+                    .WithMany(p => p.KpiByProgram1)
                     .HasForeignKey(d => d.ApplicationUserId)
                     .HasConstraintName("FK_FmsbWeb.KpiByProgram_dbo.AspNetUsers_ApplicationUserId");
 
                 entity.HasOne(d => d.Area)
-                    .WithMany(p => p.KpiByProgram)
+                    .WithMany(p => p.KpiByProgram1)
                     .HasForeignKey(d => d.AreaId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_FmsbWeb.KpiByProgram_FmsbWeb.Area_AreaId");
 
                 entity.HasOne(d => d.Kpi)
-                    .WithMany(p => p.KpiByProgram)
+                    .WithMany(p => p.KpiByProgram1)
                     .HasForeignKey(d => d.Kpiid)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_FmsbWeb.KpiByProgram_FmsbWeb.KPI_KPIId");
 
                 entity.HasOne(d => d.Program)
-                    .WithMany(p => p.KpiByProgram)
+                    .WithMany(p => p.KpiByProgram1)
                     .HasForeignKey(d => d.ProgramId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_FmsbWeb.KpiByProgram_FmsbWeb.Program_ProgramId");
-            });
-
-            modelBuilder.Entity<KpiByProgramView>(entity =>
-            {
-                entity.HasNoKey();
-
-                entity.ToView("KPI_by_program_view");
-
-                entity.Property(e => e.AreaName).IsUnicode(false);
-
-                entity.Property(e => e.Kpiname).IsUnicode(false);
             });
 
             modelBuilder.Entity<KpiTarget>(entity =>

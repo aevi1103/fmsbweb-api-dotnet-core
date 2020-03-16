@@ -10,7 +10,7 @@ namespace FmsbwebCoreApi.Entity.FmsbMvc
     {
         public Program()
         {
-            KpiByProgram = new HashSet<KpiByProgram>();
+            KpiByProgram1 = new HashSet<KpiByProgram1>();
         }
 
         [Key]
@@ -27,6 +27,6 @@ namespace FmsbwebCoreApi.Entity.FmsbMvc
         [InverseProperty(nameof(AspNetUsers.Program))]
         public virtual AspNetUsers ApplicationUser { get; set; }
         [InverseProperty("Program")]
-        public virtual ICollection<KpiByProgram> KpiByProgram { get; set; }
+        public virtual ICollection<KpiByProgram1> KpiByProgram1 { get; set; }
     }
 }

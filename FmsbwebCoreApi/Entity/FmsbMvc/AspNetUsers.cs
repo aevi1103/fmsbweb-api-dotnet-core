@@ -33,7 +33,7 @@ namespace FmsbwebCoreApi.Entity.FmsbMvc
             HxHpushAlerts = new HashSet<HxHpushAlerts>();
             JobTitle = new HashSet<JobTitle>();
             Kpi = new HashSet<Kpi>();
-            KpiByProgram = new HashSet<KpiByProgram>();
+            KpiByProgram1 = new HashSet<KpiByProgram1>();
             Kpitarget1 = new HashSet<Kpitarget1>();
             Machine = new HashSet<Machine>();
             MaintenanceAlert = new HashSet<MaintenanceAlert>();
@@ -124,7 +124,7 @@ namespace FmsbwebCoreApi.Entity.FmsbMvc
         [InverseProperty("ApplicationUser")]
         public virtual ICollection<Kpi> Kpi { get; set; }
         [InverseProperty("ApplicationUser")]
-        public virtual ICollection<KpiByProgram> KpiByProgram { get; set; }
+        public virtual ICollection<KpiByProgram1> KpiByProgram1 { get; set; }
         [InverseProperty("ApplicationUser")]
         public virtual ICollection<Kpitarget1> Kpitarget1 { get; set; }
         [InverseProperty("ApplicationUser")]

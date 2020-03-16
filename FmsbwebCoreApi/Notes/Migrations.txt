@@ -1,4 +1,4 @@
-﻿Add-Migration -Name initialCreate -OutputDir "Migrations/SAP" -Context SapContext
+﻿Add-Migration -Name initialCreate -OutputDir "Migrations/FmsbMvc" -Context FmsbMvcContext
 
 
-Update-Database "removeTestTable" -Context "SapContext"
+Update-Database "removeTestTable" -Context "FmsbMvcContext"
