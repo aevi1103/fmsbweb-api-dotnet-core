@@ -59,6 +59,8 @@ namespace FmsbwebCoreApi.Context.SAP
         public virtual DbSet<SlocOrder> SlocOrder { get; set; }
         public virtual DbSet<ViewPrograms> ViewPrograms { get; set; }
 
+        public virtual DbSet<SapDumpWithSafetyStock> SapDumpWithSafetyStock { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 //            if (!optionsBuilder.IsConfigured)

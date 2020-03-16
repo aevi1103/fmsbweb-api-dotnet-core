@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.SAP;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.SAP
 {
     [DbContext(typeof(SapContext))]
-    partial class SapContextModelSnapshot : ModelSnapshot
+    [Migration("20200313141811_rename pk to id")]
+    partial class renamepktoid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -820,18 +822,6 @@ namespace FmsbwebCoreApi.Migrations.SAP
 
                     b.Property<decimal?>("Qc02")
                         .HasColumnName("QC02")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("Qc03")
-                        .HasColumnName("QC03")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("Qc04")
-                        .HasColumnName("QC04")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("Qc05")
-                        .HasColumnName("QC05")
                         .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal?>("SafetyStock")

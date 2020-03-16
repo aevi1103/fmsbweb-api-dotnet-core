@@ -7,7 +7,7 @@ using FmsbwebCoreApi.Entity.SAP;
 
 namespace FmsbwebCoreApi.Models.Logistics
 {
-    public class SapDumpNewDto : SapDumpNew
+    public class SapDumpNewDto : SapDumpWithSafetyStock
     {
         public decimal? _4000
         {

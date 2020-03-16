@@ -13,7 +13,7 @@ namespace FmsbwebCoreApi.Profiles.Logistics
     {
         public LogisticsProfile()
         {
-            CreateMap<SapDumpNew, SapDumpNewDto>();
+            CreateMap<SapDumpWithSafetyStock, SapDumpNewDto>();
         }
     }
 }

@@ -37,7 +37,7 @@ namespace FmsbwebCoreApi.Services.Logistics
 
         public IEnumerable<GetStockOverviewDto> GetStockOverview(DateTime date)
         {
-            var stockOverview = _context.SapDumpNew
+            var stockOverview = _context.SapDumpWithSafetyStock
                         .Where(x => x.Date == date)
                         .Where(x => valuationClass.Contains(x.ValuationClass))
                         .ToList();
@@ -54,8 +54,13 @@ namespace FmsbwebCoreApi.Services.Logistics
                             _0115 = (int)x.Sum(s => s._0115),
                             _4000 = (int)x.Sum(s => s._4000),
                             _5000 = (int)x.Sum(s => s._5000),
+
                             Qc01 = (int)x.Sum(s => s.Qc01),
                             Qc02 = (int)x.Sum(s => s.Qc02),
+                            Qc03 = (int)x.Sum(s => s.Qc03),
+                            Qc04 = (int)x.Sum(s => s.Qc04),
+                            Qc05 = (int)x.Sum(s => s.Qc05),
+
                             _0130 = (int)x.Sum(s => s._0130),
                             _0131 = (int)x.Sum(s => s._0131),
                             _0135 = (int)x.Sum(s => s._0135),
@@ -252,7 +257,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Foundry Casting (0115, 0125)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
             var machineWip = inventoryData
@@ -264,7 +269,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Machine WIP (0130)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
             var finishing = inventoryData
@@ -276,7 +281,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Finishing (P2F)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
             var sbFinGood = inventoryData
@@ -289,7 +294,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "SB – Finish Goods",
                                 Total = (decimal)x.Sum(t => t._0300),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
             var sbtFinGood = inventoryData
@@ -302,7 +307,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "SBT – Finish Goods",
                                 Total = (decimal)x.Sum(t => t._0300),
-                                AvergageDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
                             });
 
             var inventoryStaus = foundryCasting
@@ -318,7 +323,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Date,
                                 Category = x.Category,
                                 Total = x.Total,
-                                AvergageDays = Math.Round((x.Total / dailyAvg), 1),
+                                AvgDays = Math.Round((x.Total / dailyAvg), 1),
                                 Comments = logiticsComments.Any(c => c.Category == x.Category)
                                             ? logiticsComments.Where(c => c.Category == x.Category).First().Comments
                                             : ""
@@ -506,7 +511,8 @@ namespace FmsbwebCoreApi.Services.Logistics
                                d.Material,
                                d.TotalUnrestInv,
                                d._0300,
-                               AvgShipDay = v.AvgShipDay == null ? 0 : v.AvgShipDay
+                               AvgShipDay = v.AvgShipDay == null ? 0 : v.AvgShipDay,
+                               d.SafeftyStock
                            })
                               .ToListAsync();
 
@@ -521,9 +527,12 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Material = x.Material,
                                 TotalUnreistrictedQty = (int)x.TotalUnrestInv,
                                 FinGoodIn0300 = (int)x._0300,
+                                SafetyStock = (int)x.SafeftyStock,
                                 AvgShipDay = (int)x.AvgShipDay,
-                                DaysOnHand = x.AvgShipDay == 0 ? 0 : Math.Floor(((decimal)x._0300 / (decimal)x.AvgShipDay)),
-                                ColorCode = DaysOnHandStatusColor(x.AvgShipDay == 0 ? 0 : Math.Floor(((decimal)x._0300 / (decimal)x.AvgShipDay)), (int)x._0300)
+                                DaysOnHand = x.SafeftyStock == 0 ? 0 : Math.Floor(((decimal)x._0300 / (decimal)x.SafeftyStock)),
+                                ColorCode = DaysOnHandStatusColor(
+                                                x.SafeftyStock == 0 ? 0 : Math.Floor(((decimal)x._0300 / (decimal)x.SafeftyStock)),
+                                                (int)x._0300)
                             })
                             .Where(x => x.Program != null)
                             .OrderBy(x => x.Sort)

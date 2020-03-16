@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.SAP;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.SAP
 {
     [DbContext(typeof(SapContext))]
-    partial class SapContextModelSnapshot : ModelSnapshot
+    [Migration("20200313124227_add new safety stock table for sap inv")]
+    partial class addnewsafetystocktableforsapinv
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -787,7 +789,7 @@ namespace FmsbwebCoreApi.Migrations.SAP
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.SAP.SapDumpWithSafetyStock", b =>
                 {
-                    b.Property<int>("id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnName("id")
                         .HasColumnType("int")
@@ -822,21 +824,8 @@ namespace FmsbwebCoreApi.Migrations.SAP
                         .HasColumnName("QC02")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<decimal?>("Qc03")
-                        .HasColumnName("QC03")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("Qc04")
-                        .HasColumnName("QC04")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("Qc05")
-                        .HasColumnName("QC05")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("SafetyStock")
-                        .HasColumnName("Safety Stock")
-                        .HasColumnType("decimal(18, 2)");
+                    b.Property<int>("SafetyStock")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("StandardPrice")
                         .HasColumnName("Standard price")
@@ -971,7 +960,7 @@ namespace FmsbwebCoreApi.Migrations.SAP
                         .HasColumnName("5010")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.HasKey("id");
+                    b.HasKey("Id");
 
                     b.ToTable("SAP_Dump_With_SafetyStock");
                 });

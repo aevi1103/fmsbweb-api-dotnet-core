@@ -11,7 +11,7 @@ namespace FmsbwebCoreApi.Models.Logistics
         public DateTime? Date { get; set; }
         public string Category { get; set; }
         public decimal Total { get; set; }
-        public decimal AvergageDays { get; set; }
+        public decimal AvgDays { get; set; }
         public string Comments { get; set; }
     }
 }

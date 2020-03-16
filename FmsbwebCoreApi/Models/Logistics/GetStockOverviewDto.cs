@@ -16,6 +16,9 @@ namespace FmsbwebCoreApi.Models.Logistics
         public int _5000 { get; set; }
         public int Qc01 { get; set; }
         public int Qc02 { get; set; }
+        public int Qc03 { get; set; }
+        public int Qc04 { get; set; }
+        public int Qc05 { get; set; }
         public int _0130 { get; set; }
         public int _0131 { get; set; }
         public int _0135 { get; set; }

@@ -13,6 +13,7 @@ namespace FmsbwebCoreApi.Models.Logistics
         public string Material { get; set; }
         public int TotalUnreistrictedQty { get; set; }
         public int FinGoodIn0300 { get; set; }
+        public int SafetyStock { get; set; }
         public int AvgShipDay { get; set; }
         public decimal DaysOnHand { get; set; }
         public DaysOnHandColorCode ColorCode { get; set; } = new DaysOnHandColorCode();
