@@ -58,5 +58,7 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public int? Reason1Id { get; set; }
         [Column("reason2Id")]
         public int? Reason2Id { get; set; }
+        //public Guid Id { get; set; }
+        //public int? DeptId { get; set; }
     }
 }

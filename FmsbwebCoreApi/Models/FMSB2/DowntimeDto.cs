@@ -8,6 +8,7 @@ namespace FmsbwebCoreApi.Models.FMSB2
     public class DowntimeDto
     {
         public string Dept { get; set; }
+        public int? DeptId { get; set; }
         public string Line { get; set; }
         public DateTime ShifDate { get; set; }
         public string Shift { get; set; }
@@ -19,5 +20,6 @@ namespace FmsbwebCoreApi.Models.FMSB2
         public decimal? DowntimeLoss { get; set; }
         public DateTime ModifiedDate { get; set; }
         public string Type { get; set; }
+        public string TypeColor { get; set; }
     }
 }

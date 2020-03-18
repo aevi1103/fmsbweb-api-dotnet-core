@@ -34,40 +34,60 @@ namespace FmsbwebCoreApi.Controllers.FMSB
             try
             {
                 var data = await _repo.GetDowntime(resourceParameter);
+                var categories = data.Select(x => new { x.Dept }).Distinct().OrderBy(x => x.Dept).ToList();
+                var series = data.Select(x => new { x.Shift }).Distinct().OrderBy(x => x.Shift).ToList();
 
-                var chart = data.GroupBy(x => new { x.Dept })
-                                .Select(x => new
-                                {
-                                    x.Key.Dept,
-                                    TotalDowntime = x.Sum(s => s.DowntimeLoss),
-                                    Count = x.Count(),
-                                    ShiftDetails = x.GroupBy(s => new { s.Shift })
-                                                    .Select(s => new
-                                                    {
-                                                        s.Key.Shift,
-                                                        TotalDowntime = s.Sum(o => o.DowntimeLoss),
-                                                        Count = s.Count(),
-                                                        OwnerDetails = s.GroupBy(o => new { o.Type })
-                                                                        .Select(o => new
-                                                                        {
-                                                                            o.Key.Type,
-                                                                            TotalDowntime = o.Sum(l => l.DowntimeLoss),
-                                                                            Count = o.Count(),
-                                                                            LineDetails = o.GroupBy(l => new { l.Line })
-                                                                                            .Select(l => new
-                                                                                            {
-                                                                                                l.Key.Line,
-                                                                                                TotalDowntime = l.Sum(l => l.DowntimeLoss),
-                                                                                                Details = l
-                                                                                            }).OrderByDescending(l => l.TotalDowntime)
-                                                                        }).OrderByDescending(o => o.TotalDowntime)
-                                                    }).OrderByDescending(s => s.TotalDowntime)
-                                })
-                                .OrderByDescending(x => x.TotalDowntime)
-                                .ToList();
+                var chartData = series
+                            .Select(s => new
+                            {
+                                seriesname = s.Shift,
+                                data = categories
+                                        .Select(x => new
+                                        {
+                                            x.Dept,
+                                            TotalDowntime = data.Any(v => v.Dept == x.Dept && v.Shift == s.Shift)
+                                                    ? data.Where(v => v.Dept == x.Dept && v.Shift == s.Shift).Sum(v => v.DowntimeLoss)
+                                                    : 0,
+                                            ownerDetails = data.Where(o => o.Dept == x.Dept && o.Shift == s.Shift)
+                                                                .GroupBy(o => new { o.Type, o.TypeColor })
+                                                                .Select(o => new
+                                                                {
+                                                                    o.Key.Type,
+                                                                    o.Key.TypeColor,
+                                                                    TotalDowntime = o.Sum(t => t.DowntimeLoss),
+                                                                    LineDetails = o.GroupBy(l => new { l.Line, l.Machine })
+                                                                                    .Select(l => new
+                                                                                    {
+                                                                                        Line = l.Key.Machine.ToLower() != l.Key.Line.ToLower() ? $"{l.Key.Machine} ({l.Key.Line})" : l.Key.Machine,
+                                                                                        o.Key.TypeColor,
+                                                                                        TotalDowntime = l.Sum(t => t.DowntimeLoss),
+                                                                                        Reason2Details = l.GroupBy(r => new { r.Reason2 })
+                                                                                                            .Select(r => new
+                                                                                                            {
+                                                                                                                r.Key.Reason2,
+                                                                                                                o.Key.TypeColor,
+                                                                                                                TotalDowntime = r.Sum(t => t.DowntimeLoss),
+                                                                                                                DailyDetails = r.GroupBy(d => new { d.ShifDate })
+                                                                                                                                .Select(d => new
+                                                                                                                                {
+                                                                                                                                    d.Key.ShifDate,
+                                                                                                                                    o.Key.TypeColor,
+                                                                                                                                    TotalDowntime = d.Sum(t => t.DowntimeLoss)
+                                                                                                                                })
+                                                                                                                                .OrderBy(d => d.ShifDate)
+                                                                                                            })
+                                                                                                            .OrderByDescending(r => r.TotalDowntime)
+                                                                                    }).OrderByDescending(l => l.TotalDowntime)
+                                                                }).OrderByDescending(o => o.TotalDowntime)
+                                        })
+                            });
 
 
-                return Ok(chart);
+                return Ok(new
+                {
+                    categories,
+                    chartData
+                });
             }
             catch (Exception e)
             {

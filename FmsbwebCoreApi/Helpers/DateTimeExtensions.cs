@@ -74,10 +74,8 @@ namespace FmsbwebCoreApi.Helpers
              2nd shift - 3:01 pm - 11:00 pm
              */
 
-            var ds = new DateTimeHelpers
-            {
-                ShiftDate = dateTime.Date
-            };
+            var ds = new DateTimeHelpers();
+            ds.ShiftDate = dateTime.Date;
 
             var hour = dateTime.Hour;
             var min = dateTime.Minute;

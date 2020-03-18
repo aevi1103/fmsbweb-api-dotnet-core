@@ -240,6 +240,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<KpiTarget> KpiTarget { get; set; }
         public virtual DbSet<AnodizeChecklist> AnodizeChecklist { get; set; }
         public virtual DbSet<AnodizeChecklistEntries> AnodizeChecklistEntries { get; set; }
+        public virtual DbSet<DowntimeOwner> DowntimeOwner { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 //            if (!optionsBuilder.IsConfigured)

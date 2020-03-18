@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Models.FMSB2;
 using FmsbwebCoreApi.Context.Fmsb2;
+using FmsbwebCoreApi.Entity.Fmsb2;
 
 namespace FmsbwebCoreApi.Services.FmsbMvc
 {
@@ -43,7 +44,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             var end = parameter.End.AddDays(1).Date; //to get end of that day
 
             var machines = await _fmsbContext.MachineList.Where(x => x.MachineMapper != null).ToListAsync();
-
+            var owners = await GetDowntimeOwner();
             var machineMapper = "";
 
             if (parameter.Line != "")
@@ -58,7 +59,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
                         .Where(x => x.Line.ToLower().Contains(machineMapper.ToLower()))
                         .ToListAsync();
 
-            var manualDowntimeEntryTask = _fmsbContext.DowntimeDataList2
+            var manualDowntimeEntryTask = _fmsbContext.DowntimeDataList2Copy
                                         .Where(x => x.Shiftdate >= parameter.Start && x.Shiftdate <= parameter.End)
                                         .Where(x => x.MachineName.ToLower().Contains(parameter.Line))
                                         .Where(x => x.Shift.ToLower().Contains(parameter.Shift))
@@ -72,13 +73,19 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             var manualDowntimeEntry = manualDowntimeEntryTask.Result;
 
             var dh = new DateTimeHelpers();
+            var spreadDowntimeData = SpreadHours(callbox);
 
-            var spreadCallboxData = SpreadHours(callbox)
+
+            var spreadCallboxData = spreadDowntimeData
             .Select(x => new DowntimeDto
             {
-                Dept = machines.Any(m => m.MachineMapper.ToLower() == x.Line.ToLower()) 
-                        ? machines.Where(m => m.MachineMapper.ToLower() == x.Line.ToLower()).First().DeptName 
+                Dept = machines.Any(m => m.MachineMapper.ToLower() == x.Line.ToLower())
+                        ? machines.Where(m => m.MachineMapper.ToLower() == x.Line.ToLower()).First().DeptName
                         : x.Department,
+
+                //DeptId = machines.Any(m => m.MachineMapper.ToLower() == x.Line.ToLower())
+                //        ? machines.Where(m => m.MachineMapper.ToLower() == x.Line.ToLower()).First().DeptId
+                //        : 0,
 
                 Line = machines.Any(m => m.MachineMapper.ToLower() == x.Line.ToLower())
                         ? machines.Where(m => m.MachineMapper.ToLower() == x.Line.ToLower()).First().MachineName
@@ -87,21 +94,24 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
                 Machine = x.Machine,
                 Reason1 = x.PrimaryReason,
                 Reason2 = x.SecondaryReason,
+
                 Comments = $"<b>Operator Comment:</b> {x.OperatorComment} <br> <b>Maintenance Comment:</b> {x.CompletionComment}",
                 DowntimeLoss = (decimal)dh.ElapsedTime(x.RequestDateTime, x.CompletedDateTime),
                 ShifDate = dh.GetDateShiftEightHours((x.CompletedDateTime == null ? DateTime.Now : (DateTime)x.CompletedDateTime)).ShiftDate,
                 Shift = dh.GetDateShiftEightHours((x.CompletedDateTime == null ? DateTime.Now : (DateTime)x.CompletedDateTime)).Shift,
                 ModifiedDate = x.RequestDateTime,
                 Hour = dh.MapHourToHxHHoursForEightHourShift(x.RequestDateTime),
-                Type = x.Type
+                Type = x.Type,
+                TypeColor = owners.Any(o => o.Owner == x.Type) ? owners.Where(o => o.Owner == x.Type).FirstOrDefault().Color : ""
             })
             .Where(x => x.ShifDate >= parameter.Start && x.ShifDate <= parameter.End)
-            .Where(x => x.Shift.ToLower().Contains(parameter.Shift.ToLower()))
+            //.Where(x => x.Shift.ToLower().Contains(parameter.Shift.ToLower()))
             .ToList();
 
             var manualDowntime = manualDowntimeEntry.Select(x => new DowntimeDto
             {
                 Dept = x.DeptName,
+                //DeptId = x.DeptId,
                 Line = x.MachineName,
                 Machine = x.MachineNumber,
                 Reason1 = x.Reason1,
@@ -112,9 +122,12 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
                 Shift = x.Shift,
                 ModifiedDate = x.Modifieddate,
                 Hour = x.Hour,
-                Type = "Operator (Manual)"
+                Type = "Operator (Manual)",
+                TypeColor = owners.Where(o => o.Owner == "Operator (Manual)").FirstOrDefault().Color
             })
             .ToList();
+
+            var sumManual = manualDowntime.Sum(q => q.DowntimeLoss);
 
             spreadCallboxData.AddRange(manualDowntime);
                             
@@ -207,6 +220,11 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             {
                 throw new Exception($"Message: {ex.Message} - Stack Trace: {ex.StackTrace}");
             }
+        }
+
+        public async Task<List<DowntimeOwner>> GetDowntimeOwner()
+        {
+            return await _fmsbContext.DowntimeOwner.ToListAsync();
         }
     }
 }
