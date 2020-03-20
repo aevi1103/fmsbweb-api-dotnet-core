@@ -463,7 +463,28 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         public async Task<KpiTarget> GetTargets(string dept, DateTime endDate)
         {
-            return await _context.KpiTarget.Where(x => x.Department.ToLower() == dept.ToLower() && x.MonthNumber == endDate.Month).FirstOrDefaultAsync();
+            return await _context.KpiTarget
+                            .Where(x => x.Department.ToLower() == dept.ToLower() 
+                                    && x.MonthNumber == endDate.Month
+                                    && x.Year == endDate.Year).FirstOrDefaultAsync();
+        }
+
+        public async Task<List<KpiTarget>> GetTargets(string area, int startYear, int endYear)
+        {
+            var dept = area;
+            switch (area.ToLower())
+            {
+                case "foundry cell":
+                    dept = "Foundry";
+                    break;
+                case "machine line":
+                    dept = "Machining";
+                    break;
+            }
+            return await _context.KpiTarget
+                            .Where(x => x.Department.ToLower() == dept.ToLower())
+                            .Where(x => x.Year >= startYear && x.Year <= endYear)
+                            .ToListAsync();
         }
     }
 }

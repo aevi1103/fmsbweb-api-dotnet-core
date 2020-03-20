@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,11 +13,19 @@ namespace FmsbwebCoreApi.Helpers
             return date.Date == DateTime.Today.AddDays(-1) ? true : false;
         }
 
-        
-
         public static DateTime ToDateTime(this DateTime? date)
         {
             return Convert.ToDateTime(date);
+        }
+
+        public static double ToQuarter(this DateTime date)
+        {
+            return Math.Ceiling(date.Month / 3.0);
+        }
+
+        public static int ToWeekNumber(this DateTime thisDate)
+        {
+            return CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(thisDate, CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
         }
     }
 

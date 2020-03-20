@@ -485,8 +485,7 @@ namespace FmsbwebCoreApi.Services.SAP
             {
                 area = "machining";
             }
-
-            //var targets = GetInMemoryKpiTarget().Where(x => x.Area.ToLower().Trim() == area.ToLower().Trim() && x.Kpi.ToLower().Trim() == type.ToLower().Trim()).FirstOrDefault();
+;
             var targetsTask = Task.Run(() => _fmsb2Repo.GetTargets(area, dateEnd));
             Task.WhenAll(targetsTask);
             var targets = targetsTask.Result;
@@ -710,7 +709,9 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public async Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(DateTime start, DateTime end, string area)
         {
-            var production = await _context.Production2
+            try
+            {
+                var production = await _context.Production2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                                 .Where(x => x.Area == area)
                                 .GroupBy(x => new { x.ShiftDate })
@@ -722,53 +723,59 @@ namespace FmsbwebCoreApi.Services.SAP
                                 .ToListAsync();
 
 
-            var finScrap = new List<string> { "anodize", "skirt coat" };
+                var finScrap = new List<string> { "anodize", "skirt coat" };
 
-            var scrapData = await _context.Scrap2
-                                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
-                                .Where(x => x.ScrapCode != "8888")
-                                .Where(x => x.IsPurchashedExclude == false)
-                                .Where(x => area.ToLower() == "skirt coat" ? (finScrap.Contains(x.ScrapAreaName.ToLower())) : (x.ScrapAreaName == MapAreaTopScrapArea(area)))
-                                .GroupBy(x => new { x.ShiftDate })
-                                .Select(x => new
-                                {
-                                    x.Key.ShiftDate,
-                                    TotalScrap = x.Sum(s => s.Qty)
-                                })
-                                .ToListAsync();
+                var scrapData = await _context.Scrap2
+                                    .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                    .Where(x => x.ScrapCode != "8888")
+                                    .Where(x => x.IsPurchashedExclude == false)
+                                    .Where(x => area.ToLower() == "skirt coat" ? (finScrap.Contains(x.ScrapAreaName.ToLower())) : (x.ScrapAreaName == MapAreaTopScrapArea(area)))
+                                    .GroupBy(x => new { x.ShiftDate })
+                                    .Select(x => new
+                                    {
+                                        x.Key.ShiftDate,
+                                        TotalScrap = x.Sum(s => s.Qty)
+                                    })
+                                    .ToListAsync();
 
-            var data = scrapData
-                        .Select(x => new DailyScrapByShiftDateDto
-                        {
-                            ShiftDate = (DateTime)x.ShiftDate,
-                            TotalScrap = (int)x.TotalScrap,
-                            SapNet = (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd),
-                            SapGross = production.Any(p => p.ShiftDate == x.ShiftDate)
-                                        ? (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
-                                        : 0,
+                var data = scrapData
+                            .Select(x => new DailyScrapByShiftDateDto
+                            {
+                                ShiftDate = (DateTime)x.ShiftDate,
+                                TotalScrap = (int)x.TotalScrap,
+                                SapNet = (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd),
+                                SapGross = production.Any(p => p.ShiftDate == x.ShiftDate)
+                                            ? (int)production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
+                                            : 0,
 
-                            ScrapRate = (production.Any(p => p.ShiftDate == x.ShiftDate)
-                                        ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
-                                        : 0) == 0
+                                ScrapRate = (production.Any(p => p.ShiftDate == x.ShiftDate)
+                                            ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (int)x.TotalScrap
+                                            : 0) == 0
 
-                                        ? null
+                                            ? null
 
-                                        : x.TotalScrap / (production.Any(p => p.ShiftDate == x.ShiftDate)
-                                            ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (decimal)x.TotalScrap
-                                            : 0)
-                        })
-                        .Select(x => new DailyScrapByShiftDateDto
-                        {
-                            ShiftDate = x.ShiftDate,
-                            TotalScrap = x.TotalScrap,
-                            SapNet = x.SapNet,
-                            SapGross = x.SapGross,
-                            ScrapRate = x.SapNet > 0 ? x.ScrapRate : null
-                        })
-                        .OrderBy(x => x.ShiftDate)
-                        .ToList();
+                                            : x.TotalScrap / (production.Any(p => p.ShiftDate == x.ShiftDate)
+                                                ? production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd) + (decimal)x.TotalScrap
+                                                : 0)
+                            })
+                            .Select(x => new DailyScrapByShiftDateDto
+                            {
+                                ShiftDate = x.ShiftDate,
+                                TotalScrap = x.TotalScrap,
+                                SapNet = x.SapNet,
+                                SapGross = x.SapGross,
+                                ScrapRate = x.SapNet > 0 ? x.ScrapRate : null
+                            })
+                            .OrderBy(x => x.ShiftDate)
+                            .ToList();
 
-            return data;
+                return data;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            
         }
 
         public async Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area)
