@@ -30,12 +30,12 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetScrapVariance")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariance(DateTime start, DateTime end, string area = "")
+        public async Task<IActionResult> GetScrapVariance(DateTime start, DateTime end, string area = "", bool isPurchasedScrap = false)
         {
             try
             {
                 
-                var scrapData = await _sapLibRepo.GetDailyScrapRateByCode(start, end, area);
+                var scrapData = await _sapLibRepo.GetDailyScrapRateByCode(start, end, area, isPurchasedScrap);
                 var targets = await _fmsb2LibRepo.GetTargets(area, start.Year, end.Year);
                 var monthlyTarget = targets
                                 .Select(x => new

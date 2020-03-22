@@ -19,13 +19,14 @@ namespace FmsbwebCoreApi.Services.SAP
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByScrapAreaFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<DailyScrapByShiftDto>> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams);
+        Task<IEnumerable<dynamic>> GetScrapByProgram(DateTime start, DateTime end, string area, bool isPurchasedScrap = false);
 
         //prod
         Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime start, DateTime end, string area);
         Task<IEnumerable<SapProdDto>> GetSapProdByTypeFromDb(DateTime start, DateTime end, string area);
         Task<GetSapProdAndScrapDto> GetSapProdAndScrap(DateTime start, DateTime end, string area);
 
-        //prod and scrap
+        //prod and scrap and labor hours
         Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area);
 
         //prod, scrap, downtime, components
@@ -51,7 +52,10 @@ namespace FmsbwebCoreApi.Services.SAP
         int MapShiftToShiftOrder(string shift);
 
         //charts
-        Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(DateTime start, DateTime end, string area);
+        Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(
+            DateTime start, DateTime end, string area,
+            bool isPurchasedScrap = false);
+
         Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area);
 
         MachineMapping GetMappedLineToWorkCenter(string line, string side);
