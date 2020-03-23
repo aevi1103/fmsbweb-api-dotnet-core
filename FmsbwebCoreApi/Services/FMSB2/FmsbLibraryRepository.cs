@@ -51,25 +51,12 @@ namespace FmsbwebCoreApi.Services.FMSB2
         {
 
             dept = dept.Trim().ToLower();
-            if (dept == "assembly")
-            {
-                return data.Where(x => (x.DeptName == "FINISHING" || x.DeptName == "ASSEMBLY") && x.IsPso == false).ToList();
-            }
 
-            if (dept == "machine line")
-            {
-                return data.Where(x => x.DeptName == "MACHINING" && x.IsPso == false).ToList();
-            }
-
-            if (dept == "foundry cell")
-            {
-                return data.Where(x => x.DeptName == "FOUNDRY" && x.IsPso == false).ToList();
-            }
-
-            if (dept == "pso")
-            {
-                return data.Where(x => x.IsPso == true).ToList();
-            }
+            if (dept == "foundry cell") return data.Where(x => x.DeptName == "FOUNDRY" && x.IsPso == false).ToList();
+            if (dept == "machine line") return data.Where(x => x.DeptName == "MACHINING" && x.IsPso == false).ToList();
+            if (dept == "skirt coat") return data.Where(x => (x.DeptName == "FINISHING") && x.IsPso == false).ToList();
+            if (dept == "assembly") return data.Where(x => (x.DeptName == "ASSEMBLY") && x.IsPso == false).ToList();
+            if (dept == "pso") return data.Where(x => x.IsPso == true).ToList();
 
             if (dept == "inspector")
             {
@@ -85,7 +72,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         }
 
-        public ProductionLaborHoursDto GetLaborHours(List<FinanceLaborHoursView> laborHrs, string dept = "")
+        public ProductionLaborHoursDto GetLaborHours(List<FinanceLaborHoursView> laborHrs, string dept)
         {
             dept = dept.Trim().ToLower();
 
@@ -97,20 +84,46 @@ namespace FmsbwebCoreApi.Services.FMSB2
             decimal? regular_q = 0, overtime_q = 0, doubleTime_q = 0, orientation_q = 0,
                 regular_pso = 0, overtime_pso = 0, doubleTime_pso = 0, orientation_pso = 0;
 
-            if (dept == "machine line" || dept == "assembly")
+            var qualityInspectorTargetRate = 0m;
+            var psoTargetRate = 0m;
+            switch (dept)
             {
-                var qualityInspectorTargetRate = dept == "machine line" ? .34m : .66m;
-                regular_q = qualityInspector.Sum(x => x.Regular) * qualityInspectorTargetRate;
-                overtime_q = qualityInspector.Sum(x => x.Overtime) * qualityInspectorTargetRate;
-                doubleTime_q = qualityInspector.Sum(x => x.DoubleTime) * qualityInspectorTargetRate;
-                orientation_q = qualityInspector.Sum(x => x.Orientation) * qualityInspectorTargetRate;
-
-                var psoTargetRate = dept == "machine line" ? .38m : .62m;
-                regular_pso = pso.Sum(x => x.Regular) * psoTargetRate;
-                overtime_pso = pso.Sum(x => x.Overtime) * psoTargetRate;
-                doubleTime_pso = pso.Sum(x => x.DoubleTime) * psoTargetRate;
-                orientation_pso = pso.Sum(x => x.Orientation) * psoTargetRate;
+                case "machine line":
+                    qualityInspectorTargetRate = .34m;
+                    psoTargetRate = .38m;
+                    break;
+                case "assembly":
+                    qualityInspectorTargetRate = .66m;
+                    break;
+                case "skirt coat":
+                    psoTargetRate = .62m;
+                    break;
             }
+
+            regular_q = qualityInspector.Sum(x => x.Regular) * qualityInspectorTargetRate;
+            overtime_q = qualityInspector.Sum(x => x.Overtime) * qualityInspectorTargetRate;
+            doubleTime_q = qualityInspector.Sum(x => x.DoubleTime) * qualityInspectorTargetRate;
+            orientation_q = qualityInspector.Sum(x => x.Orientation) * qualityInspectorTargetRate;
+
+            regular_pso = pso.Sum(x => x.Regular) * psoTargetRate;
+            overtime_pso = pso.Sum(x => x.Overtime) * psoTargetRate;
+            doubleTime_pso = pso.Sum(x => x.DoubleTime) * psoTargetRate;
+            orientation_pso = pso.Sum(x => x.Orientation) * psoTargetRate;
+
+            //if (dept == "machine line" || dept == "assembly")
+            //{
+            //    var qualityInspectorTargetRate = dept == "machine line" ? .34m : .66m;
+            //    regular_q = qualityInspector.Sum(x => x.Regular) * qualityInspectorTargetRate;
+            //    overtime_q = qualityInspector.Sum(x => x.Overtime) * qualityInspectorTargetRate;
+            //    doubleTime_q = qualityInspector.Sum(x => x.DoubleTime) * qualityInspectorTargetRate;
+            //    orientation_q = qualityInspector.Sum(x => x.Orientation) * qualityInspectorTargetRate;
+
+            //    var psoTargetRate = dept == "machine line" ? .38m : .62m;
+            //    regular_pso = pso.Sum(x => x.Regular) * psoTargetRate;
+            //    overtime_pso = pso.Sum(x => x.Overtime) * psoTargetRate;
+            //    doubleTime_pso = pso.Sum(x => x.DoubleTime) * psoTargetRate;
+            //    orientation_pso = pso.Sum(x => x.Orientation) * psoTargetRate;
+            //}
 
             var regular = data.Sum(x => x.Regular);
             var overtime = data.Sum(x => x.Overtime);
@@ -320,26 +333,26 @@ namespace FmsbwebCoreApi.Services.FMSB2
             string area)
         {
 
-            if (area == "Skirt Coat")
-            {
-                return new ProductionLaborHoursDto
-                {
-                    Regular = null,
-                    Overtime = null,
-                    DoubleTime = null,
-                    Orientation = null,
-                    OverAll = null,
-                    PPMH = null,
-                    SAPGross = null,
-                    StartDate = start.ToShortDateString(),
-                    EndDate = end.ToShortDateString(),
-                    LaborTitle = "",
+            //if (area == "Skirt Coat")
+            //{
+            //    return new ProductionLaborHoursDto
+            //    {
+            //        Regular = null,
+            //        Overtime = null,
+            //        DoubleTime = null,
+            //        Orientation = null,
+            //        OverAll = null,
+            //        PPMH = null,
+            //        SAPGross = null,
+            //        StartDate = start.ToShortDateString(),
+            //        EndDate = end.ToShortDateString(),
+            //        LaborTitle = "",
 
-                    InspectorDetails = null,
-                    OtherDetails = null,
-                    PSODetails = null
-                };
-            }
+            //        InspectorDetails = null,
+            //        OtherDetails = null,
+            //        PSODetails = null
+            //    };
+            //}
 
             var yesterday = DateTime.Today.AddDays(-1);
             var title = $"Kronos Hours <b>({start.ToString("M/d/yy")} - {end.ToString("M/d/yy")})</b>";
@@ -378,60 +391,96 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         }
 
+        public ProductionLaborHoursDto GetPPMH(int sapGross, List<FinanceLaborHoursView> laborHrs, string area)
+        {
+            var hours = GetLaborHours(laborHrs, area);
+            var ppmh = hours.OverAll == 0 ? 0 : sapGross / hours.OverAll;
+
+            return new ProductionLaborHoursDto
+            {
+                Regular = hours.Regular,
+                Overtime = hours.Overtime,
+                DoubleTime = hours.DoubleTime,
+                Orientation = hours.Orientation,
+                OverAll = hours.OverAll,
+
+                PPMH = ppmh,
+                SAPGross = sapGross,
+                Details = hours.Details,
+
+                InspectorDetails = hours.InspectorDetails,
+                OtherDetails = hours.OtherDetails,
+                PSODetails = hours.PSODetails,
+            };
+
+        }
+
         public async Task<IEnumerable<WeeklyProductionLaborHoursDto>> GetWeeklyProdScrapForLaborHrs(DateTime start, DateTime end, string area)
         {
-            var prods = await _sapContext.Production2Summary
+            try
+            {
+                var prods = await _sapContext.Production2Summary
+                    .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                    .Where(x => x.Area == area)
+                    .GroupBy(x => new { x.WeeekNumber, x.Area, x.Year })
+                    .Select(x => new SapProdDto
+                    {
+                        WeekNumber = (int)x.Key.WeeekNumber,
+                        Year = (int)x.Key.Year,
+                        Area = x.Key.Area,
+                        Qty = (int)x.Sum(s => s.Qty)
+                    })
+                    .ToListAsync();
+
+                var scraps = await _sapContext.Scrap2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                                 .Where(x => x.Area == area)
-                                .GroupBy(x => new { x.WeeekNumber, x.Area })
-                                .Select(x => new SapProdDto
+                                .Where(x => x.ScrapCode != "8888")
+                                .GroupBy(x => new { x.WeekNumber, x.Area, x.Year })
+                                .Select(x => new WeeklyScrap
                                 {
-                                    WeekNumber = (int)x.Key.WeeekNumber,
+                                    WeekNumber = (int)x.Key.WeekNumber,
+                                    Year = (int)x.Key.Year,
                                     Area = x.Key.Area,
                                     Qty = (int)x.Sum(s => s.Qty)
                                 })
                                 .ToListAsync();
 
-            var scraps = await _sapContext.Scrap2
-                            .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
-                            .Where(x => x.Area == area)
-                            .Where(x => x.ScrapCode != "8888")
-                            .GroupBy(x => new { x.WeekNumber, x.Area })
-                            .Select(x => new WeeklyScrap
-                            {
-                                WeekNumber = (int)x.Key.WeekNumber,
-                                Area = x.Key.Area,
-                                Qty = (int)x.Sum(s => s.Qty)
-                            })
-                            .ToListAsync();
-
-            var labors = await _context.FinanceLaborHoursView
-                            .Where(x => x.DateIn >= start && x.DateIn <= end)
-                            .ToListAsync();
+                var labors = await _context.FinanceLaborHoursView
+                                .Where(x => x.DateIn >= start && x.DateIn <= end)
+                                .ToListAsync();
 
 
-            var prodWeeks = prods.Select(x => x.WeekNumber).Distinct();
-            var scrapWeeks = scraps.Select(x => x.WeekNumber).Distinct();
-            var weeks = prodWeeks.Concat(scrapWeeks).Distinct().OrderBy(x => x);
+                var prodWeeks = prods.Select(x => new { x.WeekNumber, x.Year }).Distinct();
+                var scrapWeeks = scraps.Select(x => new { x.WeekNumber, x.Year }).Distinct();
+                var weeks = prodWeeks.Concat(scrapWeeks).Distinct().OrderBy(x => x.Year).ThenBy(x => x.WeekNumber);
 
-            var list = new List<WeeklyProductionLaborHoursDto>();
-            foreach (var week in weeks)
-            {
-                var prod = prods.Where(x => x.WeekNumber == week);
-                var scrap = scraps.Where(x => x.WeekNumber == week);
-                var labor = labors.Where(x => x.WeekNumber == week).ToList();
-
-                var details = GetRollingDaysPPMH(prod, scrap, labor, start, end, area);
-
-                list.Add(new WeeklyProductionLaborHoursDto
+                var list = new List<WeeklyProductionLaborHoursDto>();
+                foreach (var week in weeks)
                 {
-                    WeekNumber = week,
-                    Details = details
-                });
+                    var prod = prods.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year);
+                    var scrap = scraps.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year);
+                    var labor = labors.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year).ToList();
 
+                    var details = GetRollingDaysPPMH(prod, scrap, labor, start, end, area);
+
+                    list.Add(new WeeklyProductionLaborHoursDto
+                    {
+                        WeekNumber = week.WeekNumber,
+                        Year = week.Year,
+                        Details = details
+                    });
+
+                }
+
+                return list.OrderBy(x => x.Year).ThenBy(x => x.WeekNumber).ToList();
+            }
+            catch (Exception e)
+            {
+
+                throw new Exception(e.Message);
             }
 
-            return list.OrderBy(x => x.WeekNumber).ToList();
 
 
         }
@@ -464,7 +513,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
         public async Task<KpiTarget> GetTargets(string dept, DateTime endDate)
         {
             return await _context.KpiTarget
-                            .Where(x => x.Department.ToLower() == dept.ToLower() 
+                            .Where(x => x.Department.ToLower() == dept.ToLower()
                                     && x.MonthNumber == endDate.Month
                                     && x.Year == endDate.Year).FirstOrDefaultAsync();
         }

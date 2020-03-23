@@ -43,7 +43,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                                     x.Department,
                                     x.MonthNumber,
                                     x.Year,
-                                    Quarter = Math.Ceiling(x.MonthNumber / 3.0),
+                                    x.Quarter,
                                     x.ScrapRateTarget,
                                     ScrapRateTargetDecimal = x.ScrapRateTarget / 100
                                 }).ToList();

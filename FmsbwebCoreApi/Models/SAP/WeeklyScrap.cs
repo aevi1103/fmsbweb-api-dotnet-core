@@ -8,5 +8,6 @@ namespace FmsbwebCoreApi.Models.SAP
     public class WeeklyScrap : Scrap
     {
         public int WeekNumber { get; set; } = 0;
+        public int Year { get; set; }
     }
 }

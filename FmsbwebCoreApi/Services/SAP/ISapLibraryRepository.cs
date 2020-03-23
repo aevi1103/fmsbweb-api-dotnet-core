@@ -29,6 +29,9 @@ namespace FmsbwebCoreApi.Services.SAP
         //prod and scrap and labor hours
         Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area);
 
+        //labor hours
+        Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime start, DateTime end, string area);
+
         //prod, scrap, downtime, components
         IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(
             IEnumerable<Models.SAP.Scrap> scrap,

@@ -25,6 +25,9 @@ namespace FmsbwebCoreApi.Services.FMSB2
             DateTime start,
             DateTime end,
             string area);
+
+        ProductionLaborHoursDto GetPPMH(int sapGross, List<FinanceLaborHoursView> laborHrs, string area);
+
         Task<ProdScrapForLaborHours> GetProdScrapForLaborHrs(DateTime start, DateTime end, string area);
         Task<IEnumerable<WeeklyProductionLaborHoursDto>> GetWeeklyProdScrapForLaborHrs(DateTime start, DateTime end, string area);
 

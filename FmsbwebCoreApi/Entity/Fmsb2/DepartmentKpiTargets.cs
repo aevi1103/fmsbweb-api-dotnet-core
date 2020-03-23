@@ -18,5 +18,7 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public decimal DowntimeRateTarget { get; set; } = 0;
         public DateTime TimeStamp { get; set; }
         public int Year { get; set; }
+
+        public double Quarter => Math.Ceiling(MonthNumber / 3.0);
     }
 }

@@ -99,5 +99,6 @@ namespace FmsbwebCoreApi.Entity.SAP
         [StringLength(15)]
         public string IsPurchashedExclude2 { get; set; }
         public int? WeekNumber { get; set; }
+        public int? Year { get; set; }
     }
 }

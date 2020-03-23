@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FmsbwebCoreApi.Helpers;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -21,6 +22,11 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public int? Shift { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? DateIn { get; set; }
+
+        public int? Year => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn).Year;
+        public int? Month => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn).Month;
+        public int? Quarter => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn).ToQuarter();
+
         public TimeSpan? TimeIn { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime? DateOut { get; set; }

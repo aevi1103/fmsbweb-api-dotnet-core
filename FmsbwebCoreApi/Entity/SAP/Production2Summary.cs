@@ -34,8 +34,11 @@ namespace FmsbwebCoreApi.Entity.SAP
         public int? Qty { get; set; }
         [Column("weeekNumber")]
         public int? WeeekNumber { get; set; }
+        [Column("year")]
+        public int? Year { get; set; }
         [Column("type")]
         [StringLength(3)]
         public string Type { get; set; }
+
     }
 }

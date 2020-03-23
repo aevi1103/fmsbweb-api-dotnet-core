@@ -624,6 +624,10 @@ namespace FmsbwebCoreApi.Services.SAP
                 laborHrs = await _fmsb2Repo.GetLaborHoursData(start, end);
             }
 
+            scrapForLaborHours = scrapForLaborHours
+                                    .Where(x => x.ScrapCode != "8888")
+                                    //.Where(x => x.IsPurchashedExclude == false)
+                                    .ToList();
 
             var result = hxh
                             .Select(x => new ProductionMorningMeetingDto
@@ -633,7 +637,8 @@ namespace FmsbwebCoreApi.Services.SAP
                                 Target = (int)x.Target,
 
                                 HxhGross = x.Gross,
-                                SapGross = sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) + sbScrap.Where(w => w.Area == x.Area).Sum(w => w.qty), //with sb scrap only
+                                SapGross = sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)
+                                            + sbScrap.Where(w => w.Area == x.Area).Sum(w => w.qty), //with sb scrap only
 
                                 PlannedWarmers = warmers.Where(w => w.Area == x.Area && w.ScrapCode == "8888").Sum(w => w.qty),
                                 UnPlannedWarmers = warmers.Where(w => w.Area == x.Area && w.ScrapCode == "8889").Sum(w => w.qty),
@@ -1562,12 +1567,162 @@ namespace FmsbwebCoreApi.Services.SAP
                 {
                     return result.Where(x => x.ScrapRate < 1);
                 }
-                
+
             }
             catch (Exception e)
             {
                 throw new Exception(e.Message);
             }
+
+        }
+
+        public async Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime start, DateTime end, string area)
+        {
+            try
+            {
+                var deptName = area;
+                var deptForTarget = area;
+                switch (area.ToLower().Trim())
+                {
+                    case "foundry cell":
+                        deptName = "foundry";
+                        deptForTarget = "foundry";
+                        break;
+                    case "machine line":
+                        deptName = "machining";
+                        deptForTarget = "machining";
+                        break;
+                    case "skirt coat":
+                        deptName = "finishing";
+                        deptForTarget = "skirt coat";
+                        break;
+                }
+
+
+                //get data from db run in parallel
+                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end);
+
+                var prod = (await _context.Production2
+                                        .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
+                                        .GroupBy(x => new { x.ShiftDate, x.Area })
+                                        .Select(x => new
+                                        {
+                                            x.Key.Area,
+                                            x.Key.ShiftDate,
+                                            Qty = x.Sum(t => t.QtyProd)
+                                        })
+                                        .ToListAsync())
+                                        .Select(x => new
+                                        {
+                                            x.Area,
+                                            x.ShiftDate,
+                                            Convert.ToDateTime(x.ShiftDate).Year,
+                                            Convert.ToDateTime(x.ShiftDate).Month,
+                                            Quarter = Convert.ToDateTime(x.ShiftDate).ToQuarter(),
+                                            WeekNumber = Convert.ToDateTime(x.ShiftDate).ToWeekNumber(),
+                                            x.Qty
+                                        })
+                                        .ToList();
+
+                var scrap = (await _context.Scrap2
+                                        .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
+                                        .Where(x => x.ScrapCode != "8888")
+                                        .GroupBy(x => new { x.ShiftDate, x.Area })
+                                        .Select(x => new
+                                        {
+                                            x.Key.Area,
+                                            x.Key.ShiftDate,
+                                            Qty = x.Sum(t => t.Qty)
+                                        })
+                                        .ToListAsync())
+                                        .Select(x => new
+                                        {
+                                            x.Area,
+                                            x.ShiftDate,
+                                            Convert.ToDateTime(x.ShiftDate).Year,
+                                            Convert.ToDateTime(x.ShiftDate).Month,
+                                            Quarter = Convert.ToDateTime(x.ShiftDate).ToQuarter(),
+                                            WeekNumber = Convert.ToDateTime(x.ShiftDate).ToWeekNumber(),
+                                            x.Qty
+                                        })
+                                        .ToList();
+
+                var monthlyTarget = await _fmsbContext.KpiTarget
+                                    .Where(x => x.Year >= start.Year && x.Year <= end.Year)
+                                    .Where(x => x.Department.ToLower() == deptForTarget)
+                                    .ToListAsync();
+
+                var quarterlyTarget = monthlyTarget
+                                            .GroupBy(x => new { x.Quarter, x.Year })
+                                            .Select(x => new
+                                            {
+                                                x.Key.Year,
+                                                x.Key.Quarter,
+                                                LaborHoursTarget = x.Average(t => t.PpmhTarget)
+                                            }).ToList();
+
+                //transform data
+                var result = prod.GroupBy(x => new { x.Year, x.Quarter })
+                .Select(x => new
+                {
+                    Key = $"{x.Key.Year}-Q{x.Key.Quarter}",
+                    x.Key.Year,
+                    x.Key.Quarter,
+                    Target = quarterlyTarget.Where(t => t.Year == x.Key.Year && t.Quarter == x.Key.Quarter).First().LaborHoursTarget,
+                    SapNet = x.Sum(t => t.Qty),
+                    SapScrap = scrap.Where(s => s.Year == x.Key.Year && s.Quarter == x.Key.Quarter).Sum(s => s.Qty),
+                    SapGross = scrap.Where(s => s.Year == x.Key.Year && s.Quarter == x.Key.Quarter).Sum(s => s.Qty) + x.Sum(t => t.Qty),
+                    LaborHours = _fmsb2Repo.GetPPMH(
+                                    ((int)scrap.Where(s => s.Year == x.Key.Year && s.Quarter == x.Key.Quarter).Sum(s => s.Qty) + (int)x.Sum(t => t.Qty)),
+                                    laborHours.Where(l => l.Year == x.Key.Year && l.Quarter == x.Key.Quarter).ToList(),
+                                    area),
+
+                    MonthDetails = x.GroupBy(m => new { m.Year, m.Quarter, m.Month })
+                                    .Select(m => new
+                                    {
+                                        Key = $"{m.Key.Year}-Q{m.Key.Quarter}-M{m.Key.Month}",
+                                        m.Key.Year,
+                                        m.Key.Quarter,
+                                        m.Key.Month,
+                                        Target = monthlyTarget.Where(t => t.Year == m.Key.Year && t.MonthNumber == m.Key.Month).First().PpmhTarget,
+                                        SapNet = m.Sum(t => t.Qty),
+                                        SapScrap = scrap.Where(s => s.Year == m.Key.Year && s.Quarter == m.Key.Quarter && s.Month == m.Key.Month).Sum(s => s.Qty),
+                                        SapGross = (int)scrap.Where(s => s.Year == m.Key.Year && s.Quarter == m.Key.Quarter && s.Month == m.Key.Month).Sum(s => s.Qty) + (int)m.Sum(t => t.Qty),
+                                        LaborHours = _fmsb2Repo.GetPPMH(
+                                                        ((int)scrap.Where(s => s.Year == m.Key.Year && s.Quarter == m.Key.Quarter && s.Month == m.Key.Month).Sum(s => s.Qty) + (int)m.Sum(t => t.Qty)),
+                                                        laborHours.Where(l => l.Year == m.Key.Year && l.Quarter == m.Key.Quarter && l.Month == m.Key.Month).ToList(),
+                                                        area),
+
+                                        WeekDetails = m.GroupBy(w => new { w.Year, w.Quarter, w.Month, w.WeekNumber })
+                                                        .Select(w => new
+                                                        {
+                                                            Key = $"{w.Key.Year}-Q{w.Key.Quarter}-M{w.Key.Month}-W{w.Key.WeekNumber}",
+                                                            w.Key.Year,
+                                                            w.Key.Quarter,
+                                                            w.Key.Month,
+                                                            w.Key.WeekNumber,
+                                                            SapNet = w.Sum(t => t.Qty),
+                                                            SapScrap = scrap.Where(s => s.Year == w.Key.Year && s.Quarter == w.Key.Quarter && s.Month == w.Key.Month && s.WeekNumber == w.Key.WeekNumber).Sum(s => s.Qty),
+                                                            SapGross = (int)scrap.Where(s => s.Year == w.Key.Year && s.Quarter == w.Key.Quarter && s.Month == w.Key.Month && s.WeekNumber == w.Key.WeekNumber).Sum(s => s.Qty) + (int)w.Sum(t => t.Qty),
+                                                            LaborHours = _fmsb2Repo.GetPPMH(
+                                                                            ((int)scrap.Where(s => s.Year == w.Key.Year && s.Quarter == w.Key.Quarter && s.Month == w.Key.Month && s.WeekNumber == w.Key.WeekNumber).Sum(s => s.Qty) + (int)w.Sum(t => t.Qty)),
+                                                                            laborHours.Where(l => l.Year == w.Key.Year && l.Quarter == w.Key.Quarter && l.Month == w.Key.Month && l.WeekNumber == w.Key.WeekNumber).ToList(),
+                                                                            area),
+                                                        }).OrderBy(w => w.WeekNumber)
+
+                                    }).OrderBy(m => m.Month)
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.Quarter)
+                .ToList();
+
+                return result;
+            }
+            catch (Exception e)
+            {
+
+                throw new Exception(e.Message);
+            }
+
 
         }
     }
