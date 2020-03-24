@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Helpers;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -30,79 +31,43 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetScrapVariance")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariance(DateTime start, DateTime end, string area = "", bool isPurchasedScrap = false)
+        public async Task<IActionResult> GetScrapVariance(DateTime start, DateTime end, string area = "", bool isPurchasedScrap = false, bool isPlantTotal = false)
         {
             try
             {
+
+                //if (!isPlantTotal)
+                //{
+                //    var data = await _sapLibRepo.GetPlantWideScrapVariance(start, end, area, isPurchasedScrap);
+                //    return Ok(data);
+                //}
                 
-                var scrapData = await _sapLibRepo.GetDailyScrapRateByCode(start, end, area, isPurchasedScrap);
-                var targets = await _fmsb2LibRepo.GetTargets(area, start.Year, end.Year);
-                var monthlyTarget = targets
-                                .Select(x => new
-                                {
-                                    x.Department,
-                                    x.MonthNumber,
-                                    x.Year,
-                                    x.Quarter,
-                                    x.ScrapRateTarget,
-                                    ScrapRateTargetDecimal = x.ScrapRateTarget / 100
-                                }).ToList();
+                var areas = new List<string> { "Foundry Cell", "Machine Line", "Skirt Coat", "Assembly" };
+                if (!isPlantTotal)
+                {
+                    areas = areas.Where(x => x.ToLower().Trim() == area.ToLower().Trim()).ToList();
+                }
 
-                var quarterlyTarget = monthlyTarget
-                                        .GroupBy(x => new { x.Quarter, x.Year })
-                                        .Select(x => new
-                                        {
-                                            x.Key.Year,
-                                            x.Key.Quarter,
-                                            AvgScrapTarget = x.Average(t => t.ScrapRateTarget),
-                                            AvgScrapRateTargetDecimal = x.Average(t => t.ScrapRateTarget) / 100
-                                        }).ToList();
+                var list = new List<dynamic>();
 
-                var summary = scrapData
-                                .GroupBy(x => new { x.ShiftDate.Year, Quarter = x.ShiftDate.ToQuarter() })
-                                .Select(x => new
-                                {
-                                    x.Key.Year,
-                                    Quarter = $"{x.Key.Year}-Q{x.Key.Quarter}",
-                                    Key = $"{x.Key.Year}-Q{x.Key.Quarter}",
-                                    SapGross = x.Sum(t => t.SapGross),
-                                    SapNet = x.Sum(t => t.SapNet),
-                                    TotalScrap = x.Sum(t => t.TotalScrap),
-                                    Target = quarterlyTarget.Where(k => k.Quarter == x.Key.Quarter && k.Year == x.Key.Year).First().AvgScrapRateTargetDecimal,
-                                    ScrapRate = x.Sum(t => t.SapGross) == 0
-                                                ? 0
-                                                : (decimal)x.Sum(t => t.TotalScrap) / x.Sum(t => t.SapGross),
+                foreach (var a in areas)
+                {
+                    var details = await _sapLibRepo.GetPlantWideScrapVariance(start, end, a, isPurchasedScrap);
+                    var rec = new
+                    {
+                        ScrapType = a == "Foundry Cell"
+                                        ? "Foundry"
+                                        : a == "Machine Line"
+                                            ? "Machining"
+                                            : a == "Skirt Coat"
+                                                ? "Finishing"
+                                                : a,
+                        Details = details
+                    };
+                    list.Add(rec);
+                }
 
-                                    MonthDetails = x.GroupBy(m => new { m.ShiftDate.Month })
-                                                    .Select(m => new
-                                                    {
-                                                        m.Key.Month,
-                                                        MonthName = DateTimeFormatInfo.CurrentInfo.GetAbbreviatedMonthName(m.Key.Month),
-                                                        Key = $"{x.Key.Year}-Q{x.Key.Quarter}-M{m.Key.Month}",
-                                                        SapGross = m.Sum(t => t.SapGross),
-                                                        SapNet = m.Sum(t => t.SapNet),
-                                                        TotalScrap = m.Sum(t => t.TotalScrap),
-                                                        Target = monthlyTarget.Where(k => k.MonthNumber == m.Key.Month && k.Year == x.Key.Year).First().ScrapRateTargetDecimal,
-                                                        ScrapRate = m.Sum(t => t.SapGross) == 0
-                                                                    ? 0
-                                                                    : (decimal)m.Sum(t => t.TotalScrap) / m.Sum(t => t.SapGross),
-
-                                                        WeekDetails = m.GroupBy(w => new { WeekNumber = w.ShiftDate.ToWeekNumber() })
-                                                                        .Select(w => new
-                                                                        {
-                                                                            WeekNumber = $"WK-{w.Key.WeekNumber}",
-                                                                            Key = $"{x.Key.Year}-Q{x.Key.Quarter}-M{m.Key.Month}-WK{w.Key.WeekNumber}",
-                                                                            SapGross = w.Sum(t => t.SapGross),
-                                                                            SapNet = w.Sum(t => t.SapNet),
-                                                                            TotalScrap = w.Sum(t => t.TotalScrap),
-                                                                            ScrapRate = w.Sum(t => t.SapGross) == 0
-                                                                                            ? 0
-                                                                                            : (decimal)w.Sum(t => t.TotalScrap) / w.Sum(t => t.SapGross),
-                                                                        })
-                                                    })
-                                });
-
-                return Ok(summary);
+                return Ok(list);
             }
             catch (Exception e)
             {
