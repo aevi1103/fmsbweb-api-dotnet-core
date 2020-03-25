@@ -65,6 +65,11 @@ namespace FmsbwebCoreApi.Context.Safety
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            if (modelBuilder == null)
+            {
+                throw new ArgumentNullException(nameof(modelBuilder));
+            }
+
             modelBuilder.Entity<AllIncidentsYear>(entity =>
             {
                 entity.HasNoKey();

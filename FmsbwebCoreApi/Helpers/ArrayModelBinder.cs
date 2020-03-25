@@ -12,6 +12,8 @@ namespace FmsbwebCoreApi.Helpers
     {
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
+            if (bindingContext == null) throw new ArgumentNullException(nameof(bindingContext));
+
             // Our binder works only on enumerable types
             if (!bindingContext.ModelMetadata.IsEnumerableType)
             {

@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Models.SAP
 {
-    public class DepartmentKpiDto
+    public class DailyDepartmentKpiDto
     {
         public string Area { get; set; }
+        public DateTime ShiftDate { get; set; }
         public int TotalAreaScrap { get; set; }
         public int TotalProduction { get; set; }
         public int TotalDowntime { get; set; }
@@ -16,6 +17,5 @@ namespace FmsbwebCoreApi.Models.SAP
         public decimal SapOae { get; set; }
         public decimal ScrapRate { get; set; }
         public decimal DowntimeRate { get; set; }
-        public List<DepartmentKpiScrapDetailsDto> ScrapDetails { get; set; }
     }
 }

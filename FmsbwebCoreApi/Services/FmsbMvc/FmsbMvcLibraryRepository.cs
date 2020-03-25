@@ -1,15 +1,15 @@
-﻿using System;
+﻿using FmsbwebCoreApi.Context.Fmsb2;
+using FmsbwebCoreApi.Context.FmsbMvc;
+using FmsbwebCoreApi.Entity.Fmsb2;
+using FmsbwebCoreApi.Entity.FmsbMvc;
+using FmsbwebCoreApi.Helpers;
+using FmsbwebCoreApi.Models.FMSB2;
+using FmsbwebCoreApi.ResourceParameters.FMSB;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FmsbwebCoreApi.Context.FmsbMvc;
-using FmsbwebCoreApi.Entity.FmsbMvc;
-using FmsbwebCoreApi.ResourceParameters.FMSB;
-using Microsoft.EntityFrameworkCore;
-using FmsbwebCoreApi.Helpers;
-using FmsbwebCoreApi.Models.FMSB2;
-using FmsbwebCoreApi.Context.Fmsb2;
-using FmsbwebCoreApi.Entity.Fmsb2;
 
 namespace FmsbwebCoreApi.Services.FmsbMvc
 {
@@ -40,14 +40,16 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
 
         public async Task<List<DowntimeDto>> GetDowntime(DowntimeResourceParameter parameter)
         {
+            if (parameter == null) throw new ArgumentNullException(nameof(parameter));
+
             var start = parameter.Start.AddMonths(-1);
             var end = parameter.End.AddDays(1).Date; //to get end of that day
 
-            var machines = await _fmsbContext.MachineList.Where(x => x.MachineMapper != null).ToListAsync();
-            var owners = await GetDowntimeOwner();
+            var machines = await _fmsbContext.MachineList.Where(x => x.MachineMapper != null).ToListAsync().ConfigureAwait(false);
+            var owners = await GetDowntimeOwner().ConfigureAwait(false);
             var machineMapper = "";
 
-            if (parameter.Line != "")
+            if (!string.IsNullOrEmpty(parameter.Line))
             {
                 machineMapper = machines.Where(x => x.MachineName.ToLower() == parameter.Line.ToLower().Trim()).FirstOrDefault().MachineMapper;
             }
@@ -55,7 +57,8 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             var tasks = new List<Task>();
             var callboxTask = _context.OverallCallbox
                         .Where(x => x.RequestDateTime >= start && x.RequestDateTime <= end)
-                        .Where(x => x.Department.ToLower().Contains(parameter.Dept.ToLower()))
+                        .Where(x => x.Department.ToLower()
+                                        .Contains(parameter.Dept.ToLower()))
                         .Where(x => x.Line.ToLower().Contains(machineMapper.ToLower()))
                         .ToListAsync();
 
@@ -68,7 +71,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             tasks.Add(callboxTask);
             tasks.Add(manualDowntimeEntryTask);
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
             var callbox = callboxTask.Result;
             var manualDowntimeEntry = manualDowntimeEntryTask.Result;
 
@@ -130,7 +133,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             var sumManual = manualDowntime.Sum(q => q.DowntimeLoss);
 
             spreadCallboxData.AddRange(manualDowntime);
-                            
+
             return spreadCallboxData
                         .OrderBy(x => x.ShifDate)
                         .ThenBy(x => x.Shift)
@@ -144,7 +147,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             {
                 var dh = new DateTimeHelpers();
                 var list = new List<OverallCallbox>();
-                if (data.Count() == 0) return list;
+                if (data.Count == 0) return list;
 
                 var dataToSpreadDowntime = data.Where(x => x.RequestDateTime.Hour != Convert.ToDateTime((x.CompletedDateTime == null ? DateTime.Now : x.CompletedDateTime)).Hour).ToList();
                 var others = data.Where(x => x.RequestDateTime.Hour == Convert.ToDateTime((x.CompletedDateTime == null ? DateTime.Now : x.CompletedDateTime)).Hour).ToList();
@@ -224,7 +227,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
 
         public async Task<List<DowntimeOwner>> GetDowntimeOwner()
         {
-            return await _fmsbContext.DowntimeOwner.ToListAsync();
+            return await _fmsbContext.DowntimeOwner.ToListAsync().ConfigureAwait(false);
         }
     }
 }

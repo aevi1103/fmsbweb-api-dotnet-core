@@ -74,6 +74,7 @@ namespace FmsbwebCoreApi.Controllers.Safety
             [FromQuery] IncidentsResourceParameter incidentsResourceParameter,
             [FromHeader(Name = "Accept")] string mediaType)
         {
+            if (incidentsResourceParameter == null) throw new ArgumentNullException(nameof(incidentsResourceParameter));
 
             //checks if valid media type
             if (!MediaTypeHeaderValue.TryParse(mediaType, out MediaTypeHeaderValue parsedMediaType))

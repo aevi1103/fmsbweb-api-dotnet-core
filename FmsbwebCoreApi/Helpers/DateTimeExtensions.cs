@@ -8,6 +8,8 @@ namespace FmsbwebCoreApi.Helpers
 {
     public static class DateTimeExtensions
     {
+        public static CultureInfo CultureInfo { get; } = new CultureInfo("en-US");
+
         public static bool IsYesterday(this DateTime date)
         {
             return date.Date == DateTime.Today.AddDays(-1) ? true : false;
@@ -15,7 +17,7 @@ namespace FmsbwebCoreApi.Helpers
 
         public static DateTime ToDateTime(this DateTime? date)
         {
-            return Convert.ToDateTime(date);
+            return Convert.ToDateTime(date, CultureInfo);
         }
 
         public static double ToQuarter(this DateTime date)
@@ -31,6 +33,8 @@ namespace FmsbwebCoreApi.Helpers
 
     public class DateTimeHelpers
     {
+        public CultureInfo CultureInfo { get; } = new CultureInfo("en-US");
+
         public DateTime ShiftDate { get; set; }
         public string Shift { get; set; }
         public DateTime StartTime { get; set; }
@@ -38,7 +42,7 @@ namespace FmsbwebCoreApi.Helpers
 
         public DateTime EndOfHour(DateTime? date)
         {
-            var dte = Convert.ToDateTime(date);
+            var dte = Convert.ToDateTime(date, CultureInfo);
             var time = new TimeSpan(dte.Hour, 59, 59);
             return dte.Date + time;
         }

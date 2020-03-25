@@ -3,11 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Globalization;
 
 namespace FmsbwebCoreApi.Entity.Fmsb2
 {
     public partial class FinanceLaborHoursView
     {
+        public static readonly CultureInfo cultureInfo = new CultureInfo("en-US");
+
         [StringLength(100)]
         public string Name { get; set; }
         [Column("ID_")]
@@ -23,9 +26,9 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         [Column(TypeName = "datetime")]
         public DateTime? DateIn { get; set; }
 
-        public int? Year => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn).Year;
-        public int? Month => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn).Month;
-        public int? Quarter => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn).ToQuarter();
+        public int? Year => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn, cultureInfo).Year;
+        public int? Month => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn, cultureInfo).Month;
+        public int? Quarter => DateIn == null ? null : (int?)Convert.ToDateTime(DateIn, cultureInfo).ToQuarter();
 
         public TimeSpan? TimeIn { get; set; }
         [Column(TypeName = "datetime")]
@@ -53,5 +56,7 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public int? WeekNumber { get; set; }
         [Column("isPSO")]
         public bool? IsPso { get; set; }
+
+        
     }
 }

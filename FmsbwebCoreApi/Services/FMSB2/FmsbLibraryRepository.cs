@@ -44,11 +44,12 @@ namespace FmsbwebCoreApi.Services.FMSB2
         {
             return await _context.FinanceLaborHoursView
                             .Where(x => x.DateIn >= start && x.DateIn <= end)
-                            .ToListAsync();
+                            .ToListAsync().ConfigureAwait(false);
         }
 
         public List<FinanceLaborHoursView> TransformLaborHoursData(IEnumerable<FinanceLaborHoursView> data, string dept = "")
         {
+            if (dept == null) throw new ArgumentNullException(nameof(dept));
 
             dept = dept.Trim().ToLower();
 
@@ -74,6 +75,8 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         public ProductionLaborHoursDto GetLaborHours(List<FinanceLaborHoursView> laborHrs, string dept)
         {
+            if (dept == null) throw new ArgumentNullException(nameof(dept));
+
             dept = dept.Trim().ToLower();
 
             //transform data
@@ -303,7 +306,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
                                     Area = x.Key.Area,
                                     Qty = (int)x.Sum(s => s.Qty)
                                 })
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
             var scrap = await _sapContext.Scrap2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
@@ -315,7 +318,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
                                     Area = x.Key.Area,
                                     Qty = (int)x.Sum(s => s.Qty)
                                 })
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
             return new ProdScrapForLaborHours
             {
@@ -430,7 +433,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
                         Area = x.Key.Area,
                         Qty = (int)x.Sum(s => s.Qty)
                     })
-                    .ToListAsync();
+                    .ToListAsync().ConfigureAwait(false);
 
                 var scraps = await _sapContext.Scrap2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
@@ -444,11 +447,11 @@ namespace FmsbwebCoreApi.Services.FMSB2
                                     Area = x.Key.Area,
                                     Qty = (int)x.Sum(s => s.Qty)
                                 })
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
                 var labors = await _context.FinanceLaborHoursView
                                 .Where(x => x.DateIn >= start && x.DateIn <= end)
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
 
                 var prodWeeks = prods.Select(x => new { x.WeekNumber, x.Year }).Distinct();
@@ -487,26 +490,26 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         public async Task<IEnumerable<FinanceDailyKpi>> GetFinanceDailyKpi(DateTime date)
         {
-            return await _context.FinanceDailyKpi.Where(x => x.Date == date).ToListAsync();
+            return await _context.FinanceDailyKpi.Where(x => x.Date == date).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<FinanceDeptFcst>> GetFinanceDeptForecast(int year, int month)
         {
-            return await _context.FinanceDeptFcst.Where(x => x.Year == year && x.MonthNum == month).ToListAsync();
+            return await _context.FinanceDeptFcst.Where(x => x.Year == year && x.MonthNum == month).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<FinanceFlashProjections>> GetFinanceFlashProjections(int year, int month)
         {
-            return await _context.FinanceFlashProjections.Where(x => x.Year == year && x.MonthNum == month).ToListAsync();
+            return await _context.FinanceFlashProjections.Where(x => x.Year == year && x.MonthNum == month).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<FinaceKpiDto> GetFinanceKpi(DateTime date)
         {
             return new FinaceKpiDto
             {
-                DailyKpi = await GetFinanceDailyKpi(date),
-                MonthlyForecast = await GetFinanceDeptForecast(date.Year, date.Month),
-                MonthlyFlashProjections = await GetFinanceFlashProjections(date.Year, date.Month)
+                DailyKpi = await GetFinanceDailyKpi(date).ConfigureAwait(false),
+                MonthlyForecast = await GetFinanceDeptForecast(date.Year, date.Month).ConfigureAwait(false),
+                MonthlyFlashProjections = await GetFinanceFlashProjections(date.Year, date.Month).ConfigureAwait(false)
             };
         }
 
@@ -515,11 +518,13 @@ namespace FmsbwebCoreApi.Services.FMSB2
             return await _context.KpiTarget
                             .Where(x => x.Department.ToLower() == dept.ToLower()
                                     && x.MonthNumber == endDate.Month
-                                    && x.Year == endDate.Year).FirstOrDefaultAsync();
+                                    && x.Year == endDate.Year).FirstOrDefaultAsync().ConfigureAwait(false);
         }
 
         public async Task<List<KpiTarget>> GetTargets(string area, int startYear, int endYear)
         {
+            if (area == null) throw new ArgumentNullException(nameof(area));
+
             var dept = area;
             switch (area.ToLower())
             {
@@ -533,7 +538,7 @@ namespace FmsbwebCoreApi.Services.FMSB2
             return await _context.KpiTarget
                             .Where(x => x.Department.ToLower() == dept.ToLower())
                             .Where(x => x.Year >= startYear && x.Year <= endYear)
-                            .ToListAsync();
+                            .ToListAsync().ConfigureAwait(false);
         }
     }
 }

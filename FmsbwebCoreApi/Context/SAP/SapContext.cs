@@ -72,6 +72,11 @@ namespace FmsbwebCoreApi.Context.SAP
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            if (modelBuilder == null)
+            {
+                throw new ArgumentNullException(nameof(modelBuilder));
+            }
+
             modelBuilder.Entity<AutoGageScrapCodes>(entity =>
             {
                 entity.HasNoKey();

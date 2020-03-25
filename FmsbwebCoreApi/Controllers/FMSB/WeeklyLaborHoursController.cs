@@ -38,13 +38,14 @@ namespace FmsbwebCoreApi.Controllers.FMSB
                 var data = await _fmsbLibRepo.GetWeeklyProdScrapForLaborHrs(
                 resourceParameter.Start,
                 resourceParameter.End,
-                resourceParameter.Area);
+                resourceParameter.Area)
+                    .ConfigureAwait(false);
 
                 return Ok(data);
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                throw new Exception(e.Message);
             }
             
         }

@@ -28,7 +28,7 @@ namespace FmsbwebCoreApi.Services.FmsbQuality
 
         public async Task<IEnumerable<CustomerComplaint>> GetListCustomerComplaint(DateTime start, DateTime end)
         {
-            return await _context.CustomerComplaint.Where(x => x.Date >= start && x.Date <= end).OrderBy(x => x.Date).ToListAsync();
+            return await _context.CustomerComplaint.Where(x => x.Date >= start && x.Date <= end).OrderBy(x => x.Date).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<MrrViewDto>> GetListMrr(DateTime start, DateTime end)
@@ -43,7 +43,7 @@ namespace FmsbwebCoreApi.Services.FmsbQuality
                                 Qty = (int)x.Sum(s => s.Quantity)
                             })
                             .OrderBy(x => x.Qty)
-                            .ToListAsync();
+                            .ToListAsync().ConfigureAwait(false);
         }
 
         public void Dispose()

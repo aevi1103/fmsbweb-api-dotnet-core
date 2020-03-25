@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FmsbwebCoreApi.Models.Safety.Incident
 {
-    [DescriptionMustBeDifferentFromInterim(ErrorMessage = "Description must be different from Interim Action Taken.")]
+    [DescriptionMustBeDifferentFromInterimAttribute(ErrorMessage = "Description must be different from Interim Action Taken.")]
     public abstract class IncidentForManipulation //: IValidatableObject
     {
         [Required]

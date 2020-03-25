@@ -32,6 +32,8 @@ namespace FmsbwebCoreApi.Controllers.Safety
         public IActionResult GetMonthlyIncidentRate(
             [FromQuery] MonthlyIncidentResouceParameter resourceparameter)
         {
+            if (resourceparameter == null) throw new ArgumentNullException(nameof(resourceparameter));
+
             var monthlyIncidentsFromRepo = _safetyLibraryRepository.GetMonthlyIncidentRate(
                                             resourceparameter.Start, resourceparameter.End).ToList();
 

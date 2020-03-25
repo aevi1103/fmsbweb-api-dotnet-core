@@ -16,22 +16,25 @@ namespace FmsbwebCoreApi.Services.SAP
         ScrapByCodeDto GetScrapByCode(List<Models.SAP.Scrap> scrap, string area, bool isSbScrap, int sapNet);
         DepartmentScrapDto GetDepartmentScrap(List<Models.SAP.Scrap> scrap, string area, int sapNet);
         SapProductionByTypeDto GetSapProductionByType(List<SapProdDto> sapProd, string area);
-        Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByScrapAreaFromDb(DateTime start, DateTime end, string area);
-        Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime start, DateTime end, string area);
+        Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByScrapAreaFromDb(DateTime startDate, DateTime endDate, string area);
+        Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime startDate, DateTime endDate, string area);
         Task<IEnumerable<DailyScrapByShiftDto>> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams);
-        Task<IEnumerable<dynamic>> GetScrapByProgram(DateTime start, DateTime end, string area, bool isPurchasedScrap = false);
-        Task<IEnumerable<dynamic>> GetPlantWideScrapVariance(DateTime start, DateTime end, string area = "", bool isPurchasedScrap = false);
+        Task<IEnumerable<dynamic>> GetScrapByProgram(DateTime startDate, DateTime endDate, string area, bool isPurchasedScrap = false);
+        Task<IEnumerable<dynamic>> GetPlantWideScrapVariance(DateTime startDate, DateTime endDate, string area = "", bool isPurchasedScrap = false);
 
         //prod
-        Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime start, DateTime end, string area);
-        Task<IEnumerable<SapProdDto>> GetSapProdByTypeFromDb(DateTime start, DateTime end, string area);
-        Task<GetSapProdAndScrapDto> GetSapProdAndScrap(DateTime start, DateTime end, string area);
+        Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime startDate, DateTime endDate, string area);
+        Task<IEnumerable<SapProdDto>> GetSapProdByTypeFromDb(DateTime startDate, DateTime endDate, string area);
+        Task<GetSapProdAndScrapDto> GetSapProdAndScrap(DateTime startDate, DateTime endDate, string area);
 
         //prod and scrap and labor hours
-        Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area);
+        Task<ProductionMorningMeetingDto> GetProductionData(DateTime startDate, DateTime endDate, string area);
+
+        //prod scrap downtime
+        Task<DepartmentKpiDto> GetDepartmentKpi(DateTime startDate, DateTime endDate, string area);
 
         //labor hours
-        Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime start, DateTime end, string area);
+        Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime startDate, DateTime endDate, string area);
 
         //prod, scrap, downtime, components
         IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(
@@ -45,22 +48,22 @@ namespace FmsbwebCoreApi.Services.SAP
             IEnumerable<SapProdDetailDto> prod,
             IEnumerable<HxhProductionByProgramDto> hxh);
 
-        Task<DepartmentDetailsDto> GetDepartmentDetails(DateTime start, DateTime end, string area);
+        Task<DepartmentDetailsDto> GetDepartmentDetails(DateTime startDate, DateTime endDate, string area);
 
         //targets
         IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget();
 
         //utils
-        string GetColorCode(string area, string type, decimal? value, DateTime dateEnd);
+        string GetColorCode(string area, string type, decimal? value, DateTime dateendDate);
         string MapAreaTopScrapArea(string area);
         int MapShiftToShiftOrder(string shift);
 
         //charts
         Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRateByCode(
-            DateTime start, DateTime end, string area,
+            DateTime startDate, DateTime endDate, string area,
             bool isPurchasedScrap = false);
 
-        Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area);
+        Task<IEnumerable<DailyDepartmentKpiDto>> GetDailyKpiChart(DateTime startDate, DateTime endDate, string area);
 
         MachineMapping GetMappedLineToWorkCenter(string line, string side);
 

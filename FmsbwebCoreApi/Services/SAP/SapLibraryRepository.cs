@@ -1,21 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.SAP;
-using FmsbwebCoreApi.Context.Intranet;
+using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
-using FmsbwebCoreApi.Entity.Intranet;
-using FmsbwebCoreApi.Context.Fmsb2;
+using FmsbwebCoreApi.Helpers;
+using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Models.SAP;
-using Microsoft.EntityFrameworkCore;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.FMSB2;
 using FmsbwebCoreApi.Services.Intranet;
-using FmsbwebCoreApi.Helpers;
-using FmsbwebCoreApi.Entity.Fmsb2;
-using FmsbwebCoreApi.Models.Intranet;
-using FmsbwebCoreApi.ResourceParameters.SAP;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Services.SAP
 {
@@ -31,7 +29,6 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public SapLibraryRepository(
             SapContext context,
-            IntranetContext intranetContext,
             Fmsb2Context fmsbContext,
             IFmsb2LibraryRepository fmsb2Repo,
             IIntranetLibraryRepository intranetRepo)
@@ -51,6 +48,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public string MapAreaTopScrapArea(string area)
         {
+            if (area == null) throw new ArgumentNullException(nameof(area));
             switch (area.ToLower().Trim())
             {
                 case "foundry cell":
@@ -354,6 +352,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public async Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByScrapAreaFromDb(DateTime start, DateTime end, string area)
         {
+            if (area == null) throw new ArgumentNullException(nameof(area));
 
             var qry = _context.Scrap2Summary2.Where(x => x.ShiftDate >= start && x.ShiftDate <= end).AsQueryable();
 
@@ -389,7 +388,8 @@ namespace FmsbwebCoreApi.Services.SAP
                                 IsPurchashedExclude2 = x.IsPurchashedExclude2,
                                 ScrapDesc = x.ScrapDesc,
                                 Qty = (int)x.Qty
-                            }).ToListAsync();
+                            }).ToListAsync()
+                            .ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime start, DateTime end, string area)
@@ -409,7 +409,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                     IsPurchashedExclude2 = x.IsPurchashedExclude2,
                                     ScrapDesc = x.ScrapDesc,
                                     Qty = (int)x.Qty
-                                }).ToListAsync();
+                                }).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime start, DateTime end, string area)
@@ -424,11 +424,13 @@ namespace FmsbwebCoreApi.Services.SAP
                                     SapType = x.Key.sapType,
                                     Area = x.Key.Area,
                                     Qty = (int)x.Sum(s => s.Qty)
-                                }).ToListAsync();
+                                }).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<SapProdDto>> GetSapProdByTypeFromDb(DateTime start, DateTime end, string area)
         {
+            if (area == null) throw new ArgumentNullException(nameof(area));
+
             var qry = _context
                         .Production2Summary
                         .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
@@ -463,11 +465,13 @@ namespace FmsbwebCoreApi.Services.SAP
                                 SapType = x.Key.sapType,
                                 Area = x.Key.Area,
                                 Qty = (int)x.Sum(s => s.Qty)
-                            }).ToListAsync();
+                            }).ToListAsync().ConfigureAwait(false);
         }
 
         public string GetColorCode(string area, string type, decimal? value, DateTime dateEnd)
         {
+            if (area == null) throw new ArgumentNullException(nameof(area));
+
             var black = "#262626";
 
             if (value == null)
@@ -554,13 +558,13 @@ namespace FmsbwebCoreApi.Services.SAP
         public async Task<ProductionMorningMeetingDto> GetProductionData(DateTime start, DateTime end, string area)
         {
             //load data from db
-            var scrapByScrapArea = (await GetScrapDataByScrapAreaFromDb(start, end, area)).ToList();
-            var scrapByDepartment = (await GetScrapDataByDepartmentFromDb(start, end, area)).ToList();
+            var scrapByScrapArea = (await GetScrapDataByScrapAreaFromDb(start, end, area).ConfigureAwait(false)).ToList();
+            var scrapByDepartment = (await GetScrapDataByDepartmentFromDb(start, end, area).ConfigureAwait(false)).ToList();
 
-            var sapProdByArea = (await GetSapProdByAreaFromDb(start, end, area)).ToList();
-            var sapProdByType = (await GetSapProdByTypeFromDb(start, end, area)).ToList();
+            var sapProdByArea = (await GetSapProdByAreaFromDb(start, end, area).ConfigureAwait(false)).ToList();
+            var sapProdByType = (await GetSapProdByTypeFromDb(start, end, area).ConfigureAwait(false)).ToList();
 
-            var hxh = (await _intranetRepo.GetHxhProduction(start, end, area)).ToList();
+            var hxh = (await _intranetRepo.GetHxhProduction(start, end, area).ConfigureAwait(false)).ToList();
 
             //transform data
             var sbScrap = scrapByScrapArea
@@ -608,12 +612,12 @@ namespace FmsbwebCoreApi.Services.SAP
             if (start.IsYesterday()) //check if date is yesterday, if yes subtract -6 day from end day and store in a variable
             {
                 //get data from the db with the new date range
-                var prodScrapForLaborHrs = await _fmsb2Repo.GetProdScrapForLaborHrs(startDayForLaborHorsIfYesterday, end, area);
+                var prodScrapForLaborHrs = await _fmsb2Repo.GetProdScrapForLaborHrs(startDayForLaborHorsIfYesterday, end, area).ConfigureAwait(false);
                 prodForLaborHours = prodScrapForLaborHrs.Prod.ToList();
                 scrapForLaborHours = prodScrapForLaborHrs.Scrap.ToList();
 
                 //get labor hrs data from db
-                laborHrs = await _fmsb2Repo.GetLaborHoursData(startDayForLaborHorsIfYesterday, end);
+                laborHrs = await _fmsb2Repo.GetLaborHoursData(startDayForLaborHorsIfYesterday, end).ConfigureAwait(false);
             }
             else
             {
@@ -622,7 +626,7 @@ namespace FmsbwebCoreApi.Services.SAP
                 scrapForLaborHours = scrapByDepartment;
 
                 //use unmodified date range
-                laborHrs = await _fmsb2Repo.GetLaborHoursData(start, end);
+                laborHrs = await _fmsb2Repo.GetLaborHoursData(start, end).ConfigureAwait(false);
             }
 
             scrapForLaborHours = scrapForLaborHours
@@ -726,7 +730,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                     x.Key.ShiftDate,
                                     TotalProd = x.Sum(s => s.QtyProd)
                                 })
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
 
                 var finScrap = new List<string> { "anodize", "skirt coat" };
@@ -742,7 +746,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                         x.Key.ShiftDate,
                                         TotalScrap = x.Sum(s => s.Qty)
                                     })
-                                    .ToListAsync();
+                                    .ToListAsync().ConfigureAwait(false);
 
                 var data = scrapData
                             .Select(x => new DailyScrapByShiftDateDto
@@ -784,7 +788,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
         }
 
-        public async Task<IEnumerable<DepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area)
+        public async Task<IEnumerable<DailyDepartmentKpiDto>> GetDailyKpiChart(DateTime start, DateTime end, string area)
         {
             //get data from db
             var production = await _context.Production2
@@ -797,7 +801,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                    x.Key.ShiftDate,
                                    TotalProd = x.Sum(s => s.QtyProd)
                                })
-                               .ToListAsync();
+                               .ToListAsync().ConfigureAwait(false);
 
             var scrapData = await _context.Scrap2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
@@ -810,13 +814,13 @@ namespace FmsbwebCoreApi.Services.SAP
                                     x.Key.ShiftDate,
                                     TotalScrap = x.Sum(s => s.Qty)
                                 })
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
-            var target = await _intranetRepo.DailyHxHTargetByArea(start, end, area);
+            var target = await _intranetRepo.DailyHxHTargetByArea(start, end, area).ConfigureAwait(false);
 
             //transform data
             var result = production
-                            .Select(x => new DepartmentKpiDto
+                            .Select(x => new DailyDepartmentKpiDto
                             {
                                 Area = x.Area,
                                 ShiftDate = (DateTime)x.ShiftDate,
@@ -830,7 +834,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                             ? 0
                                             : target.Where(s => s.ShiftDate == x.ShiftDate).Sum(s => s.Target)
                             })
-                            .Select(x => new DepartmentKpiDto
+                            .Select(x => new DailyDepartmentKpiDto
                             {
                                 Area = x.Area,
                                 ShiftDate = x.ShiftDate,
@@ -839,7 +843,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                 Target = x.Target,
                                 SapGross = x.TotalAreaScrap + x.TotalProduction
                             })
-                            .Select(x => new DepartmentKpiDto
+                            .Select(x => new DailyDepartmentKpiDto
                             {
                                 Area = x.Area,
                                 ShiftDate = x.ShiftDate,
@@ -903,7 +907,7 @@ namespace FmsbwebCoreApi.Services.SAP
                             .OrderByDescending(x => x.Qty)
                             .ToList();
 
-            var targets = (await _intranetRepo.GetHxhProduction(start, end, area)).ToList();
+            var targets = (await _intranetRepo.GetHxhProduction(start, end, area).ConfigureAwait(false)).ToList();
 
             //transform data
             var sbScrapList = scrap.Where(x => x.IsPurchaseScrap == false).OrderByDescending(x => x.Qty).ToList();
@@ -1213,8 +1217,10 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public async Task<DepartmentDetailsDto> GetDepartmentDetails(DateTime start, DateTime end, string area)
         {
+            if (area == null) throw new ArgumentNullException(nameof(area));
+
             //get data from db
-            var scrapData = (await GetScrapDataByDepartmentFromDb(start, end, area)).ToList();
+            var scrapData = (await GetScrapDataByDepartmentFromDb(start, end, area).ConfigureAwait(false)).ToList();
             var scrap = scrapData.Where(x => x.ScrapCode != "8888").ToList();
             var warmers = scrapData.Where(x => x.ScrapCode == "8888").ToList();
 
@@ -1233,9 +1239,9 @@ namespace FmsbwebCoreApi.Services.SAP
                                     User = x.Key.EnteredUser,
                                     SapNet = (int)x.Sum(s => s.QtyProd)
                                 })
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
-            var hxh = await _intranetRepo.GetHxhProdByLineAndProgram(start, end, area);
+            var hxh = await _intranetRepo.GetHxhProdByLineAndProgram(start, end, area).ConfigureAwait(false);
 
             //get overall total
             var target = hxh.LineDetails.Sum(x => x.Target);
@@ -1358,6 +1364,8 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public async Task<IEnumerable<DailyScrapByShiftDto>> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams)
         {
+            if (resourceParams == null) throw new ArgumentNullException(nameof(resourceParams));
+
             var qry = _context.Scrap2Summary2
                                 .Where(x => x.ShiftDate >= resourceParams.Start && x.ShiftDate <= resourceParams.End)
                                 .Where(x => x.Area.ToLower() == resourceParams.Area.ToLower())
@@ -1375,7 +1383,7 @@ namespace FmsbwebCoreApi.Services.SAP
                 qry = qry.Where(x => x.Program.ToLower().Trim() == resourceParams.Program.ToLower().Trim());
             }
 
-            var data = (await qry.ToListAsync())
+            var data = (await qry.ToListAsync().ConfigureAwait(false))
                                 .GroupBy(x => new { x.ShiftDate, x.Shift, x.ScrapCode, x.ScrapDesc })
                                 .Select(x => new DailyScrapByShiftDto
                                 {
@@ -1395,6 +1403,9 @@ namespace FmsbwebCoreApi.Services.SAP
 
         public MachineMapping GetMappedLineToWorkCenter(string line, string side = "n/a")
         {
+            if (side == null) throw new ArgumentNullException(nameof(side));
+            if (line == null) throw new ArgumentNullException(nameof(line));
+
             side = side.ToLower().Trim();
             if (side == "n/a")
             {
@@ -1445,7 +1456,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                     Side = x.Side == null ? "n/a" : x.Side
                                 })
                                 .OrderBy(x => x.WorkCenter)
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
             return workcenters;
 
@@ -1464,7 +1475,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                     x.Key.Program,
                                     TotalProd = x.Sum(s => s.QtyProd)
                                 })
-                                .ToListAsync();
+                                .ToListAsync().ConfigureAwait(false);
 
                 var finScrap = new List<string> { "anodize", "skirt coat" };
 
@@ -1483,12 +1494,14 @@ namespace FmsbwebCoreApi.Services.SAP
                                         Qty = x.Sum(s => s.Qty),
 
                                     })
-                                    .ToListAsync();
+                                    .ToListAsync().ConfigureAwait(false);
 
                 var scrapByProgram = scrap
-                                        .GroupBy(x => new { 
+                                        .GroupBy(x => new
+                                        {
                                             x.Program,
-                                            ScrapAreaName = (x.ScrapAreaName.ToLower() == "anodize" || x.ScrapAreaName.ToLower() == "skirt coat") ? "Finishing" : x.ScrapAreaName })
+                                            ScrapAreaName = (x.ScrapAreaName.ToLower() == "anodize" || x.ScrapAreaName.ToLower() == "skirt coat") ? "Finishing" : x.ScrapAreaName
+                                        })
                                         .Select(x => new
                                         {
                                             x.Key.Program,
@@ -1535,7 +1548,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                 })
                                 .Select(x => new
                                 {
-                                    key = $"{x.ScrapAreaName.Replace(" ","_")}-{x.Program.Replace(" ", "_")}",
+                                    key = $"{x.ScrapAreaName.Replace(" ", "_")}-{x.Program.Replace(" ", "_")}",
                                     x.ScrapAreaName,
                                     x.Program,
                                     x.SapNet,
@@ -1593,6 +1606,8 @@ namespace FmsbwebCoreApi.Services.SAP
         {
             try
             {
+                if (area == null) throw new ArgumentNullException(nameof(area));
+
                 var deptName = area;
                 var deptForTarget = area;
                 switch (area.ToLower().Trim())
@@ -1613,7 +1628,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
 
                 //get data from db run in parallel
-                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end);
+                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end).ConfigureAwait(false);
 
                 var prod = (await _context.Production2
                                         .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
@@ -1624,7 +1639,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                             x.Key.ShiftDate,
                                             Qty = x.Sum(t => t.QtyProd)
                                         })
-                                        .ToListAsync())
+                                        .ToListAsync().ConfigureAwait(false))
                                         .Select(x => new
                                         {
                                             x.Area,
@@ -1647,7 +1662,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                             x.Key.ShiftDate,
                                             Qty = x.Sum(t => t.Qty)
                                         })
-                                        .ToListAsync())
+                                        .ToListAsync().ConfigureAwait(false))
                                         .Select(x => new
                                         {
                                             x.Area,
@@ -1663,7 +1678,7 @@ namespace FmsbwebCoreApi.Services.SAP
                 var monthlyTarget = await _fmsbContext.KpiTarget
                                     .Where(x => x.Year >= start.Year && x.Year <= end.Year)
                                     .Where(x => x.Department.ToLower() == deptForTarget)
-                                    .ToListAsync();
+                                    .ToListAsync().ConfigureAwait(false);
 
                 var quarterlyTarget = monthlyTarget
                                             .GroupBy(x => new { x.Quarter, x.Year })
@@ -1761,8 +1776,8 @@ namespace FmsbwebCoreApi.Services.SAP
                         break;
                 }
 
-                var scrapData = await GetDailyScrapRateByCode(start, end, area, isPurchasedScrap);
-                var targets = await _fmsb2Repo.GetTargets(area, start.Year, end.Year);
+                var scrapData = await GetDailyScrapRateByCode(start, end, area, isPurchasedScrap).ConfigureAwait(false);
+                var targets = await _fmsb2Repo.GetTargets(area, start.Year, end.Year).ConfigureAwait(false);
                 var monthlyTarget = targets
                                 .Select(x => new
                                 {
@@ -1837,6 +1852,11 @@ namespace FmsbwebCoreApi.Services.SAP
             {
                 throw new Exception(e.Message);
             }
+        }
+
+        public Task<DepartmentKpiDto> GetDepartmentKpi(DateTime start, DateTime end, string area)
+        {
+            throw new NotImplementedException();
         }
     }
 }

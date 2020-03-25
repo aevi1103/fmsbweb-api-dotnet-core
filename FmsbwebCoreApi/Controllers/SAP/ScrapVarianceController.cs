@@ -3,11 +3,9 @@ using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FmsbwebCoreApi.Helpers;
-using System.Globalization;
-using System.Collections.Generic;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -45,7 +43,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 var list = new List<dynamic>();
                 foreach (var a in areas)
                 {
-                    var details = await _sapLibRepo.GetPlantWideScrapVariance(start, end, a, isPurchasedScrap);
+                    var details = await _sapLibRepo.GetPlantWideScrapVariance(start, end, a, isPurchasedScrap).ConfigureAwait(false);
                     var rec = new
                     {
                         ScrapType = a == "Foundry Cell"
@@ -64,7 +62,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                throw new Exception(e.Message);
             }
 
         }

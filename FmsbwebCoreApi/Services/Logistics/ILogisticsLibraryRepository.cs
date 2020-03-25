@@ -14,11 +14,11 @@ namespace FmsbwebCoreApi.Services.Logistics
         IEnumerable<InvProgramTargets> GetProgramTargets();
         IEnumerable<StockOverviewBySlocDto> GetStockOverviewBySloc(DateTime date);
 
-        Task<List<SapDumpNewView>> GetInventory(DateTime start, DateTime end);
-        Task<List<LogisticsCommentDto>> GetLogisticsComments(DateTime start, DateTime end);
+        Task<List<SapDumpNewView>> GetInventory(DateTime startDate, DateTime endDate);
+        Task<List<LogisticsCommentDto>> GetLogisticsComments(DateTime startDate, DateTime endDate);
         List<string> GetDmaxParts();
-        Task<List<RawMatInv>> GetRawMaterialsInventory(DateTime start, DateTime end);
-        Task<List<LogisticsDollarsDto>> GetLogisticsDollars(DateTime start, DateTime end);
+        Task<List<RawMatInv>> GetRawMaterialsInventory(DateTime startDate, DateTime endDate);
+        Task<List<LogisticsDollarsDto>> GetLogisticsDollars(DateTime startDate, DateTime endDate);
 
         IEnumerable<InventoryStatusDto> GetInventoryStatus(
                 List<SapDumpNewView> inventoryData,
@@ -29,11 +29,11 @@ namespace FmsbwebCoreApi.Services.Logistics
             List<RawMatInv> rawMatData,
             List<LogisticsDollarsDto> dollarsData,
             List<string> dmax);
-        Task<IEnumerable<CustomerCommentsDto>> GetCustomerComments(DateTime start, DateTime end);
+        Task<IEnumerable<CustomerCommentsDto>> GetCustomerComments(DateTime startDate, DateTime endDate);
 
         DaysOnHandColorCode DaysOnHandStatusColor(decimal daysOnHand, int InvQty);
-        Task<IEnumerable<InventoryDaysOnHandDto>> GetInventoryDaysOnHand(DateTime start, DateTime end);
+        Task<IEnumerable<InventoryDaysOnHandDto>> GetInventoryDaysOnHand(DateTime startDate, DateTime endDate);
 
-        Task<StockStatusDto> GetStockStatus(DateTime start, DateTime end);
+        Task<StockStatusDto> GetStockStatus(DateTime startDate, DateTime endDate);
     }
 }

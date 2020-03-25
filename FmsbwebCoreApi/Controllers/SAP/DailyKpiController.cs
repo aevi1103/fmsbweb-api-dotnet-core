@@ -35,7 +35,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
             var prodData = await _sapLibRepo.GetDailyKpiChart(
                                     resourceParameter.Start,
                                     resourceParameter.End,
-                                    resourceParameter.Area);
+                                    resourceParameter.Area).ConfigureAwait(false);
 
 
             var category = prodData.Select(x => x.ShiftDate.ToShortDateString()).Distinct();

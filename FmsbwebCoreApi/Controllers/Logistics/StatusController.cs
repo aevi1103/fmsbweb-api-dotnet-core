@@ -32,8 +32,7 @@ namespace FmsbwebCoreApi.Controllers.Logistics
                 return BadRequest();
             }
 
-            var inventoryStatus = await _logisticsLibRepo
-                                    .GetStockStatus(resourceParameter.Start, resourceParameter.End);
+            var inventoryStatus = await _logisticsLibRepo.GetStockStatus(resourceParameter.Start, resourceParameter.End).ConfigureAwait(false);
 
             return Ok(inventoryStatus);
         }

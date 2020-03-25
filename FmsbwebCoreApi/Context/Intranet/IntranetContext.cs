@@ -34,6 +34,11 @@ namespace FmsbwebCoreApi.Context.Intranet
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            if (modelBuilder == null)
+            {
+                throw new ArgumentNullException(nameof(modelBuilder));
+            }
+
             modelBuilder.HasAnnotation("Relational:DefaultSchema", "db_owner");
 
             modelBuilder.Entity<EolvsEos>(entity =>

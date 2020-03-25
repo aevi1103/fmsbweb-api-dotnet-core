@@ -23,7 +23,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetScrapVariancePerProgram")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariancePerProgram(DateTime start, DateTime end, string area = "", 
+        public async Task<IActionResult> GetScrapVariancePerProgram(DateTime start, DateTime end, string area = "",
             bool isPurchasedScrap = false, bool isPlantTotal = false)
         {
             try
@@ -38,7 +38,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
                 foreach (var a in areas)
                 {
-                    var details = await _sapLibRepo.GetScrapByProgram(start, end, a, isPurchasedScrap);
+                    var details = await _sapLibRepo.GetScrapByProgram(start, end, a, isPurchasedScrap).ConfigureAwait(false);
                     var rec = new
                     {
                         ScrapType = a == "Foundry Cell"
@@ -57,9 +57,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                throw new Exception(e.Message);
             }
-            
+
         }
     }
 }

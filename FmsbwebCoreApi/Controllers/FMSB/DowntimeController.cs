@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Services.FmsbMvc;
 using FmsbwebCoreApi.ResourceParameters.FMSB;
+using System.Globalization;
 
 namespace FmsbwebCoreApi.Controllers.FMSB
 {
@@ -33,7 +34,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
 
             try
             {
-                var data = await _repo.GetDowntime(resourceParameter);
+                var data = await _repo.GetDowntime(resourceParameter).ConfigureAwait(false);
                 var categories = data.Select(x => new { x.Dept }).Distinct().OrderBy(x => x.Dept).ToList();
                 var series = data.Select(x => new { x.Shift }).Distinct().OrderBy(x => x.Shift).ToList();
 
@@ -91,7 +92,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                throw new Exception(e.Message);
             }
         }
     }

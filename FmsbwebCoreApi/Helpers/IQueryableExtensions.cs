@@ -59,7 +59,7 @@ namespace FmsbwebCoreApi.Helpers
 
                 if (propertyMappingValue == null)
                 {
-                    throw new ArgumentNullException("propertyMappingValue");
+                    throw new ArgumentNullException(nameof(mappingDictionary));
                 }
 
                 // Run through the property names in reverse

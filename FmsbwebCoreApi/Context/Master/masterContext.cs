@@ -281,6 +281,11 @@ namespace FmsbwebCoreApi.Context.Master
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            if (modelBuilder == null)
+            {
+                throw new ArgumentNullException(nameof(modelBuilder));
+            }
+
             modelBuilder.Entity<AFDailyOutputProgram>(entity =>
             {
                 entity.HasNoKey();

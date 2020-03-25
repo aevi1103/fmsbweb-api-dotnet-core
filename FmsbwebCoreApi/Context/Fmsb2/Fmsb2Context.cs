@@ -235,7 +235,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<SwotTargets> SwotTargets { get; set; }
         public virtual DbSet<TemporaryLevelGetterOae> TemporaryLevelGetterOae { get; set; }
         public virtual DbSet<Users> Users { get; set; }
-        public virtual DbSet<_24hours> _24hours { get; set; }
+        public virtual DbSet<TwentyFourHours> TwentyFourHours { get; set; }
         public virtual DbSet<SapBOM> SapBom { get; set; }
         public virtual DbSet<KpiTarget> KpiTarget { get; set; }
         public virtual DbSet<AnodizeChecklist> AnodizeChecklist { get; set; }
@@ -252,6 +252,11 @@ namespace FmsbwebCoreApi.Context.Fmsb2
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            if (modelBuilder == null)
+            {
+                throw new ArgumentNullException(nameof(modelBuilder));
+            }
+
             modelBuilder.Entity<ActualCycles>(entity =>
             {
                 entity.HasIndex(e => new { e.Hourid, e.HourNum })
@@ -2507,7 +2512,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
                 entity.Property(e => e.Shift).IsUnicode(false);
             });
 
-            modelBuilder.Entity<_24hours>(entity =>
+            modelBuilder.Entity<TwentyFourHours>(entity =>
             {
                 entity.HasNoKey();
             });

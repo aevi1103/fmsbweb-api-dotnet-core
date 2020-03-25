@@ -8,10 +8,12 @@ using FmsbwebCoreApi.Models.Safety.Incident;
 
 namespace FmsbwebCoreApi.ValidationAttributes
 {
-    public class DescriptionMustBeDifferentFromInterim : ValidationAttribute
+    public class DescriptionMustBeDifferentFromInterimAttribute : ValidationAttribute
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
+            if (validationContext == null) throw new ArgumentNullException(nameof(validationContext));
+  
             var incident = (IncidentForManipulation)validationContext.ObjectInstance;
 
             if (incident.Description == incident.InterimActionTaken) //create a custom validation

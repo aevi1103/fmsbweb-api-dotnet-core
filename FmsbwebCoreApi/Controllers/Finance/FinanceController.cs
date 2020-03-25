@@ -32,8 +32,7 @@ namespace FmsbwebCoreApi.Controllers.Finance
                 return BadRequest();
             }
 
-            var data = await _fmsbLibRepo.GetFinanceKpi(
-                resourceParameter.Date);
+            var data = await _fmsbLibRepo.GetFinanceKpi(resourceParameter.Date).ConfigureAwait(false);
 
             return Ok(data);
         }

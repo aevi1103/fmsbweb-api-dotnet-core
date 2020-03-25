@@ -24,8 +24,8 @@ namespace FmsbwebCoreApi.Services.Safety
         IEnumerable<Attachments> GetAttachments(int id);
         Attachments GetAttachment(int id, int attachmentId);
         void AddAttachment(int id, Attachments attachment);
-        IEnumerable<MonthlyIncidentRateDto> GetMonthlyIncidentRate(DateTime start, DateTime end);
-        IncidentsByDepartmentForChartDto GetIncidedentsByDepartment(DateTime start, DateTime end);
+        IEnumerable<MonthlyIncidentRateDto> GetMonthlyIncidentRate(DateTime startDate, DateTime endDate);
+        IncidentsByDepartmentForChartDto GetIncidedentsByDepartment(DateTime startDate, DateTime endDate);
         bool Save();
     }
 }

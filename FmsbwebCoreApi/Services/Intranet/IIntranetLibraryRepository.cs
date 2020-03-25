@@ -8,8 +8,8 @@ namespace FmsbwebCoreApi.Services.Intranet
 {
     public interface IIntranetLibraryRepository
     {
-        Task<IEnumerable<HxhProductionDto>> GetHxhProduction(DateTime start, DateTime end, string area);
-        Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime start, DateTime end, string area);
-        Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(DateTime start, DateTime end, string area);
+        Task<IEnumerable<HxhProductionDto>> GetHxhProduction(DateTime startDate, DateTime endDate, string area);
+        Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime startDate, DateTime endDate, string area);
+        Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(DateTime startDate, DateTime endDate, string area);
     }
 }

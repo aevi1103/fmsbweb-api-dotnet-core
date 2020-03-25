@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Mvc;
-using RestSharp;
-using RestSharp.Authenticators;
-
-using Newtonsoft.Json;
-using FmsbwebCoreApi.Models.SAP;
-using AutoMapper;
-using FmsbwebCoreApi.Services.SAP;
-using Microsoft.AspNetCore.Cors;
+using System;
 using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Controllers.SAP
@@ -29,7 +20,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
         public async Task<IActionResult> GetWorkCenters(string area)
         {
             if (string.IsNullOrEmpty(area)) return BadRequest();
-            var result = await _sapLibRepo.GetWorkcentersByDept(area);
+            var result = await _sapLibRepo.GetWorkcentersByDept(area).ConfigureAwait(false);
             return Ok(result);
         }
     }

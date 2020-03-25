@@ -32,7 +32,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 return BadRequest();
             }
 
-            var result = await _sapLibRepo.GetDailyScrapByShift(resourceParameter);
+            var result = await _sapLibRepo.GetDailyScrapByShift(resourceParameter).ConfigureAwait(false);
 
             var distinctShift = result.Select(x => new { x.Shift, x.ShiftOrder }).Distinct();
 

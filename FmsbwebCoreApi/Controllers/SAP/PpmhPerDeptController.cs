@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Controllers.SAP
@@ -27,12 +25,12 @@ namespace FmsbwebCoreApi.Controllers.SAP
         {
             try
             {
-                var result = await _sapLibRepo.GetPpmhPerDeptPlantWideVariance(start, end, area);
+                var result = await _sapLibRepo.GetPpmhPerDeptPlantWideVariance(start, end, area).ConfigureAwait(false);
                 return Ok(result);
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                throw new Exception(e.Message);
             }
 
         }

@@ -10,8 +10,8 @@ namespace FmsbwebCoreApi.Services.FmsbQuality
 {
     public interface IFmsbQualityLibraryRepository
     {
-        Task<IEnumerable<CustomerComplaint>> GetListCustomerComplaint(DateTime start, DateTime end);
-        Task<IEnumerable<MrrViewDto>> GetListMrr(DateTime start, DateTime end);
+        Task<IEnumerable<CustomerComplaint>> GetListCustomerComplaint(DateTime startDate, DateTime endDate);
+        Task<IEnumerable<MrrViewDto>> GetListMrr(DateTime startDate, DateTime endDate);
 
     }
 }

@@ -32,7 +32,7 @@ namespace FmsbwebCoreApi.Controllers.Quality
                 return BadRequest();
             }
 
-            var customerComplaintList = await _qualityRepo.GetListCustomerComplaint(resourceParameter.Start, resourceParameter.End);
+            var customerComplaintList = await _qualityRepo.GetListCustomerComplaint(resourceParameter.Start, resourceParameter.End).ConfigureAwait(false);
             var totalCustomerComplaint = customerComplaintList.Sum(x => x.Prr) +
                                             customerComplaintList.Sum(x => x.Pir) +
                                             customerComplaintList.Sum(x => x.Qr);
@@ -44,9 +44,9 @@ namespace FmsbwebCoreApi.Controllers.Quality
             var end = DateTime.Now;
 
 
-            var ytd = await _qualityRepo.GetListMrr(ytdStart, end);
-            var mtd = await _qualityRepo.GetListMrr(mtdStart, end);
-            var twenty = await _qualityRepo.GetListMrr(twentyFourHoursStart, end);
+            var ytd = await _qualityRepo.GetListMrr(ytdStart, end).ConfigureAwait(false);
+            var mtd = await _qualityRepo.GetListMrr(mtdStart, end).ConfigureAwait(false);
+            var twenty = await _qualityRepo.GetListMrr(twentyFourHoursStart, end).ConfigureAwait(false);
 
             var result = new
             {

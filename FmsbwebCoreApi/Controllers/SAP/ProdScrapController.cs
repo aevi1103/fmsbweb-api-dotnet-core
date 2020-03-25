@@ -3,8 +3,6 @@ using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Controllers.SAP
@@ -35,7 +33,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
             var prodData = await _sapLibRepo.GetSapProdAndScrap(
                                     resourceParameter.Start,
                                     resourceParameter.End,
-                                    resourceParameter.Area);
+                                    resourceParameter.Area).ConfigureAwait(false);
 
             return Ok(prodData);
         }

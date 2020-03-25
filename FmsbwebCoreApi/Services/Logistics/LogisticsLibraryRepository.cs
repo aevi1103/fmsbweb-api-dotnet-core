@@ -197,7 +197,7 @@ namespace FmsbwebCoreApi.Services.Logistics
 
         public async Task<List<SapDumpNewView>> GetInventory(DateTime start, DateTime end)
         {
-            return await _context.SapDumpNewView.Where(x => x.Date >= start && x.Date <= end).ToListAsync();
+            return await _context.SapDumpNewView.Where(x => x.Date >= start && x.Date <= end).ToListAsync().ConfigureAwait(false);
         }
 
         public List<string> GetDmaxParts()
@@ -216,12 +216,12 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = (DateTime)mm.Date,
                                 Category = inv.Category,
                                 Comments = inv.Comments
-                            }).ToListAsync();
+                            }).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<List<RawMatInv>> GetRawMaterialsInventory(DateTime start, DateTime end)
         {
-            return await _context.RawMatInv.Where(x => x.Date >= start && x.Date <= end).ToListAsync();
+            return await _context.RawMatInv.Where(x => x.Date >= start && x.Date <= end).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<List<LogisticsDollarsDto>> GetLogisticsDollars(DateTime start, DateTime end)
@@ -238,7 +238,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                         Category = d.Category,
                         Cost = (decimal)d.Actual,
                         Target = (decimal)d.Target
-                    }).ToListAsync();
+                    }).ToListAsync().ConfigureAwait(false);
         }
 
         public IEnumerable<InventoryStatusDto> GetInventoryStatus(
@@ -452,7 +452,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                         Date = (DateTime)m.Date,
                         Customer = c.Customer,
                         Comments = c.Comment
-                    }).ToListAsync();
+                    }).ToListAsync().ConfigureAwait(false);
         }
 
         public DaysOnHandColorCode DaysOnHandStatusColor(decimal daysOnHand, int InvQty)
@@ -513,10 +513,9 @@ namespace FmsbwebCoreApi.Services.Logistics
                                d._0300,
                                AvgShipDay = v.AvgShipDay == null ? 0 : v.AvgShipDay,
                                d.SafeftyStock
-                           })
-                              .ToListAsync();
+                           }).ToListAsync().ConfigureAwait(false);
 
-            var logisticsParts = await _fmsb2Context.LogisticsParts.ToListAsync();
+            var logisticsParts = await _fmsb2Context.LogisticsParts.ToListAsync().ConfigureAwait(false);
 
             var result = avgShip
                             .Select(x => new InventoryDaysOnHandDto
@@ -543,14 +542,14 @@ namespace FmsbwebCoreApi.Services.Logistics
 
         public async Task<StockStatusDto> GetStockStatus(DateTime start, DateTime end)
         {
-            var inventoryData = await GetInventory(start, end); //sap dump view 
+            var inventoryData = await GetInventory(start, end).ConfigureAwait(false); //sap dump view 
             var dmax = GetDmaxParts();
-            var comments = await GetLogisticsComments(start, end);
-            var rawMat = await GetRawMaterialsInventory(start, end);
-            var dollars = await GetLogisticsDollars(start, end);
-            var customerComments = await GetCustomerComments(start, end);
+            var comments = await GetLogisticsComments(start, end).ConfigureAwait(false);
+            var rawMat = await GetRawMaterialsInventory(start, end).ConfigureAwait(false);
+            var dollars = await GetLogisticsDollars(start, end).ConfigureAwait(false);
+            var customerComments = await GetCustomerComments(start, end).ConfigureAwait(false);
 
-            var daysOnHand = await GetInventoryDaysOnHand(start, end);
+            var daysOnHand = await GetInventoryDaysOnHand(start, end).ConfigureAwait(false);
 
             return new StockStatusDto
             {

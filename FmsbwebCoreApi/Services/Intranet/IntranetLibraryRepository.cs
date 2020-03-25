@@ -44,7 +44,7 @@ namespace FmsbwebCoreApi.Services.Intranet
                                         + x.Sum(s => s.AnodGross)
                                         + x.Sum(s => s.ScGross)
                                         + x.Sum(s => s.AssyGross)
-                            }).ToListAsync();
+                            }).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(DateTime start, DateTime end, string area)
@@ -66,7 +66,7 @@ namespace FmsbwebCoreApi.Services.Intranet
                                         + x.Sum(s => s.AnodGross)
                                         + x.Sum(s => s.ScGross)
                                         + x.Sum(s => s.AssyGross)
-                            }).ToListAsync();
+                            }).ToListAsync().ConfigureAwait(false);
 
             var lines = data.GroupBy(x => new { x.Department, x.Area, x.Line })
                             .Select(x => new HxHProductionByLineDto
@@ -108,7 +108,7 @@ namespace FmsbwebCoreApi.Services.Intranet
                                 Area = x.Key.Area,
                                 ShiftDate = (DateTime)x.Key.Date,
                                 Target = (int)x.Sum(s => s.OeeTarget)
-                            }).ToListAsync();
+                            }).ToListAsync().ConfigureAwait(false);
         }
         protected virtual void Dispose(bool disposing)
         {

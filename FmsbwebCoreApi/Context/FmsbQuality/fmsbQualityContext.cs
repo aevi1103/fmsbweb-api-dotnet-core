@@ -60,6 +60,11 @@ namespace FmsbwebCoreApi.Context.FmsbQuality
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            if (modelBuilder == null)
+            {
+                throw new ArgumentNullException(nameof(modelBuilder));
+            }
+
             modelBuilder.Entity<AcknowledgmentView>(entity =>
             {
                 entity.HasNoKey();
