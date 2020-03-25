@@ -23,12 +23,37 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetScrapVariancePerProgram")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariancePerProgram(DateTime start, DateTime end, string area = "", bool isPurchasedScrap = false)
+        public async Task<IActionResult> GetScrapVariancePerProgram(DateTime start, DateTime end, string area = "", 
+            bool isPurchasedScrap = false, bool isPlantTotal = false)
         {
             try
             {
-                var result = await _sapLibRepo.GetScrapByProgram(start, end, area, isPurchasedScrap);
-                return Ok(result);
+                var areas = new List<string> { "Foundry Cell", "Machine Line", "Skirt Coat", "Assembly" };
+                if (!isPlantTotal)
+                {
+                    areas = areas.Where(x => x.ToLower().Trim() == area.ToLower().Trim()).ToList();
+                }
+
+                var list = new List<dynamic>();
+
+                foreach (var a in areas)
+                {
+                    var details = await _sapLibRepo.GetScrapByProgram(start, end, a, isPurchasedScrap);
+                    var rec = new
+                    {
+                        ScrapType = a == "Foundry Cell"
+                                        ? "Foundry"
+                                        : a == "Machine Line"
+                                            ? "Machining"
+                                            : a == "Skirt Coat"
+                                                ? "Finishing"
+                                                : a,
+                        Details = details
+                    };
+                    list.Add(rec);
+                }
+
+                return Ok(list);
             }
             catch (Exception e)
             {

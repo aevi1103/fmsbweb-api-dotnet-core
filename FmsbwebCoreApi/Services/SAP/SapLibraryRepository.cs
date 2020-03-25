@@ -1486,7 +1486,9 @@ namespace FmsbwebCoreApi.Services.SAP
                                     .ToListAsync();
 
                 var scrapByProgram = scrap
-                                        .GroupBy(x => new { x.Program, x.ScrapAreaName })
+                                        .GroupBy(x => new { 
+                                            x.Program,
+                                            ScrapAreaName = (x.ScrapAreaName.ToLower() == "anodize" || x.ScrapAreaName.ToLower() == "skirt coat") ? "Finishing" : x.ScrapAreaName })
                                         .Select(x => new
                                         {
                                             x.Key.Program,
@@ -1533,6 +1535,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                 })
                                 .Select(x => new
                                 {
+                                    key = $"{x.ScrapAreaName.Replace(" ","_")}-{x.Program.Replace(" ", "_")}",
                                     x.ScrapAreaName,
                                     x.Program,
                                     x.SapNet,
@@ -1542,12 +1545,19 @@ namespace FmsbwebCoreApi.Services.SAP
                                     AreaDetails = x.AreaDetails
                                                     .Select(a => new
                                                     {
+                                                        key = $"{x.ScrapAreaName.Replace(" ", "_")}-{x.Program.Replace(" ", "_")}-{a.Area.Replace(" ", "_")}",
+                                                        x.ScrapAreaName,
+                                                        x.Program,
                                                         a.Area,
                                                         a.Qty,
                                                         ScrapRate = x.SapGross == 0 ? 0 : (decimal)a.Qty / x.SapGross,
                                                         LineDetails = a.LineDetails
                                                                         .Select(l => new
                                                                         {
+                                                                            key = $"{x.ScrapAreaName.Replace(" ", "_")}-{x.Program.Replace(" ", "_")}-{a.Area.Replace(" ", "_")}-{l.MachineHxh.Replace(" ", "_")}",
+                                                                            x.ScrapAreaName,
+                                                                            x.Program,
+                                                                            a.Area,
                                                                             Line = l.MachineHxh,
                                                                             l.Qty,
                                                                             ScrapRate = x.SapGross == 0 ? 0 : (decimal)l.Qty / x.SapGross,

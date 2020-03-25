@@ -31,17 +31,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetScrapVariance")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariance(DateTime start, DateTime end, string area = "", bool isPurchasedScrap = false, bool isPlantTotal = false)
+        public async Task<IActionResult> GetScrapVariance(DateTime start, DateTime end, string area = "",
+            bool isPurchasedScrap = false, bool isPlantTotal = false)
         {
             try
             {
-
-                //if (!isPlantTotal)
-                //{
-                //    var data = await _sapLibRepo.GetPlantWideScrapVariance(start, end, area, isPurchasedScrap);
-                //    return Ok(data);
-                //}
-                
                 var areas = new List<string> { "Foundry Cell", "Machine Line", "Skirt Coat", "Assembly" };
                 if (!isPlantTotal)
                 {
@@ -49,7 +43,6 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 }
 
                 var list = new List<dynamic>();
-
                 foreach (var a in areas)
                 {
                     var details = await _sapLibRepo.GetPlantWideScrapVariance(start, end, a, isPurchasedScrap);
