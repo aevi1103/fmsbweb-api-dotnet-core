@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Models.Intranet
 {
-    public class DailyHxHTargetDto : HxHTargetDto
+    public class HxHTargetDto
     {
-        public DateTime ShiftDate { get; set; }
+        public string Area { get; set; }
+        public int Target { get; set; }
     }
 }

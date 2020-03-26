@@ -63,7 +63,7 @@ namespace FmsbwebCoreApi.Profiles.Safety
                    )
                    .ForMember(
                        dest => dest.NumberOfAttachments,
-                       opt => opt.MapFrom(src => src.Attachments.Count())
+                       opt => opt.MapFrom(src => src.Attachments.Count)
                    );
 
             CreateMap<IncidentForCreationDto, Incidence>();

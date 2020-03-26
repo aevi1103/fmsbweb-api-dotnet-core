@@ -7,8 +7,9 @@ namespace FmsbwebCoreApi.Models.SAP
 {
     public class DepartmentKpiScrapDetailsDto
     {
-        public string ScrapType { get; set; }
+        public string ScrapAreaName { get; set; }
         public int ScrapQty { get; set; }
         public decimal ScrapRate { get; set; }
+        public string ColorCode { get; set; }
     }
 }

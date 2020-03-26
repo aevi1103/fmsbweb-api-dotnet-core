@@ -9,9 +9,10 @@ namespace FmsbwebCoreApi.Services.FMSB2
 {
     public interface IFmsb2LibraryRepository
     {
+        #region Labor Hours
 
         List<FinanceLaborHoursView> TransformLaborHoursData(
-                IEnumerable<FinanceLaborHoursView> data, string dept = "");
+        IEnumerable<FinanceLaborHoursView> data, string dept = "");
 
         Task<List<FinanceLaborHoursView>> GetLaborHoursData(DateTime startDate, DateTime endDate);
         ProductionLaborHoursDto GetLaborHours(List<FinanceLaborHoursView> laborHrs, string dept = "");
@@ -28,15 +29,23 @@ namespace FmsbwebCoreApi.Services.FMSB2
         Task<ProdScrapForLaborHours> GetProdScrapForLaborHrs(DateTime startDate, DateTime endDate, string area);
         Task<IEnumerable<WeeklyProductionLaborHoursDto>> GetWeeklyProdScrapForLaborHrs(DateTime startDate, DateTime endDate, string area);
 
+        #endregion
+
+        #region Finance
 
         Task<IEnumerable<FinanceDailyKpi>> GetFinanceDailyKpi(DateTime date);
         Task<IEnumerable<FinanceDeptFcst>> GetFinanceDeptForecast(int year, int month);
         Task<IEnumerable<FinanceFlashProjections>> GetFinanceFlashProjections(int year, int month);
         Task<FinaceKpiDto> GetFinanceKpi(DateTime date);
 
+        #endregion
+
+        #region Targets
 
         Task<KpiTarget> GetTargets(string dept, DateTime endDate);
         Task<List<KpiTarget>> GetTargets(string area, int startDateYear, int endDateYear);
+
+        #endregion
 
 
     }

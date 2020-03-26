@@ -5,8 +5,10 @@ using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Models.SAP;
+using FmsbwebCoreApi.ResourceParameters.FMSB;
 using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.FMSB2;
+using FmsbwebCoreApi.Services.FmsbMvc;
 using FmsbwebCoreApi.Services.Intranet;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -21,16 +23,17 @@ namespace FmsbwebCoreApi.Services.SAP
     {
 
         private readonly SapContext _context;
-        //private readonly IntranetContext _IntranetContext;
         private readonly Fmsb2Context _fmsbContext;
 
         private readonly IFmsb2LibraryRepository _fmsb2Repo;
         private readonly IIntranetLibraryRepository _intranetRepo;
+        private readonly IFmsbMvcLibraryRepository _fmsbMvcRepo;
 
         public SapLibraryRepository(
             SapContext context,
             Fmsb2Context fmsbContext,
             IFmsb2LibraryRepository fmsb2Repo,
+            IFmsbMvcLibraryRepository fmsbMvcRepo,
             IIntranetLibraryRepository intranetRepo)
         {
             _context = context ??
@@ -44,6 +47,9 @@ namespace FmsbwebCoreApi.Services.SAP
 
             _fmsb2Repo = fmsb2Repo ??
                 throw new ArgumentNullException(nameof(fmsb2Repo));
+
+            _fmsbMvcRepo = fmsbMvcRepo ??
+                throw new ArgumentNullException(nameof(fmsbMvcRepo));
         }
 
         public string MapAreaTopScrapArea(string area)
@@ -1854,9 +1860,137 @@ namespace FmsbwebCoreApi.Services.SAP
             }
         }
 
-        public Task<DepartmentKpiDto> GetDepartmentKpi(DateTime start, DateTime end, string area)
+        public async Task<DepartmentKpiDto> GetDepartmentKpi(DateTime start, DateTime end, string area)
         {
-            throw new NotImplementedException();
+            if (area == null) throw new ArgumentNullException(nameof(area));
+
+            var deptHxh = area;
+            switch (area.ToLower().Trim())
+            {
+                case "foundry cell":
+                    deptHxh = "Foundry";
+                    break;
+                case "machine line":
+                    deptHxh = "Machining";
+                    break;
+            }
+
+            //get data from db
+            var production = await _context.Production2
+                               .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                               .Where(x => x.Area.ToLower() == area.ToLower().Trim())
+                               .GroupBy(x => new { x.Area })
+                               .Select(x => new
+                               {
+                                   x.Key.Area,
+                                   TotalProd = x.Sum(s => s.QtyProd)
+                               })
+                               .ToListAsync()
+                               .ConfigureAwait(false);
+
+            var scrapDataQry = _context.Scrap2.AsQueryable();
+
+            var scrapData = await _context.Scrap2
+                                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                                .Where(x => x.Area.ToLower() == area.ToLower().Trim())
+                                .Where(x => x.ScrapCode != "8888")
+                                .GroupBy(x => new { x.Area, x.ScrapAreaName })
+                                .Select(x => new
+                                {
+                                    x.Key.Area,
+                                    x.Key.ScrapAreaName,
+                                    TotalScrap = x.Sum(s => s.Qty)
+                                })
+                                .ToListAsync()
+                                .ConfigureAwait(false);
+
+            var hxhTarget = await _intranetRepo.HxHTargetByArea(start, end, area).ConfigureAwait(false);
+            var scrapAreaCode = await _context.ScrapAreaCode.ToListAsync().ConfigureAwait(false);
+            var oaeTarget = ((await _fmsb2Repo.GetTargets(area, start.Year, end.Year).ConfigureAwait(false))
+                                .Where(x => x.Year == end.Year && x.MonthNumber == end.Month).First().OaeTarget) / 100;
+
+            var downtimeData = (await _fmsbMvcRepo.GetDowntime(new DowntimeResourceParameter { Start = start, End = end }).ConfigureAwait(false));
+            downtimeData = downtimeData.Where(x => x.Dept.ToLower().Trim() == deptHxh.ToLower().Trim()).ToList();
+
+            //get line targets for pph to convert downtime minutes to pa
+            var lineTarget = (await _fmsbContext.SwotTargetWithDeptId
+                                .Where(x => x.DeptName == deptHxh)
+                                .ToListAsync()
+                                .ConfigureAwait(false))
+                                .Select(x => new
+                                {
+                                    x.DeptName,
+                                    x.MachineName,
+                                    x.TargetPartsPerHour,
+                                    PartsPerMinute = x.TargetPartsPerHour / 60
+                                }).ToList();
+
+            //transform data
+
+            var totalDowntimeParts = downtimeData
+                                        .GroupBy(x => new { x.Dept, x.Line })
+                                        .Select(x => new
+                                        {
+                                            x.Key.Dept,
+                                            x.Key.Line,
+                                            Downtime = x.Sum(s => s.DowntimeLoss),
+                                            DowntimeParts = lineTarget.Any(l => l.MachineName == x.Key.Line)
+                                                                ? lineTarget.Where(l => l.MachineName == x.Key.Line).First().PartsPerMinute * x.Sum(s => s.DowntimeLoss)
+                                                                : 0
+                                        })
+                                        .Sum(x => x.DowntimeParts);
+
+            var totalAreaScrap = (int)scrapData.Sum(x => x.TotalScrap);
+            var totalProdcution = (int)production.Sum(x => x.TotalProd);
+            var totalTarget = hxhTarget.Sum(x => x.Target);
+            var sapGross = totalProdcution + totalAreaScrap;
+
+            //rates
+
+            var sapOae = totalTarget == 0 ? 0 : (decimal)totalProdcution / (decimal)totalTarget;
+            var overallScrapRate = sapGross == 0 ? 0 : (decimal)totalAreaScrap / (decimal)sapGross;
+            var downtimeRate = totalTarget == 0 ? 0 : (decimal)totalDowntimeParts / totalTarget;
+
+            var totalRates = 1 - sapOae - overallScrapRate - downtimeRate;
+            var unknownRate = 0m;
+
+            if (totalRates > 1 || totalRates < 0)
+            {
+                downtimeRate = 1 - sapOae - overallScrapRate;
+                unknownRate = 0;
+            }
+            else
+            {
+                unknownRate = 1 - sapOae - overallScrapRate - downtimeRate;
+            }
+
+            var scrapDetails = scrapData.Select(x => new DepartmentKpiScrapDetailsDto
+            {
+                ScrapAreaName = x.ScrapAreaName,
+                ScrapQty = (int)x.TotalScrap,
+                ScrapRate = sapGross == 0 ? 0 : (decimal)x.TotalScrap / sapGross,
+                ColorCode = scrapAreaCode.Any(s => s.ScrapAreaName == x.ScrapAreaName)
+                                ? scrapAreaCode.Where(s => s.ScrapAreaName == x.ScrapAreaName).First().ColorCode
+                                : scrapAreaCode.Where(s => s.ScrapAreaName == "Other").First().ColorCode
+            }).ToList();
+
+            var res = new DepartmentKpiDto
+            {
+                Area = area,
+                TotalAreaScrap = totalAreaScrap,
+                TotalProduction = totalProdcution,
+                Target = totalTarget,
+                SapGross = sapGross,
+                SapOae = sapOae,
+                OaeTarget = oaeTarget,
+                OaeColor = sapOae >= oaeTarget ? "#19bc9c" : "#e74d3d",
+                OverallScrapRate = overallScrapRate,
+                DowntimeRate = downtimeRate,
+                UnkownRate = unknownRate,
+                ScrapDetails = scrapDetails
+            };
+
+            return res;
         }
     }
 }

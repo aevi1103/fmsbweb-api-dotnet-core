@@ -110,6 +110,22 @@ namespace FmsbwebCoreApi.Services.Intranet
                                 Target = (int)x.Sum(s => s.OeeTarget)
                             }).ToListAsync().ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<HxHTargetDto>> HxHTargetByArea(DateTime startDate, DateTime endDate, string area)
+        {
+            return await _context.FmsbMasterProdPartsCopyDashboard
+                        .Where(x => x.Date >= startDate && x.Date <= endDate)
+                        .Where(x => x.Area == area)
+                        .GroupBy(x => new { x.Area })
+                        .Select(x => new HxHTargetDto
+                        {
+                            Area = x.Key.Area,
+                            Target = (int)x.Sum(s => s.OeeTarget)
+                        })
+                        .ToListAsync()
+                        .ConfigureAwait(false);
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
@@ -117,5 +133,7 @@ namespace FmsbwebCoreApi.Services.Intranet
                 // dispose resources when needed
             }
         }
+
+
     }
 }

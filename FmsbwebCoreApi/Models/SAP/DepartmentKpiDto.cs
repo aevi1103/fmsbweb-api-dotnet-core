@@ -10,12 +10,14 @@ namespace FmsbwebCoreApi.Models.SAP
         public string Area { get; set; }
         public int TotalAreaScrap { get; set; }
         public int TotalProduction { get; set; }
-        public int TotalDowntime { get; set; }
         public int Target { get; set; }
         public int SapGross { get; set; }
         public decimal SapOae { get; set; }
-        public decimal ScrapRate { get; set; }
+        public string OaeColor { get; set; }
+        public decimal OaeTarget { get; set; }
+        public decimal OverallScrapRate { get; set; }
         public decimal DowntimeRate { get; set; }
+        public decimal UnkownRate { get; set; }
         public List<DepartmentKpiScrapDetailsDto> ScrapDetails { get; set; }
     }
 }

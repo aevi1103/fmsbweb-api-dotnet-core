@@ -10,6 +10,7 @@ namespace FmsbwebCoreApi.Services.Intranet
     {
         Task<IEnumerable<HxhProductionDto>> GetHxhProduction(DateTime startDate, DateTime endDate, string area);
         Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime startDate, DateTime endDate, string area);
+        Task<IEnumerable<HxHTargetDto>> HxHTargetByArea(DateTime startDate, DateTime endDate, string area);
         Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(DateTime startDate, DateTime endDate, string area);
     }
 }
