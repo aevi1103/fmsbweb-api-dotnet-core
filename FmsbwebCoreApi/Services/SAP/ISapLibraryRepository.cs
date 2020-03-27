@@ -20,6 +20,7 @@ namespace FmsbwebCoreApi.Services.SAP
         Task<IEnumerable<Models.SAP.Scrap>> GetScrapDataByDepartmentFromDb(DateTime startDate, DateTime endDate, string area);
         Task<IEnumerable<DailyScrapByShiftDto>> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams);
         Task<IEnumerable<dynamic>> GetScrapByProgram(DateTime startDate, DateTime endDate, string area, bool isPurchasedScrap = false);
+        Task<IEnumerable<dynamic>> GetScrapByShift(DateTime startDate, DateTime endDate, string area, bool isPurchasedScrap = false);
         Task<IEnumerable<dynamic>> GetScrapByDept(DateTime startDate, DateTime endDate, bool isPurchasedScrap = false);
         Task<IEnumerable<dynamic>> GetPlantWideScrapVariance(DateTime startDate, DateTime endDate, string area = "", bool isPurchasedScrap = false);
 
