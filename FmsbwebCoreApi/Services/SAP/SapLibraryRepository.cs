@@ -1606,7 +1606,126 @@ namespace FmsbwebCoreApi.Services.SAP
 
         }
 
+        public async Task<IEnumerable<dynamic>> GetScrapByDept(DateTime startDate, DateTime endDate, bool isPurchasedScrap = false)
+        {
+            try
+            {
+                var prod = await _context.Production2
+                                .Where(x => x.ShiftDate >= startDate && x.ShiftDate <= endDate)
+                                .GroupBy(x => new { x.Area })
+                                .Select(x => new
+                                {
+                                    x.Key.Area,
+                                    TotalProd = x.Sum(s => s.QtyProd)
+                                })
+                                .ToListAsync().ConfigureAwait(false);
 
+                var scrap = await _context.Scrap2
+                                    .Where(x => x.ShiftDate >= startDate && x.ShiftDate <= endDate)
+                                    .Where(x => x.ScrapCode != "8888")
+                                    .Where(x => x.IsPurchashedExclude == isPurchasedScrap)
+                                    .GroupBy(x => new { x.Area, x.ScrapAreaName, x.MachineHxh })
+                                    .Select(x => new
+                                    {
+                                        x.Key.Area,
+                                        x.Key.ScrapAreaName,
+                                        x.Key.MachineHxh,
+                                        Qty = x.Sum(s => s.Qty),
+
+                                    })
+                                    .ToListAsync().ConfigureAwait(false);
+
+                var scrapByArea = scrap
+                                        .GroupBy(x => new { x.Area })
+                                        .Select(x => new
+                                        {
+                                            x.Key.Area,
+                                            Qty = x.Sum(t => t.Qty),
+                                            ScrapAreaNameDetails = x.GroupBy(a => new { a.ScrapAreaName })
+                                                            .Select(a => new
+                                                            {
+                                                                a.Key.ScrapAreaName,
+                                                                Qty = (int)a.Sum(t => t.Qty),
+                                                                LineDetails = a.GroupBy(l => new { l.MachineHxh })
+                                                                                .Select(l => new
+                                                                                {
+                                                                                    l.Key.MachineHxh,
+                                                                                    Qty = l.Sum(t => t.Qty)
+                                                                                })
+                                                            })
+                                        }).ToList();
+
+                var result = scrapByArea
+                                .Select(x => new
+                                {
+                                    x.Area,
+                                    SapNet = prod.Any(n => n.Area == x.Area)
+                                                ? (int)prod.Where(n => n.Area == x.Area).Sum(n => n.TotalProd)
+                                                : 0,
+
+                                    Qty = scrap.Any(s => s.Area == x.Area)
+                                            ? (int)scrap.Where(s => s.Area == x.Area).Sum(s => s.Qty)
+                                            : 0,
+
+                                    SapGross = (prod.Any(n => n.Area == x.Area)
+                                                ? (int)prod.Where(n => n.Area == x.Area).Sum(n => n.TotalProd)
+                                                : 0)
+                                                +
+                                                (scrap.Any(s => s.Area == x.Area)
+                                                ? (int)scrap.Where(s => s.Area == x.Area).Sum(s => s.Qty)
+                                                : 0),
+
+                                    ScrapAreaNameDetails = scrapByArea.Any(s => s.Area == x.Area)
+                                                    ? scrapByArea.Where(s => s.Area == x.Area).First().ScrapAreaNameDetails.ToList()
+                                                    : null,
+                                })
+                                .Select(x => new
+                                {
+                                    key = $"{x.Area.Replace(" ", "_")}",
+                                    x.Area,
+                                    x.SapNet,
+                                    x.Qty,
+                                    x.SapGross,
+                                    ScrapRate = x.SapGross == 0 ? 0 : (decimal)x.Qty / x.SapGross,
+                                    ScrapAreaNameDetails = x.ScrapAreaNameDetails
+                                                            .Select(a => new
+                                                            {
+                                                                key = $"{x.Area.Replace(" ", "_")}-{a.ScrapAreaName.Replace(" ", "_")}",
+                                                                x.Area,
+                                                                a.ScrapAreaName,
+                                                                a.Qty,
+                                                                ScrapRate = x.SapGross == 0 ? 0 : (decimal)a.Qty / x.SapGross,
+                                                                LineDetails = a.LineDetails
+                                                                                .Select(l => new
+                                                                                {
+                                                                                    key = $"{x.Area.Replace(" ", "_")}-{a.ScrapAreaName.Replace(" ", "_")}-{l.MachineHxh.Replace(" ", "_")}",
+                                                                                    x.Area,
+                                                                                    a.ScrapAreaName,
+                                                                                    Line = l.MachineHxh,
+                                                                                    l.Qty,
+                                                                                    ScrapRate = x.SapGross == 0 ? 0 : (decimal)l.Qty / x.SapGross,
+                                                                                }).OrderByDescending(x => x.ScrapRate)
+                                                            })
+                                                            .OrderByDescending(a => a.ScrapRate)
+                                                            .ToList()
+
+                                        }).OrderByDescending(x => x.ScrapRate).ToList();
+
+                if (isPurchasedScrap)
+                {
+                    return result;
+                }
+                else
+                {
+                    return result.Where(x => x.ScrapRate < 1);
+                }
+
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
 
         public async Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime start, DateTime end, string area)
         {
@@ -1992,5 +2111,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
             return res;
         }
+
+        
     }
 }

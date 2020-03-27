@@ -35,7 +35,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
             try
             {
                 var data = await _repo.GetDowntime(resourceParameter).ConfigureAwait(false);
-                var categories = data.Select(x => new { x.Dept }).Distinct().OrderBy(x => x.Dept).ToList();
+                var categories = data.Select(x => new { Dept = x.Dept.ToUpper() }).Distinct().OrderBy(x => x.Dept.ToUpper()).ToList();
                 var series = data.Select(x => new { x.Shift }).Distinct().OrderBy(x => x.Shift).ToList();
 
                 var chartData = series
@@ -45,11 +45,11 @@ namespace FmsbwebCoreApi.Controllers.FMSB
                                 data = categories
                                         .Select(x => new
                                         {
-                                            x.Dept,
-                                            TotalDowntime = data.Any(v => v.Dept == x.Dept && v.Shift == s.Shift)
-                                                    ? data.Where(v => v.Dept == x.Dept && v.Shift == s.Shift).Sum(v => v.DowntimeLoss)
+                                            Dept = x.Dept.ToUpper(),
+                                            TotalDowntime = data.Any(v => v.Dept.ToUpper() == x.Dept.ToUpper() && v.Shift == s.Shift)
+                                                    ? data.Where(v => v.Dept.ToUpper() == x.Dept.ToUpper() && v.Shift == s.Shift).Sum(v => v.DowntimeLoss)
                                                     : 0,
-                                            ownerDetails = data.Where(o => o.Dept == x.Dept && o.Shift == s.Shift)
+                                            ownerDetails = data.Where(o => o.Dept.ToUpper() == x.Dept.ToUpper() && o.Shift == s.Shift)
                                                                 .GroupBy(o => new { o.Type, o.TypeColor })
                                                                 .Select(o => new
                                                                 {
