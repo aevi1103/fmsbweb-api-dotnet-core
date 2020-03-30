@@ -113,21 +113,6 @@ namespace FmsbwebCoreApi.Services.FMSB2
             doubleTime_pso = pso.Sum(x => x.DoubleTime) * psoTargetRate;
             orientation_pso = pso.Sum(x => x.Orientation) * psoTargetRate;
 
-            //if (dept == "machine line" || dept == "assembly")
-            //{
-            //    var qualityInspectorTargetRate = dept == "machine line" ? .34m : .66m;
-            //    regular_q = qualityInspector.Sum(x => x.Regular) * qualityInspectorTargetRate;
-            //    overtime_q = qualityInspector.Sum(x => x.Overtime) * qualityInspectorTargetRate;
-            //    doubleTime_q = qualityInspector.Sum(x => x.DoubleTime) * qualityInspectorTargetRate;
-            //    orientation_q = qualityInspector.Sum(x => x.Orientation) * qualityInspectorTargetRate;
-
-            //    var psoTargetRate = dept == "machine line" ? .38m : .62m;
-            //    regular_pso = pso.Sum(x => x.Regular) * psoTargetRate;
-            //    overtime_pso = pso.Sum(x => x.Overtime) * psoTargetRate;
-            //    doubleTime_pso = pso.Sum(x => x.DoubleTime) * psoTargetRate;
-            //    orientation_pso = pso.Sum(x => x.Orientation) * psoTargetRate;
-            //}
-
             var regular = data.Sum(x => x.Regular);
             var overtime = data.Sum(x => x.Overtime);
             var doubleTime = data.Sum(x => x.DoubleTime);

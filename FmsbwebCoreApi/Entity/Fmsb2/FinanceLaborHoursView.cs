@@ -57,6 +57,13 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         [Column("isPSO")]
         public bool? IsPso { get; set; }
 
-        
+        public DateTime? DateInTimeIn => DateIn == null 
+                                            ? null 
+                                            : (DateTime?)Convert.ToDateTime(DateIn).Add((TimeSpan)TimeIn);
+
+        public string Shift2 => DateIn == null
+                                    ? null
+                                    : new DateTimeHelpers().GetDateShiftEightHours((DateTime)DateInTimeIn).Shift;
+
     }
 }

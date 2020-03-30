@@ -29,6 +29,11 @@ namespace FmsbwebCoreApi.Helpers
         {
             return CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(thisDate, CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
         }
+
+        public static string ToMonthName(this DateTime thisDate)
+        {
+            return thisDate.ToString("MMM", CultureInfo.InvariantCulture);
+        }
     }
 
     public class DateTimeHelpers
