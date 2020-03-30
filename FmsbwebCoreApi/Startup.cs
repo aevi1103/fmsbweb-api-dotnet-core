@@ -19,6 +19,7 @@ using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.FmsbQuality;
 using FmsbwebCoreApi.Context.Master;
 using FmsbwebCoreApi.Context.FmsbMvc;
+using FmsbwebCoreApi.Context.Iconics;
 
 namespace FmsbwebCoreApi
 {
@@ -127,55 +128,25 @@ namespace FmsbwebCoreApi
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            //inject safety lib repo
+            //inject repositories
             services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
-
-            //inject logistics lib repo
             services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
-
-            //inject sap lib repo
             services.AddScoped<Services.SAP.ISapLibraryRepository, Services.SAP.SapLibraryRepository>();
-
-            //inject fmsab2 lib repo
             services.AddScoped<Services.FMSB2.IFmsb2LibraryRepository, Services.FMSB2.FmsbLibraryRepository>();
-
-            //inject intranet lib repo
             services.AddScoped<Services.Intranet.IIntranetLibraryRepository, Services.Intranet.IntranetLibraryRepository>();
-
-            //inject fmsb quality lib repo
             services.AddScoped<Services.FmsbQuality.IFmsbQualityLibraryRepository, Services.FmsbQuality.FmsbQualityLibraryRepository>();
-
-            //inject fmsb mvc lib repo
             services.AddScoped<Services.FmsbMvc.IFmsbMvcLibraryRepository, Services.FmsbMvc.FmsbMvcLibraryRepository>();
+            services.AddScoped<Services.Iconics.IIconicsLibraryRepository, Services.Iconics.IconicsLibraryRepository>();
 
             //inject connection strings
-            services.AddDbContext<Fmsb2Context>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("fmsbConn"))
-            );
-
-            services.AddDbContext<FmsbMvcContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("fmsbMvc"))
-            );
-
-            services.AddDbContext<SafetyContext>(options =>
-               options.UseSqlServer(Configuration.GetConnectionString("safetyConn"))
-            );
-
-            services.AddDbContext<SapContext>(options =>
-               options.UseSqlServer(Configuration.GetConnectionString("sapConn"))
-            );
-
-            services.AddDbContext<IntranetContext>(options =>
-               options.UseSqlServer(Configuration.GetConnectionString("intranet"))
-            );
-
-            services.AddDbContext<fmsbQualityContext>(options =>
-               options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality"))
-            );
-
-            services.AddDbContext<masterContext>(options =>
-               options.UseSqlServer(Configuration.GetConnectionString("fmoMaster"))
-            );
+            services.AddDbContext<Fmsb2Context>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));
+            services.AddDbContext<IconicsContext>(options =>  options.UseSqlServer(Configuration.GetConnectionString("iconicsConn")));
+            services.AddDbContext<FmsbMvcContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbMvc")));
+            services.AddDbContext<SafetyContext>(options => options.UseSqlServer(Configuration.GetConnectionString("safetyConn")));
+            services.AddDbContext<SapContext>(options => options.UseSqlServer(Configuration.GetConnectionString("sapConn")));
+            services.AddDbContext<IntranetContext>(options => options.UseSqlServer(Configuration.GetConnectionString("intranet")));
+            services.AddDbContext<fmsbQualityContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality")));
+            services.AddDbContext<masterContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmoMaster")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

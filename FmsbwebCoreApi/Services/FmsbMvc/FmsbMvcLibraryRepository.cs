@@ -57,15 +57,15 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             var tasks = new List<Task>();
             var callboxTask = _context.OverallCallbox
                         .Where(x => x.RequestDateTime >= start && x.RequestDateTime <= end)
-                        .Where(x => x.Department.ToLower()
-                                        .Contains(parameter.Dept.ToLower()))
+                        //.Where(x => x.Department.ToLower().Contains(parameter.Dept.ToLower()))
                         .Where(x => x.Line.ToLower().Contains(machineMapper.ToLower()))
                         .ToListAsync();
 
             var manualDowntimeEntryTask = _fmsbContext.DowntimeDataList2Copy
                                         .Where(x => x.Shiftdate >= parameter.Start && x.Shiftdate <= parameter.End)
-                                        .Where(x => x.MachineName.ToLower().Contains(parameter.Line))
-                                        .Where(x => x.Shift.ToLower().Contains(parameter.Shift))
+                                        .Where(x => x.DeptName.ToLower().Contains(parameter.Dept.Trim().ToLower()))
+                                        .Where(x => x.MachineName.ToLower().Contains(parameter.Line.Trim().ToLower()))
+                                        .Where(x => x.Shift.ToLower().Contains(parameter.Shift.Trim().ToLower()))
                                         .ToListAsync();
 
             tasks.Add(callboxTask);
@@ -135,6 +135,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             spreadCallboxData.AddRange(manualDowntime);
 
             return spreadCallboxData
+                        .Where(x => x.Dept.ToLower().Contains(parameter.Dept.Trim().ToLower()))
                         .OrderBy(x => x.ShifDate)
                         .ThenBy(x => x.Shift)
                         .ThenBy(x => x.Hour)

@@ -27,10 +27,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
         [HttpHead]
         public async Task<IActionResult> GetDowntime([FromQuery] DowntimeResourceParameter resourceParameter)
         {
-            if (resourceParameter == null)
-            {
-                return BadRequest();
-            }
+            if (resourceParameter == null) return BadRequest();
 
             try
             {

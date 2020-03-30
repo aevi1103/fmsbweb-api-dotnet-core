@@ -94,10 +94,8 @@ namespace FmsbwebCoreApi.Context.FmsbMvc
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            if (modelBuilder == null)
-            {
-                throw new ArgumentNullException(nameof(modelBuilder));
-            }
+            modelBuilder = modelBuilder 
+                            ?? throw new ArgumentNullException(nameof(modelBuilder));
 
             modelBuilder.Entity<Area>(entity =>
             {

@@ -1,10 +1,8 @@
-﻿using FmsbwebCoreApi.Models.FmsbQuality;
+﻿using FmsbwebCoreApi.Entity.FmsbQuality;
+using FmsbwebCoreApi.Models.FmsbQuality;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using FmsbwebCoreApi.Entity.FmsbQuality;
-using FmsbwebCoreApi.Entity.Master;
 
 namespace FmsbwebCoreApi.Services.FmsbQuality
 {
@@ -15,3 +13,4 @@ namespace FmsbwebCoreApi.Services.FmsbQuality
 
     }
 }
+ 
