@@ -37,6 +37,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
         //labor hours
         Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime startDate, DateTime endDate, string area);
+        Task<IEnumerable<dynamic>> GetPpmhPerShiftVariance(DateTime startDate, DateTime endDate, string area);
 
         //prod, scrap, downtime, components
         IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(

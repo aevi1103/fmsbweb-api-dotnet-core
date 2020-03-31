@@ -2004,6 +2004,99 @@ namespace FmsbwebCoreApi.Services.SAP
 
         }
 
+        public async Task<IEnumerable<dynamic>> GetPpmhPerShiftVariance(DateTime start, DateTime end, string area)
+        {
+            try
+            {
+                if (area == null) throw new ArgumentNullException(nameof(area));
+
+                var deptName = area;
+                var deptForTarget = area;
+                switch (area.ToLower().Trim())
+                {
+                    case "foundry cell":
+                        deptName = "foundry";
+                        deptForTarget = "foundry";
+                        break;
+                    case "machine line":
+                        deptName = "machining";
+                        deptForTarget = "machining";
+                        break;
+                    case "skirt coat":
+                        deptName = "finishing";
+                        deptForTarget = "skirt coat";
+                        break;
+                }
+
+
+                //get data from db run in parallel
+                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end).ConfigureAwait(false);
+
+                var prod = await _context.Production2
+                                        .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
+                                        .GroupBy(x => new { x.Shift, x.Area })
+                                        .Select(x => new
+                                        {
+                                            x.Key.Area,
+                                            x.Key.Shift,
+                                            Qty = x.Sum(t => t.QtyProd)
+                                        })
+                                        .ToListAsync()
+                                        .ConfigureAwait(false);
+
+                var scrap = (await _context.Scrap2
+                                        .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
+                                        .Where(x => x.ScrapCode != "8888")
+                                        .GroupBy(x => new { x.Shift, x.Area })
+                                        .Select(x => new
+                                        {
+                                            x.Key.Area,
+                                            x.Key.Shift,
+                                            Qty = x.Sum(t => t.Qty)
+                                        })
+                                        .ToListAsync()
+                                        .ConfigureAwait(false));
+
+                var ppmhTarget = await _fmsbContext.KpiTarget
+                                    .Where(x => x.Year >= start.Year && x.Year <= end.Year)
+                                    .Where(x => x.MonthNumber >= start.Month && x.MonthNumber <= end.Month)
+                                    .Where(x => x.Department.ToLower() == deptForTarget)
+                                    .AverageAsync(x => x.PpmhTarget)
+                                    .ConfigureAwait(false);
+
+                var uniqueShifts = prod.Select(x => x.Shift).Distinct().ToList();
+                var list = new List<dynamic>();
+
+                foreach (var shift in uniqueShifts)
+                {
+                    var rec = new
+                    {
+                        Area = deptName,
+                        Shift = shift,
+                        Target = ppmhTarget,
+                        SapNet = prod.Where(p => p.Shift == shift).Sum(t => t.Qty),
+                        SapScrap = scrap.Where(s => s.Shift == shift).Sum(s => s.Qty),
+                        SapGross = (int)scrap.Where(s => s.Shift == shift).Sum(s => s.Qty) + (int)prod.Where(p => p.Shift == shift).Sum(t => t.Qty),
+                        LaborHours = _fmsb2Repo.GetPPMH(
+                                        ((int)scrap.Where(s => s.Shift == shift).Sum(s => s.Qty) + (int)prod.Where(p => p.Shift == shift).Sum(t => t.Qty)),
+                                        laborHours.Where(l => l.Shift2 == shift).ToList(),
+                                        area
+                                    ),
+
+                    };
+                    list.Add(rec);
+
+                }
+
+                return list;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+
+        }
+
         public async Task<IEnumerable<dynamic>> GetPlantWideScrapVariance(DateTime start, DateTime end, string area = "", bool isPurchasedScrap = false)
         {
             try
