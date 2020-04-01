@@ -213,8 +213,16 @@ namespace FmsbwebCoreApi.Services.SAP
                                 ScrapType = (isSbScrap ? "SB Scrap" : "Purchased Scrap"),
                                 ScrapAreaName = x.Key.ScrapAreaName,
                                 Qty = x.Sum(s => s.Qty),
-                                SapGross = sapGross, // add sap net + tot
-                                ScrapRate = sapGross == 0 ? 0 : (decimal)x.Sum(s => s.Qty) / (decimal)sapGross
+                                SapGross = sapGross, // add sap net + total
+                                ScrapRate = sapGross == 0 ? 0 : (decimal)x.Sum(s => s.Qty) / (decimal)sapGross,
+                                Details = x.GroupBy(d => new { d.ScrapAreaName, d.ScrapCode, d.ScrapDesc })
+                                            .Select(d => new Models.SAP.Scrap
+                                            {
+                                                ScrapAreaName = d.Key.ScrapAreaName,
+                                                ScrapCode = d.Key.ScrapCode,
+                                                ScrapDesc = d.Key.ScrapDesc,
+                                                Qty = d.Sum(t => t.Qty)
+                                            }).OrderByDescending(d => d.Qty)
                             })
                             .OrderByDescending(x => x.Qty)
                             .ToList();
@@ -474,48 +482,22 @@ namespace FmsbwebCoreApi.Services.SAP
                             }).ToListAsync().ConfigureAwait(false);
         }
 
-        public string GetColorCode(string area, string type, decimal? value, DateTime dateEnd)
+        public string GetColorCode(KpiTarget targets, string type, decimal? value)
         {
-            if (area == null) throw new ArgumentNullException(nameof(area));
+            targets = targets ?? throw new ArgumentNullException(nameof(targets));
 
             var black = "#262626";
-
-            if (value == null)
-            {
-                return black;
-            }
-
-            area = area.ToLower().Trim();
-
-            if (area == "foundry cell")
-            {
-                area = "foundry";
-            }
-
-            if (area == "machine line")
-            {
-                area = "machining";
-            }
-;
-            var targetsTask = Task.Run(() => _fmsb2Repo.GetTargets(area, dateEnd));
-            Task.WhenAll(targetsTask);
-            var targets = targetsTask.Result;
-
-            if (targets == null)
-            {
-                return black;
-            }
+            if (value == null) return black;
+            if (targets == null) return black;
 
             var red = "#FF4136";
             var green = "#19A974";
-
-            value *= 100;
 
             switch (type)
             {
                 case "oae":
 
-                    if (value <= targets.OaeTarget)
+                    if (value <= targets.OaeTarget / 100)
                     {
                         return red;
                     }
@@ -526,7 +508,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
                 case "scrap":
 
-                    if (value <= targets.ScrapRateTarget)
+                    if (value <= targets.ScrapRateTarget / 100)
                     {
                         return green;
                     }
@@ -548,7 +530,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
                 case "downtime":
 
-                    if (value <= targets.DowntimeRateTarget)
+                    if (value <= targets.DowntimeRateTarget / 100)
                     {
                         return red;
                     }
@@ -571,6 +553,8 @@ namespace FmsbwebCoreApi.Services.SAP
             var sapProdByType = (await GetSapProdByTypeFromDb(start, end, area).ConfigureAwait(false)).ToList();
 
             var hxh = (await _intranetRepo.GetHxhProduction(start, end, area).ConfigureAwait(false)).ToList();
+
+            var targets = await _fmsb2Repo.GetTargets(area, start, end).ConfigureAwait(false);
 
             //transform data
             var sbScrap = scrapByScrapArea
@@ -658,11 +642,8 @@ namespace FmsbwebCoreApi.Services.SAP
 
                                 SapNet = sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty),
                                 SapOae = (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target,
-                                SapOaeColorCode = GetColorCode(
-                                                        x.Area,
-                                                        "oae",
-                                                        (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target,
-                                                        end),
+                                SapOaeColorCode = GetColorCode(targets, "oae",
+                                                    (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target),
 
                                 HxHNet = x.Gross - ((x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "machine line")
                                                     ? scrapByDepartment.Where(s => s.ScrapCode != "8888").Sum(s => s.Qty)
@@ -673,14 +654,11 @@ namespace FmsbwebCoreApi.Services.SAP
                                                                 : 0))
                                                             / (decimal)x.Target,
 
-                                HxhOaeColorCode = GetColorCode(
-                                                        x.Area,
-                                                        "oae",
+                                HxhOaeColorCode = GetColorCode(targets, "oae",
                                                         (x.Target == 0 ? 0 : (decimal)(x.Gross - ((x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "foundry cell")
-                                                                ? scrapByDepartment.Where(s => s.ScrapCode != "8888").Sum(s => s.Qty)
-                                                                : 0))
-                                                            / (decimal)x.Target),
-                                                        end),
+                                                            ? scrapByDepartment.Where(s => s.ScrapCode != "8888").Sum(s => s.Qty)
+                                                            : 0))
+                                                        / (decimal)x.Target)),
 
                                 SbScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
                                 PurchaseScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, false, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
@@ -691,16 +669,12 @@ namespace FmsbwebCoreApi.Services.SAP
                                 LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area),
 
 
-                                ScrapByCodeColorCode = GetColorCode(
-                                                            x.Area,
-                                                            "scrap",
-                                                            GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate,
-                                                            end),
-                                PpmhColorCode = GetColorCode(
-                                                    x.Area,
-                                                    "ppmh",
-                                                    _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area).PPMH,
-                                                    end),
+                                ScrapByCodeColorCode = GetColorCode(targets, "scrap",
+                                                            GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate),
+                                PpmhColorCode = GetColorCode(targets, "ppmh",
+                                                   _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area).PPMH),
+
+                                Targets = targets
 
                             })
                             .FirstOrDefault();
@@ -900,14 +874,18 @@ namespace FmsbwebCoreApi.Services.SAP
                                 x.ScrapAreaName,
                                 x.Area,
                                 x.IsPurchashedExclude,
-                                x.IsPurchashedExclude2
+                                x.IsPurchashedExclude2,
+                                x.ScrapCode,
+                                x.ScrapDesc,
                             })
-                            .Select(x => new ScrapByCodeDetailsDto
+                            .Select(x => new
                             {
-                                Area = x.Key.Area,
-                                ScrapType = x.Key.IsPurchashedExclude2,
-                                ScrapAreaName = x.Key.ScrapAreaName,
+                                x.Key.Area,
+                                x.Key.ScrapAreaName,
+                                x.Key.ScrapCode,
+                                x.Key.ScrapDesc,
                                 IsPurchaseScrap = (bool)x.Key.IsPurchashedExclude,
+                                ScrapType = x.Key.IsPurchashedExclude2,
                                 Qty = (int)x.Sum(s => s.Qty)
                             })
                             .OrderByDescending(x => x.Qty)
@@ -915,19 +893,41 @@ namespace FmsbwebCoreApi.Services.SAP
 
             var targets = (await _intranetRepo.GetHxhProduction(start, end, area).ConfigureAwait(false)).ToList();
 
-            //transform data
-            var sbScrapList = scrap.Where(x => x.IsPurchaseScrap == false).OrderByDescending(x => x.Qty).ToList();
-            var purchaseScrapList = scrap.Where(x => x.IsPurchaseScrap == true).OrderByDescending(x => x.Qty).ToList();
+            //transform data ScrapByCodeDetailsDto
 
             var target = targets.Sum(x => x.Target);
             var sapProd = prod.Sum(x => x.Qty);
-            var sbScrap = sbScrapList.Sum(x => x.Qty);
-            var purchasedScrap = purchaseScrapList.Sum(x => x.Qty);
+            var sbScrap = scrap.Where(x => x.IsPurchaseScrap == false).Sum(x => x.Qty);
+            var purchasedScrap = scrap.Where(x => x.IsPurchaseScrap == true).Sum(x => x.Qty);
 
             var sapGross = sapProd + sbScrap;
             var sbScrapRate = sapGross == 0 ? 0 : sbScrap / (decimal)sapGross;
             var purchaseScrapRate = sapGross == 0 ? 0 : purchasedScrap / (decimal)sapGross;
             var sapOae = target == 0 ? 0 : sapProd / target;
+
+            var scrapByType = scrap
+                    //.Where(sb => sb.IsPurchaseScrap == false)
+                    .GroupBy(sb => new { sb.Area, sb.ScrapType, sb.ScrapAreaName, sb.IsPurchaseScrap })
+                    .Select(sb => new ScrapByCodeDetailsDto
+                    {
+                        Area = sb.Key.Area,
+                        ScrapType = sb.Key.ScrapType,
+                        ScrapAreaName = sb.Key.ScrapAreaName,
+                        IsPurchaseScrap = sb.Key.IsPurchaseScrap,
+                        Qty = sb.Sum(t => t.Qty),
+                        SapGross = sapProd + sb.Sum(t => t.Qty),
+                        ScrapRate = (sapProd + sb.Sum(t => t.Qty)) == 0 ? 0 : (decimal)sb.Sum(t => t.Qty) / (decimal)(sapProd + sb.Sum(t => t.Qty)),
+                        Details = sb.GroupBy(d => new { d.ScrapCode, d.ScrapDesc })
+                                    .Select(d => new Models.SAP.Scrap
+                                    {
+                                        Area = area,
+                                        ScrapAreaName = sb.Key.ScrapAreaName,
+                                        ScrapCode = d.Key.ScrapCode,
+                                        ScrapDesc = d.Key.ScrapDesc,
+                                        Qty = d.Sum(t => t.Qty)
+                                    }).OrderByDescending(d => d.Qty)
+                    })
+                    .OrderByDescending(sb => sb.Qty);
 
             return new GetSapProdAndScrapDto
             {
@@ -940,18 +940,8 @@ namespace FmsbwebCoreApi.Services.SAP
                 PurchaseScrapRate = purchaseScrapRate,
                 SapOae = sapOae,
                 DailySapProd = prod,
-                SbScrapDetail = sbScrapList
-                                    .Select(x => new ScrapByCodeDetailsDto
-                                    {
-                                        Area = x.Area,
-                                        ScrapType = x.ScrapType,
-                                        ScrapAreaName = x.ScrapAreaName,
-                                        IsPurchaseScrap = x.IsPurchaseScrap,
-                                        Qty = x.Qty,
-                                        SapGross = sapProd + x.Qty,
-                                        ScrapRate = (sapProd + x.Qty) == 0 ? 0 : (decimal)x.Qty / (decimal)(sapProd + x.Qty)
-                                    }),
-                PurchaseScrapDetail = purchaseScrapList
+                SbScrapDetail = scrapByType.Where(x => x.IsPurchaseScrap == false),
+                PurchaseScrapDetail = scrapByType.Where(x => x.IsPurchaseScrap == true)
             };
 
         }

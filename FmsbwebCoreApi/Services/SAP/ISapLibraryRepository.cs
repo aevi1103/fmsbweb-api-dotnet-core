@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Models.SAP;
@@ -57,7 +57,7 @@ namespace FmsbwebCoreApi.Services.SAP
         IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget();
 
         //utils
-        string GetColorCode(string area, string type, decimal? value, DateTime dateendDate);
+        string GetColorCode(KpiTarget targets, string type, decimal? value);
         string MapAreaTopScrapArea(string area);
         int MapShiftToShiftOrder(string shift);
 

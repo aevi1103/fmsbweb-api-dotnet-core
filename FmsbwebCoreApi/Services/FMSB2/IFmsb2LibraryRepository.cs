@@ -42,8 +42,9 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         #region Targets
 
-        Task<KpiTarget> GetTargets(string dept, DateTime endDate);
+        Task<KpiTarget> GetTargets(string area, DateTime endDate);
         Task<List<KpiTarget>> GetTargets(string area, int startDateYear, int endDateYear);
+        Task<KpiTarget> GetTargets(string area, DateTime startDate, DateTime endDate);
 
         #endregion
 

@@ -498,8 +498,19 @@ namespace FmsbwebCoreApi.Services.FMSB2
             };
         }
 
-        public async Task<KpiTarget> GetTargets(string dept, DateTime endDate)
+        public async Task<KpiTarget> GetTargets(string area, DateTime endDate)
         {
+            var dept = area;
+            switch (area.ToLower())
+            {
+                case "foundry cell":
+                    dept = "Foundry";
+                    break;
+                case "machine line":
+                    dept = "Machining";
+                    break;
+            }
+
             return await _context.KpiTarget
                             .Where(x => x.Department.ToLower() == dept.ToLower()
                                     && x.MonthNumber == endDate.Month
@@ -524,6 +535,39 @@ namespace FmsbwebCoreApi.Services.FMSB2
                             .Where(x => x.Department.ToLower() == dept.ToLower())
                             .Where(x => x.Year >= startYear && x.Year <= endYear)
                             .ToListAsync().ConfigureAwait(false);
+        }
+
+        public async Task<KpiTarget> GetTargets(string area, DateTime startDate, DateTime endDate)
+        {
+            if (area == null) throw new ArgumentNullException(nameof(area));
+
+            var dept = area;
+            switch (area.ToLower())
+            {
+                case "foundry cell":
+                    dept = "Foundry";
+                    break;
+                case "machine line":
+                    dept = "Machining";
+                    break;
+            }
+
+            var data = await _context.KpiTarget
+                            .Where(x => x.Department.ToLower() == dept.ToLower())
+                            .Where(x => x.Year >= startDate.Year && x.Year == endDate.Year)
+                            .ToListAsync()
+                            .ConfigureAwait(false);
+
+            data = data.Where(x => x.MonthNumber >= startDate.Month && x.MonthNumber <= endDate.Month).ToList();
+
+            return new KpiTarget
+            {
+                Department = area,
+                OaeTarget = data.Average(x => x.OaeTarget),
+                ScrapRateTarget = data.Average(x => x.ScrapRateTarget),
+                PpmhTarget = data.Average(x => x.PpmhTarget),
+                DowntimeRateTarget = data.Average(x => x.DowntimeRateTarget),
+            };
         }
     }
 }

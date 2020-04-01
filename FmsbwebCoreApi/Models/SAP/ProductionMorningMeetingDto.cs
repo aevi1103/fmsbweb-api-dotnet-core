@@ -1,4 +1,5 @@
-﻿using FmsbwebCoreApi.Models.FMSB2;
+﻿using FmsbwebCoreApi.Entity.Fmsb2;
+using FmsbwebCoreApi.Models.FMSB2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,5 +32,7 @@ namespace FmsbwebCoreApi.Models.SAP
         public string HxhOaeColorCode { get; set; }
         public string ScrapByCodeColorCode { get; set; }
         public string PpmhColorCode { get; set; }
+
+        public KpiTarget Targets { get; set; }
     }
 }
