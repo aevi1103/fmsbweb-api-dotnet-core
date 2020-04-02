@@ -20,9 +20,31 @@ namespace FmsbwebCoreApi.Helpers
             return Convert.ToDateTime(date, CultureInfo);
         }
 
+        public static double ToQuarter(this DateTime? date)
+        {
+            try
+            {
+                return Math.Ceiling(Convert.ToDateTime(date).Month / 3.0);
+            }
+            catch (Exception ee)
+            {
+                throw new Exception(ee.Message);
+            }
+        }
+
         public static double ToQuarter(this DateTime date)
         {
             return Math.Ceiling(date.Month / 3.0);
+        }
+
+        public static int ToYear(this DateTime? date)
+        {
+            return Convert.ToDateTime(date).Year;
+        }
+
+        public static int ToMonth(this DateTime? date)
+        {
+            return Convert.ToDateTime(date).Month;
         }
 
         public static int ToWeekNumber(this DateTime thisDate)
@@ -30,9 +52,32 @@ namespace FmsbwebCoreApi.Helpers
             return CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(thisDate, CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
         }
 
+        public static int ToWeekNumber(this DateTime? thisDate)
+        {
+            try
+            {
+                return CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(Convert.ToDateTime(thisDate), CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            
+        }
+
         public static string ToMonthName(this DateTime thisDate)
         {
             return thisDate.ToString("MMM", CultureInfo.InvariantCulture);
+        }
+
+        public static string ToMonthName(this int? monthNumber)
+        {
+            return CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName((int)monthNumber);
+        }
+
+        public static string ToMonthName(this int monthNumber)
+        {
+            return CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(monthNumber);
         }
     }
 

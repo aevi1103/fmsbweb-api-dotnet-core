@@ -15,6 +15,7 @@ namespace FmsbwebCoreApi.Models.FMSB2
 
         public decimal? PPMH { get; set; }
         public int? SAPGross { get; set; }
+        public int SapNet { get; set; }
         public string StartDate { get; set; }
         public string EndDate { get; set; }
         public string LaborTitle { get; set; }

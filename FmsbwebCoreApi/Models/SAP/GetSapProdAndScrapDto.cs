@@ -7,6 +7,9 @@ namespace FmsbwebCoreApi.Models.SAP
 {
     public class GetSapProdAndScrapDto
     {
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+
         public int Target { get; set; }
         public int SapProd { get; set; }
         public int SbScrap { get; set; }

@@ -38,6 +38,10 @@ namespace FmsbwebCoreApi.Services.SAP
         //labor hours
         Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime startDate, DateTime endDate, string area);
         Task<IEnumerable<dynamic>> GetPpmhPerShiftVariance(DateTime startDate, DateTime endDate, string area);
+        Task<IEnumerable<dynamic>> GetPlantWidePpmh(DateTime startDate, DateTime endDate);
+        decimal? CalculatePlantPpmh(decimal? overallHours, decimal? sapNetDmax, decimal sapNetLessDmax);
+        decimal? GetOverallHours(decimal? regular, decimal? overtime, decimal? doubleTime, decimal? orientation);
+        decimal? GetOverallHoursLessDmax(decimal? overallHours, decimal? sapNetDmax, decimal? sapNetLessDmax);
 
         //prod, scrap, downtime, components
         IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(

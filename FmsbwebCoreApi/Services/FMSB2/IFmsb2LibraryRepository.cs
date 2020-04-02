@@ -11,22 +11,20 @@ namespace FmsbwebCoreApi.Services.FMSB2
     {
         #region Labor Hours
 
-        List<FinanceLaborHoursView> TransformLaborHoursData(
-        IEnumerable<FinanceLaborHoursView> data, string dept = "");
-
+        List<FinanceLaborHoursView> TransformLaborHoursData(IEnumerable<FinanceLaborHoursView> data, string dept = "");
         Task<List<FinanceLaborHoursView>> GetLaborHoursData(DateTime startDate, DateTime endDate);
-        ProductionLaborHoursDto GetLaborHours(List<FinanceLaborHoursView> laborHrs, string dept = "");
+        Task<List<FinanceLaborHoursView>> GetLaborHoursData(DateTime startDate, DateTime endDate, string area);
+        Task<List<FinanceLaborHoursView>> GetPlantLaborHours(DateTime startDate, DateTime endDate);
+        ProductionLaborHoursDto GetLaborHours(List<FinanceLaborHoursView> laborHrs);
         ProductionLaborHoursDto GetRollingDaysPPMH(
             IEnumerable<SapProdDto> prodData,
-            IEnumerable<Scrap> scrapData,
             List<FinanceLaborHoursView> laborHrs,
             DateTime startDate,
-            DateTime endDate,
-            string area);
+            DateTime endDate);
 
-        ProductionLaborHoursDto GetPPMH(int sapGross, List<FinanceLaborHoursView> laborHrs, string area);
+        ProductionLaborHoursDto GetPPMH(int sapNet, List<FinanceLaborHoursView> laborHrs);
 
-        Task<ProdScrapForLaborHours> GetProdScrapForLaborHrs(DateTime startDate, DateTime endDate, string area);
+        Task<List<SapProdDto>> GetProdForLaborHrs(DateTime startDate, DateTime endDate, string area);
         Task<IEnumerable<WeeklyProductionLaborHoursDto>> GetWeeklyProdScrapForLaborHrs(DateTime startDate, DateTime endDate, string area);
 
         #endregion

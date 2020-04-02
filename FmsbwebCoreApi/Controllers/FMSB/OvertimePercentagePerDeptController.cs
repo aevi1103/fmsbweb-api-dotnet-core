@@ -30,7 +30,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
         {
             try
             {
-                var hoursData = await _fmsbLibRepo.GetLaborHoursData(start, end).ConfigureAwait(false);
+                var hoursData = await _fmsbLibRepo.GetLaborHoursData(start, end, dept).ConfigureAwait(false);
 
                 #region Overtime Percent Per Dept
 
@@ -42,7 +42,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
                     var endOfQuarter = startOfQuarter.EndOfQuarter();
 
                     var quarterHours = hoursData.Where(x => x.DateIn >= startOfQuarter && x.DateIn <= endOfQuarter).ToList();
-                    var quarterData = _fmsbLibRepo.GetLaborHours(quarterHours, dept);
+                    var quarterData = _fmsbLibRepo.GetLaborHours(quarterHours);
 
                     var listOfMonths = new List<dynamic>();
                     var monthStart = startOfQuarter;
@@ -51,7 +51,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
                         var monthEnd = monthStart.EndOfMonth();
 
                         var monthHours = hoursData.Where(x => x.DateIn >= monthStart && x.DateIn <= monthEnd).ToList();
-                        var monthData = _fmsbLibRepo.GetLaborHours(monthHours, dept);
+                        var monthData = _fmsbLibRepo.GetLaborHours(monthHours);
 
                         var monthRecord = new
                         {
@@ -96,7 +96,7 @@ namespace FmsbwebCoreApi.Controllers.FMSB
                 var shiftSummary = new List<dynamic>();
                 foreach (var shift in uniqueShifts)
                 {
-                    var shiftData = _fmsbLibRepo.GetLaborHours(hoursData.Where(x => x.Shift2 == shift).ToList(), dept);
+                    var shiftData = _fmsbLibRepo.GetLaborHours(hoursData.Where(x => x.Shift2 == shift).ToList());
                     var rec = new
                     {
                         Shift = shift,

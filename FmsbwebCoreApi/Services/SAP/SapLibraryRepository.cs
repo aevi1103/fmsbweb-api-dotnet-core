@@ -21,7 +21,7 @@ namespace FmsbwebCoreApi.Services.SAP
 {
     public class SapLibraryRepository : ISapLibraryRepository, IDisposable
     {
-
+        private readonly decimal dmaxHourRate = 0.01252m;
         private readonly SapContext _context;
         private readonly Fmsb2Context _fmsbContext;
 
@@ -596,33 +596,24 @@ namespace FmsbwebCoreApi.Services.SAP
 
             //labor hours
             var prodForLaborHours = new List<SapProdDto>();
-            var scrapForLaborHours = new List<Models.SAP.Scrap>();
             var laborHrs = new List<FinanceLaborHoursView>();
             var startDayForLaborHorsIfYesterday = end.AddDays(-6);
             if (start.IsYesterday()) //check if date is yesterday, if yes subtract -6 day from end day and store in a variable
             {
                 //get data from the db with the new date range
-                var prodScrapForLaborHrs = await _fmsb2Repo.GetProdScrapForLaborHrs(startDayForLaborHorsIfYesterday, end, area).ConfigureAwait(false);
-                prodForLaborHours = prodScrapForLaborHrs.Prod.ToList();
-                scrapForLaborHours = prodScrapForLaborHrs.Scrap.ToList();
+                prodForLaborHours = await _fmsb2Repo.GetProdForLaborHrs(startDayForLaborHorsIfYesterday, end, area).ConfigureAwait(false);
 
                 //get labor hrs data from db
-                laborHrs = await _fmsb2Repo.GetLaborHoursData(startDayForLaborHorsIfYesterday, end).ConfigureAwait(false);
+                laborHrs = await _fmsb2Repo.GetLaborHoursData(startDayForLaborHorsIfYesterday, end, area).ConfigureAwait(false);
             }
             else
             {
                 //use the original db request for prod and scrap
                 prodForLaborHours = sapProdByArea;
-                scrapForLaborHours = scrapByDepartment;
 
                 //use unmodified date range
-                laborHrs = await _fmsb2Repo.GetLaborHoursData(start, end).ConfigureAwait(false);
+                laborHrs = await _fmsb2Repo.GetLaborHoursData(start, end, area).ConfigureAwait(false);
             }
-
-            scrapForLaborHours = scrapForLaborHours
-                                    .Where(x => x.ScrapCode != "8888")
-                                    //.Where(x => x.IsPurchashedExclude == false)
-                                    .ToList();
 
             var result = hxh
                             .Select(x => new ProductionMorningMeetingDto
@@ -666,13 +657,13 @@ namespace FmsbwebCoreApi.Services.SAP
 
                                 SapProductionByType = GetSapProductionByType(sapProdByType, x.Area),
 
-                                LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area),
+                                LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, laborHrs, start, end),
 
 
                                 ScrapByCodeColorCode = GetColorCode(targets, "scrap",
                                                             GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate),
                                 PpmhColorCode = GetColorCode(targets, "ppmh",
-                                                   _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, scrapForLaborHours, laborHrs, start, end, x.Area).PPMH),
+                                                   _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, laborHrs, start, end).PPMH),
 
                                 Targets = targets
 
@@ -931,6 +922,9 @@ namespace FmsbwebCoreApi.Services.SAP
 
             return new GetSapProdAndScrapDto
             {
+                StartDate = start,
+                EndDate = end,
+
                 Target = (int)target,
                 SapProd = sapProd,
                 SbScrap = sbScrap,
@@ -1870,7 +1864,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
 
                 //get data from db run in parallel
-                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end).ConfigureAwait(false);
+                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end, area).ConfigureAwait(false);
 
                 var prod = (await _context.Production2
                                         .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
@@ -1942,10 +1936,8 @@ namespace FmsbwebCoreApi.Services.SAP
                     SapNet = x.Sum(t => t.Qty),
                     SapScrap = scrap.Where(s => s.Year == x.Key.Year && s.Quarter == x.Key.Quarter).Sum(s => s.Qty),
                     SapGross = scrap.Where(s => s.Year == x.Key.Year && s.Quarter == x.Key.Quarter).Sum(s => s.Qty) + x.Sum(t => t.Qty),
-                    LaborHours = _fmsb2Repo.GetPPMH(
-                                    ((int)scrap.Where(s => s.Year == x.Key.Year && s.Quarter == x.Key.Quarter).Sum(s => s.Qty) + (int)x.Sum(t => t.Qty)),
-                                    laborHours.Where(l => l.Year == x.Key.Year && l.Quarter == x.Key.Quarter).ToList(),
-                                    area),
+                    LaborHours = _fmsb2Repo.GetPPMH((int)x.Sum(t => t.Qty),
+                                    laborHours.Where(l => l.Year == x.Key.Year && l.Quarter == x.Key.Quarter).ToList()),
 
                     MonthDetails = x.GroupBy(m => new { m.Year, m.Quarter, m.Month })
                                     .Select(m => new
@@ -1958,10 +1950,8 @@ namespace FmsbwebCoreApi.Services.SAP
                                         SapNet = m.Sum(t => t.Qty),
                                         SapScrap = scrap.Where(s => s.Year == m.Key.Year && s.Quarter == m.Key.Quarter && s.Month == m.Key.Month).Sum(s => s.Qty),
                                         SapGross = (int)scrap.Where(s => s.Year == m.Key.Year && s.Quarter == m.Key.Quarter && s.Month == m.Key.Month).Sum(s => s.Qty) + (int)m.Sum(t => t.Qty),
-                                        LaborHours = _fmsb2Repo.GetPPMH(
-                                                        ((int)scrap.Where(s => s.Year == m.Key.Year && s.Quarter == m.Key.Quarter && s.Month == m.Key.Month).Sum(s => s.Qty) + (int)m.Sum(t => t.Qty)),
-                                                        laborHours.Where(l => l.Year == m.Key.Year && l.Quarter == m.Key.Quarter && l.Month == m.Key.Month).ToList(),
-                                                        area),
+                                        LaborHours = _fmsb2Repo.GetPPMH((int)m.Sum(t => t.Qty),
+                                                        laborHours.Where(l => l.Year == m.Key.Year && l.Quarter == m.Key.Quarter && l.Month == m.Key.Month).ToList()),
 
                                         WeekDetails = m.GroupBy(w => new { w.Year, w.Quarter, w.Month, w.WeekNumber })
                                                         .Select(w => new
@@ -1974,10 +1964,8 @@ namespace FmsbwebCoreApi.Services.SAP
                                                             SapNet = w.Sum(t => t.Qty),
                                                             SapScrap = scrap.Where(s => s.Year == w.Key.Year && s.Quarter == w.Key.Quarter && s.Month == w.Key.Month && s.WeekNumber == w.Key.WeekNumber).Sum(s => s.Qty),
                                                             SapGross = (int)scrap.Where(s => s.Year == w.Key.Year && s.Quarter == w.Key.Quarter && s.Month == w.Key.Month && s.WeekNumber == w.Key.WeekNumber).Sum(s => s.Qty) + (int)w.Sum(t => t.Qty),
-                                                            LaborHours = _fmsb2Repo.GetPPMH(
-                                                                            ((int)scrap.Where(s => s.Year == w.Key.Year && s.Quarter == w.Key.Quarter && s.Month == w.Key.Month && s.WeekNumber == w.Key.WeekNumber).Sum(s => s.Qty) + (int)w.Sum(t => t.Qty)),
-                                                                            laborHours.Where(l => l.Year == w.Key.Year && l.Quarter == w.Key.Quarter && l.Month == w.Key.Month && l.WeekNumber == w.Key.WeekNumber).ToList(),
-                                                                            area),
+                                                            LaborHours = _fmsb2Repo.GetPPMH((int)w.Sum(t => t.Qty),
+                                                                            laborHours.Where(l => l.Year == w.Key.Year && l.Quarter == w.Key.Quarter && l.Month == w.Key.Month && l.WeekNumber == w.Key.WeekNumber).ToList()),
                                                         }).OrderBy(w => w.WeekNumber)
 
                                     }).OrderBy(m => m.Month)
@@ -2020,7 +2008,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
 
                 //get data from db run in parallel
-                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end).ConfigureAwait(false);
+                var laborHours = await _fmsb2Repo.GetLaborHoursData(start, end, area).ConfigureAwait(false);
 
                 var prod = await _context.Production2
                                         .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
@@ -2033,19 +2021,6 @@ namespace FmsbwebCoreApi.Services.SAP
                                         })
                                         .ToListAsync()
                                         .ConfigureAwait(false);
-
-                var scrap = (await _context.Scrap2
-                                        .Where(x => x.ShiftDate >= start && x.ShiftDate <= end && x.Area == area)
-                                        .Where(x => x.ScrapCode != "8888")
-                                        .GroupBy(x => new { x.Shift, x.Area })
-                                        .Select(x => new
-                                        {
-                                            x.Key.Area,
-                                            x.Key.Shift,
-                                            Qty = x.Sum(t => t.Qty)
-                                        })
-                                        .ToListAsync()
-                                        .ConfigureAwait(false));
 
                 var ppmhTarget = await _fmsbContext.KpiTarget
                                     .Where(x => x.Year >= start.Year && x.Year <= end.Year)
@@ -2065,13 +2040,10 @@ namespace FmsbwebCoreApi.Services.SAP
                         Shift = shift,
                         Target = ppmhTarget,
                         SapNet = prod.Where(p => p.Shift == shift).Sum(t => t.Qty),
-                        SapScrap = scrap.Where(s => s.Shift == shift).Sum(s => s.Qty),
-                        SapGross = (int)scrap.Where(s => s.Shift == shift).Sum(s => s.Qty) + (int)prod.Where(p => p.Shift == shift).Sum(t => t.Qty),
-                        LaborHours = _fmsb2Repo.GetPPMH(
-                                        ((int)scrap.Where(s => s.Shift == shift).Sum(s => s.Qty) + (int)prod.Where(p => p.Shift == shift).Sum(t => t.Qty)),
-                                        laborHours.Where(l => l.Shift2 == shift).ToList(),
-                                        area
-                                    ),
+                        SapScrap = 0,
+                        SapGross = 0,
+                        LaborHours = _fmsb2Repo.GetPPMH((int)prod.Where(p => p.Shift == shift).Sum(t => t.Qty),
+                                        laborHours.Where(l => l.Shift2 == shift).ToList()),
 
                     };
                     list.Add(rec);
@@ -2320,5 +2292,189 @@ namespace FmsbwebCoreApi.Services.SAP
             return res;
         }
 
+        public async Task<IEnumerable<dynamic>> GetPlantWidePpmh(DateTime startDate, DateTime endDate)
+        {
+            //todo: ask Hannes is the ppmh calculation for Plant PPMH is SAP net / Hours
+
+            //get data from db
+            var p1s = new List<string> { "P1A", "P1F", "P1M" };
+
+            #region DB SAP Net
+
+            var sapNetLessDmax = await _context.Production2
+                    .Where(x => x.ShiftDate >= startDate && x.ShiftDate <= endDate)
+                    .Where(x => x.Program != "DMAX")
+                    .Where(x => x.Material.StartsWith("P1A") || x.Material.StartsWith("P1F") || x.Material.StartsWith("P1M"))
+                    .GroupBy(x => new { x.ShiftDate })
+                    .Select(x => new
+                    {
+                        x.Key.ShiftDate,
+                        Qty = x.Sum(t => t.QtyProd)
+                    })
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+
+            var dmaxSapNet = await _context.Production2
+                                .Where(x => x.ShiftDate >= startDate && x.ShiftDate <= endDate)
+                                .Where(x => x.Program == "DMAX")
+                                .GroupBy(x => new { x.ShiftDate })
+                                .Select(x => new
+                                {
+                                    x.Key.ShiftDate,
+                                    Qty = x.Sum(t => t.QtyProd)
+                                })
+                                .ToListAsync()
+                                .ConfigureAwait(false);
+
+            #endregion
+
+            #region DB Labor Hours
+
+            var plantLaborHours = await _fmsb2Repo
+                        .GetPlantLaborHours(startDate, endDate)
+                        .ConfigureAwait(false);
+
+            #endregion
+
+            const decimal dmaxConstant = 0.01252m;
+            var quarterlyHours = plantLaborHours
+                                .GroupBy(x => new { x.Year, x.Quarter })
+                                .Select(x => new
+                                {
+                                    x.Key.Year,
+                                    x.Key.Quarter,
+                                    Regular = x.Sum(t => t.Regular),
+                                    Overtime = x.Sum(t => t.Overtime),
+                                    DoubleTime = x.Sum(t => t.DoubleTime),
+                                    Orientation = x.Sum(t => t.Orientation),
+                                    OverallHours = GetOverallHours(x.Sum(t => t.Regular), x.Sum(t => t.Overtime), x.Sum(t => t.DoubleTime), x.Sum(t => t.Orientation)),
+
+                                    sapNetLessDmax = sapNetLessDmax.Any(d => d.ShiftDate.ToYear() == x.Key.Year && d.ShiftDate.ToQuarter() == x.Key.Quarter)
+                                                    ? (decimal)sapNetLessDmax.Where(d => d.ShiftDate.ToYear() == x.Key.Year && d.ShiftDate.ToQuarter() == x.Key.Quarter).Sum(t => t.Qty)
+                                                    : 0,
+
+                                    sapNetDmax = dmaxSapNet.Any(d => d.ShiftDate.ToYear() == x.Key.Year && d.ShiftDate.ToQuarter() == x.Key.Quarter)
+                                                    ? (decimal)dmaxSapNet.Where(d => d.ShiftDate.ToYear() == x.Key.Year && d.ShiftDate.ToQuarter() == x.Key.Quarter).Sum(t => t.Qty)
+                                                    : 0,
+
+                                    MontDetails = x.GroupBy(m => new { m.Year, m.Quarter, m.Month })
+                                                    .Select(m => new
+                                                    {
+                                                        m.Key.Month,
+                                                        MonthName = m.Key.Month.ToMonthName(),
+                                                        Regular = m.Sum(t => t.Regular),
+                                                        Overtime = m.Sum(t => t.Overtime),
+                                                        DoubleTime = m.Sum(t => t.DoubleTime),
+                                                        Orientation = m.Sum(t => t.Orientation),
+                                                        OverallHours = GetOverallHours(m.Sum(t => t.Regular), m.Sum(t => t.Overtime), m.Sum(t => t.DoubleTime), m.Sum(t => t.Orientation)),
+
+                                                        sapNetLessDmax = sapNetLessDmax.Any(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month)
+                                                                        ? (decimal)sapNetLessDmax.Where(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month).Sum(t => t.Qty)
+                                                                        : 0,
+
+                                                        sapNetDmax = dmaxSapNet.Any(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month)
+                                                                        ? (decimal)dmaxSapNet.Where(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month).Sum(t => t.Qty)
+                                                                        : 0,
+
+                                                        WeekDetails = m.GroupBy(w => new { w.WeekNumber })
+                                                                        .Select(w => new
+                                                                        {
+                                                                            w.Key.WeekNumber,
+                                                                            Regular = w.Sum(t => t.Regular),
+                                                                            Overtime = w.Sum(t => t.Overtime),
+                                                                            DoubleTime = w.Sum(t => t.DoubleTime),
+                                                                            Orientation = w.Sum(t => t.Orientation),
+                                                                            OverallHours = GetOverallHours(w.Sum(t => t.Regular), w.Sum(t => t.Overtime), w.Sum(t => t.DoubleTime), w.Sum(t => t.Orientation)),
+
+                                                                            sapNetLessDmax = sapNetLessDmax.Any(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month && d.ShiftDate.ToWeekNumber() == w.Key.WeekNumber)
+                                                                            ? (decimal)sapNetLessDmax.Where(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month && d.ShiftDate.ToWeekNumber() == w.Key.WeekNumber).Sum(t => t.Qty)
+                                                                            : 0,
+
+                                                                            sapNetDmax = dmaxSapNet.Any(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month && d.ShiftDate.ToWeekNumber() == w.Key.WeekNumber)
+                                                                            ? (decimal)dmaxSapNet.Where(d => d.ShiftDate.ToYear() == m.Key.Year && d.ShiftDate.ToQuarter() == m.Key.Quarter && d.ShiftDate.ToMonth() == m.Key.Month && d.ShiftDate.ToWeekNumber() == w.Key.WeekNumber).Sum(t => t.Qty)
+                                                                            : 0,
+
+
+                                                                        })
+
+                                                    })
+
+                                })
+                                .Select(x => new
+                                {
+                                    x.Year,
+                                    x.Quarter,
+                                    x.Regular,
+                                    x.Overtime,
+                                    x.Orientation,
+
+                                    x.sapNetLessDmax,
+                                    x.sapNetDmax,
+
+                                    x.OverallHours,
+                                    OverallHoursLessDmax = GetOverallHoursLessDmax(x.OverallHours, x.sapNetDmax, x.sapNetLessDmax),
+
+                                    PPMH = CalculatePlantPpmh(x.OverallHours, x.sapNetDmax, x.sapNetLessDmax),
+
+                                    MonthDetails = x.MontDetails
+                                                    .Select(m => new
+                                                    {
+                                                        m.Month,
+                                                        m.Regular,
+                                                        m.Overtime,
+                                                        m.DoubleTime,
+                                                        m.Orientation,
+                                                        
+                                                        m.sapNetLessDmax,
+                                                        m.sapNetDmax,
+
+                                                        m.OverallHours,
+                                                        OverallHoursLessDmax = GetOverallHoursLessDmax(m.OverallHours, m.sapNetDmax, m.sapNetLessDmax),
+                                                        PPMH = CalculatePlantPpmh(m.OverallHours, m.sapNetDmax, m.sapNetLessDmax),
+
+                                                        WeekDetails = m.WeekDetails
+                                                                        .Select(w => new
+                                                                        {
+                                                                            w.WeekNumber,
+                                                                            w.Regular,
+                                                                            w.Overtime,
+                                                                            w.DoubleTime,
+                                                                            w.Orientation,
+                                                                            
+                                                                            w.sapNetLessDmax,
+                                                                            w.sapNetDmax,
+
+                                                                            w.OverallHours,
+                                                                            OverallHoursLessDmax = GetOverallHoursLessDmax(w.OverallHours, w.sapNetDmax, w.sapNetLessDmax),
+                                                                            PPMH = CalculatePlantPpmh(w.OverallHours, w.sapNetDmax, w.sapNetLessDmax),
+                                                                        })
+                                                                        .OrderBy(w => w.WeekNumber)
+                                                    }).OrderBy(m => m.Month)
+                                })
+                                .OrderBy(x => x.Year)
+                                .ThenBy(x => x.Quarter)
+                                .ToList();
+
+
+            return quarterlyHours;
+        }
+
+        public decimal? CalculatePlantPpmh(decimal? overallHours, decimal? sapNetDmax, decimal sapNetLessDmax)
+        {
+            var dmaxHours = sapNetLessDmax == 0 ? 0 : sapNetDmax * dmaxHourRate / sapNetLessDmax;
+            var hours = overallHours - dmaxHours;
+            return hours == 0 ? 0 : sapNetLessDmax / hours;
+        }
+
+        public decimal? GetOverallHours(decimal? regular, decimal? overtime, decimal? doubleTime, decimal? orientation)
+        {
+            return regular + overtime + doubleTime + orientation;
+        }
+
+        public decimal? GetOverallHoursLessDmax(decimal? overallHours, decimal? sapNetDmax, decimal? sapNetLessDmax)
+        {
+            var dmaxHours = sapNetLessDmax == 0 ? 0 : sapNetDmax * dmaxHourRate / sapNetLessDmax;
+            return overallHours - dmaxHours;
+        }
     }
 }
