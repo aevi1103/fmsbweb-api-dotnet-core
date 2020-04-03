@@ -24,11 +24,15 @@ namespace FmsbwebCoreApi.Models.SAP
         public int TotalSbScrap { get; set; }
         public int TotalPurchaseScrap { get; set; }
 
+        public decimal TotalAfScrap { get; set; } //anod, sc, assy
+
         public int TotalWarmers { get; set; }
 
         public decimal TotalScrapRate { get; set; }
         public decimal TotalSbScrapRate { get; set; }
         public decimal TotalPurchaseScrapRate { get; set; }
+
+        public decimal TotalAfScrapRate { get; set; } //anod, sc, assy
 
         public IEnumerable<Scrap> SbScrapDetails { get; set; } = new List<Scrap>();
         public IEnumerable<Scrap> PurchaseScrapDetails { get; set; } = new List<Scrap>();

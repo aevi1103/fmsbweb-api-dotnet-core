@@ -42,13 +42,13 @@ namespace FmsbwebCoreApi.Services.SAP
         decimal? CalculatePlantPpmh(decimal? overallHours, decimal? sapNetDmax, decimal sapNetLessDmax);
         decimal? GetOverallHours(decimal? regular, decimal? overtime, decimal? doubleTime, decimal? orientation);
         decimal? GetOverallHoursLessDmax(decimal? overallHours, decimal? sapNetDmax, decimal? sapNetLessDmax);
-
         //prod, scrap, downtime, components
         IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(
             IEnumerable<Models.SAP.Scrap> scrap,
             IEnumerable<SapProdDetailDto> prod,
             IEnumerable<HxHProductionByLineDto> hxh,
-            IEnumerable<Models.SAP.Scrap> warmers);
+            IEnumerable<Models.SAP.Scrap> warmers,
+            IEnumerable<SwotTargetWithDeptId> lineTargets);
 
         IEnumerable<ProductionByProgramDto> GetDepartmentDetailsByProgram(
             IEnumerable<Models.SAP.Scrap> scrap,
@@ -62,7 +62,6 @@ namespace FmsbwebCoreApi.Services.SAP
 
         //utils
         string GetColorCode(KpiTarget targets, string type, decimal? value);
-        string MapAreaTopScrapArea(string area);
         int MapShiftToShiftOrder(string shift);
 
         //charts

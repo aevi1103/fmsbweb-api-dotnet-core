@@ -21,6 +21,9 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         [Column("machineName")]
         [StringLength(50)]
         public string MachineName { get; set; }
+        [Column("Line2")]
+        [StringLength(50)]
+        public string Line2 { get; set; }
         [Column("oaeTarget", TypeName = "decimal(18, 5)")]
         public decimal OaeTarget { get; set; }
         [Column("targetPartsPerHour")]

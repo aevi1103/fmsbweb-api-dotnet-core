@@ -9,6 +9,7 @@ namespace FmsbwebCoreApi.Models.SAP
     {
         public string Area { get; set; }
         public int Target { get; set; }
+        public decimal OaeTarget { get; set; }
 
         public int SapGross { get; set; }
         public int SapNet { get; set; }

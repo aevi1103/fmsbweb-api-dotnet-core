@@ -24,6 +24,7 @@ namespace FmsbwebCoreApi.Services.SAP
         private readonly decimal dmaxHourRate = 0.01252m;
         private readonly SapContext _context;
         private readonly Fmsb2Context _fmsbContext;
+        private readonly MapArea _mapArea;
 
         private readonly IFmsb2LibraryRepository _fmsb2Repo;
         private readonly IIntranetLibraryRepository _intranetRepo;
@@ -50,21 +51,10 @@ namespace FmsbwebCoreApi.Services.SAP
 
             _fmsbMvcRepo = fmsbMvcRepo ??
                 throw new ArgumentNullException(nameof(fmsbMvcRepo));
+
+            _mapArea = new MapArea();
         }
 
-        public string MapAreaTopScrapArea(string area)
-        {
-            if (area == null) throw new ArgumentNullException(nameof(area));
-            switch (area.ToLower().Trim())
-            {
-                case "foundry cell":
-                    return "foundry";
-                case "machine line":
-                    return "machining";
-                default:
-                    return area;
-            }
-        }
         public IEnumerable<Models.SAP.KpiTargets> GetInMemoryKpiTarget()
         {
             var kpis = new List<Models.SAP.KpiTargets>
@@ -710,7 +700,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                     .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                                     .Where(x => x.ScrapCode != "8888")
                                     .Where(x => x.IsPurchashedExclude == isPurchasedScrap)
-                                    .Where(x => area.ToLower() == "skirt coat" ? (finScrap.Contains(x.ScrapAreaName.ToLower())) : (x.ScrapAreaName == MapAreaTopScrapArea(area)))
+                                    .Where(x => area.ToLower() == "skirt coat" ? (finScrap.Contains(x.ScrapAreaName.ToLower())) : (x.ScrapAreaName == _mapArea.RanameAreaToDepartment(area)))
                                     .GroupBy(x => new { x.ShiftDate })
                                     .Select(x => new
                                     {
@@ -858,7 +848,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
             var scrap = _context.Scrap2
                             .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
-                            .Where(x => x.ScrapAreaName == MapAreaTopScrapArea(area))
+                            .Where(x => x.ScrapAreaName == _mapArea.RanameAreaToDepartment(area))
                             .Where(x => x.ScrapCode != "8888")
                             .GroupBy(x => new
                             {
@@ -944,7 +934,8 @@ namespace FmsbwebCoreApi.Services.SAP
             IEnumerable<Models.SAP.Scrap> scrap,
             IEnumerable<SapProdDetailDto> prod,
             IEnumerable<HxHProductionByLineDto> hxh,
-            IEnumerable<Models.SAP.Scrap> warmers)
+            IEnumerable<Models.SAP.Scrap> warmers,
+            IEnumerable<SwotTargetWithDeptId> lineTargets)
         {
 
             //distinct lines
@@ -953,7 +944,15 @@ namespace FmsbwebCoreApi.Services.SAP
             var hxhLine = hxh.Select(x => x.Line).Distinct();
             var distinctLines = (scrapLines.Concat(sapProdLine).Concat(hxhLine)).Distinct();
 
-            //transform data
+            var targets = lineTargets.Select(x => new
+            {
+                Line = x.Line2,
+                x.OaeTarget,
+                x.FoundryScrapTarget,
+                x.MachineScrapTarget,
+                x.AfScrapTarget,
+            }).ToList();
+
             var scrapByLine = scrap
                                 .GroupBy(x => new { x.Department, x.Area, x.Line, x.ScrapAreaName, x.ScrapCode, x.ScrapDesc, x.IsPurchashedExclude, x.IsPurchashedExclude2 })
                                 .Select(x => new Models.SAP.Scrap
@@ -991,6 +990,10 @@ namespace FmsbwebCoreApi.Services.SAP
             var sbScrap = scrapByLine.Where(x => x.IsPurchashedExclude == false);
             var purchasedScrap = scrapByLine.Where(x => x.IsPurchashedExclude == true);
 
+            var afScrap = scrapByLine
+                            .Where(x => x.IsPurchashedExclude == false)
+                            .Where(x => x.ScrapAreaName == "Anodize" || x.ScrapAreaName == "Skirt Coat" || x.ScrapAreaName == "Assembly");
+
             //details
             var result = distinctLines.Select(line => new ProductionByLineDto
             {
@@ -998,6 +1001,11 @@ namespace FmsbwebCoreApi.Services.SAP
                 Area = hxh.Any(x => x.Line == line) ? hxh.Where(x => x.Line == line).First().Area : "",
                 Line = line,
                 Target = hxh.Any(x => x.Line == line) ? (int)hxh.Where(x => x.Line == line).First().Target : 0,
+
+                OaeTarget = targets.Any(x => x.Line == line) ? (decimal)targets.Where(x => x.Line == line).First().OaeTarget : 0,
+                FoundryScrapRateTarget = targets.Any(x => x.Line == line) ? (decimal)targets.Where(x => x.Line == line).First().FoundryScrapTarget : 0,
+                MachiningScrapRateTarget = targets.Any(x => x.Line == line) ? (decimal)targets.Where(x => x.Line == line).First().MachineScrapTarget : 0,
+                AfScrapRateTarget = targets.Any(x => x.Line == line) ? (decimal)targets.Where(x => x.Line == line).First().AfScrapTarget : 0,
 
                 HxHGross = hxh.Any(x => x.Line == line) ? (int)hxh.Where(x => x.Line == line).First().Gross : 0,
 
@@ -1007,6 +1015,8 @@ namespace FmsbwebCoreApi.Services.SAP
                 TotalScrap = scrapByLine.Any(x => x.Line == line) ? scrapByLine.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
                 TotalSbScrap = sbScrap.Any(x => x.Line == line) ? sbScrap.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
                 TotalPurchaseScrap = purchasedScrap.Any(x => x.Line == line) ? purchasedScrap.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
+
+                TotalAfScrap = afScrap.Any(x => x.Line == line) ? afScrap.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
 
                 TotalWarmers = warmersByLine.Any(x => x.Line == line) ? warmersByLine.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
 
@@ -1019,6 +1029,11 @@ namespace FmsbwebCoreApi.Services.SAP
                 Area = x.Area,
                 Line = x.Line,
                 Target = x.Target,
+
+                OaeTarget = x.OaeTarget,
+                FoundryScrapRateTarget = x.FoundryScrapRateTarget,
+                MachiningScrapRateTarget = x.MachiningScrapRateTarget,
+                AfScrapRateTarget = x.AfScrapRateTarget,
 
                 HxHGross = x.HxHGross,
                 HxHNet = (x.Area.ToLower() == "foundry cell" || x.Area.ToLower() == "machine line") ? x.HxHGross - x.TotalScrap : x.HxHGross,
@@ -1033,12 +1048,14 @@ namespace FmsbwebCoreApi.Services.SAP
                 TotalScrap = x.TotalScrap,
                 TotalSbScrap = x.TotalSbScrap,
                 TotalPurchaseScrap = x.TotalPurchaseScrap,
+                TotalAfScrap = x.TotalAfScrap,
 
                 TotalWarmers = x.TotalWarmers,
 
                 TotalScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalScrap / (decimal)(x.SapNet + x.TotalScrap),
                 TotalSbScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalSbScrap / (decimal)(x.SapNet + x.TotalScrap),
                 TotalPurchaseScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalPurchaseScrap / (decimal)(x.SapNet + x.TotalScrap),
+                TotalAfScrapRate = (x.SapNet + x.TotalScrap) == 0 ? 0 : (decimal)x.TotalAfScrap / (decimal)(x.SapNet + x.TotalScrap),
 
                 SbScrapDetails = x.SbScrapDetails,
                 PurchaseScrapDetails = x.PurchaseScrapDetails,
@@ -1210,9 +1227,7 @@ namespace FmsbwebCoreApi.Services.SAP
             if (area == null) throw new ArgumentNullException(nameof(area));
 
             //get data from db
-            var scrapData = (await GetScrapDataByDepartmentFromDb(start, end, area).ConfigureAwait(false)).ToList();
-            var scrap = scrapData.Where(x => x.ScrapCode != "8888").ToList();
-            var warmers = scrapData.Where(x => x.ScrapCode == "8888").ToList();
+            var scrapData = await GetScrapDataByDepartmentFromDb(start, end, area).ConfigureAwait(false);
 
             var prod = await _context.Production2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
@@ -1229,9 +1244,21 @@ namespace FmsbwebCoreApi.Services.SAP
                                     User = x.Key.EnteredUser,
                                     SapNet = (int)x.Sum(s => s.QtyProd)
                                 })
-                                .ToListAsync().ConfigureAwait(false);
+                                .ToListAsync()
+                                .ConfigureAwait(false);
 
-            var hxh = await _intranetRepo.GetHxhProdByLineAndProgram(start, end, area).ConfigureAwait(false);
+            var hxh = await _intranetRepo.GetHxhProdByLineAndProgram(start, end, area)
+                            .ConfigureAwait(false);
+
+            var lineTargets = await _fmsbContext.SwotTargetWithDeptId.Where(x => x.DeptName == _mapArea.RanameAreaToDepartment(area))
+                               .ToListAsync()
+                               .ConfigureAwait(false);
+
+            var kpiTarget = await _fmsb2Repo.GetTargets(area, start, end).ConfigureAwait(false);
+
+            //transform data
+            var scrap = scrapData.Where(x => x.ScrapCode != "8888").ToList();
+            var warmers = scrapData.Where(x => x.ScrapCode == "8888").ToList();
 
             //get overall total
             var target = hxh.LineDetails.Sum(x => x.Target);
@@ -1303,6 +1330,8 @@ namespace FmsbwebCoreApi.Services.SAP
                 Target = (int)target,
                 SapGross = sapGross,
 
+                OaeTarget = kpiTarget.OaeTarget / 100,
+
                 SapNet = sapNet,
                 SapOae = sapOae,
 
@@ -1320,7 +1349,7 @@ namespace FmsbwebCoreApi.Services.SAP
 
                 SbScrapAreaDetails = scrapAreaDetails,
 
-                DetailsByLine = GetDepartmentDetailsByLine(scrap, prod, hxh.LineDetails, warmers),
+                DetailsByLine = GetDepartmentDetailsByLine(scrap, prod, hxh.LineDetails, warmers, lineTargets),
                 DetailsByProgram = GetDepartmentDetailsByProgram(scrap, prod, hxh.ProgramDetails),
 
                 SbScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == false),
@@ -1473,7 +1502,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                     .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                                     .Where(x => x.ScrapCode != "8888")
                                     .Where(x => x.IsPurchashedExclude == isPurchasedScrap)
-                                    .Where(x => area.ToLower() == "skirt coat" ? (finScrap.Contains(x.ScrapAreaName.ToLower())) : (x.ScrapAreaName == MapAreaTopScrapArea(area)))
+                                    .Where(x => area.ToLower() == "skirt coat" ? (finScrap.Contains(x.ScrapAreaName.ToLower())) : (x.ScrapAreaName == _mapArea.RanameAreaToDepartment(area)))
                                     .GroupBy(x => new { x.Program, x.Area, x.ScrapAreaName, x.MachineHxh })
                                     .Select(x => new
                                     {
@@ -2424,7 +2453,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                                         m.Overtime,
                                                         m.DoubleTime,
                                                         m.Orientation,
-                                                        
+
                                                         m.sapNetLessDmax,
                                                         m.sapNetDmax,
 
@@ -2440,7 +2469,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                                                             w.Overtime,
                                                                             w.DoubleTime,
                                                                             w.Orientation,
-                                                                            
+
                                                                             w.sapNetLessDmax,
                                                                             w.sapNetDmax,
 
