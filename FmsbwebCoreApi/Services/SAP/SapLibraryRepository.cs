@@ -2505,5 +2505,39 @@ namespace FmsbwebCoreApi.Services.SAP
             var dmaxHours = sapNetLessDmax == 0 ? 0 : sapNetDmax * dmaxHourRate / sapNetLessDmax;
             return overallHours - dmaxHours;
         }
+
+        public async Task<IEnumerable<dynamic>> GetDailyScrapByCodeByShift(DateTime startDate, DateTime endDate, string scrapCode, bool isPurchasedScrap = false, bool isTotalScrap = false)
+        {
+            var scrapQry = _context.Scrap2.AsQueryable();
+            scrapQry = scrapQry.Where(x => x.ShiftDate >= startDate && x.ShiftDate <= endDate);
+
+            if (isTotalScrap)
+            {
+                scrapQry = scrapQry.Where(x => x.IsPurchashedExclude == isPurchasedScrap);
+            }
+            else
+            {
+                scrapQry = scrapQry.Where(x => x.ScrapCode == scrapCode);
+            }
+
+            var data = await scrapQry
+                            .GroupBy(x => new { x.ShiftDate, x.Shift, x.ScrapCode, x.ScrapDesc })
+                            .Select(x => new
+                            {
+                                x.Key.ShiftDate,
+                                x.Key.Shift,
+                                //ShiftOrder = MapShiftToShiftOrder(x.Key.Shift),
+                                x.Key.ScrapCode,
+                                x.Key.ScrapDesc,
+                                Qty = x.Sum(t => t.Qty)
+                            })
+                            .OrderBy(x => x.ShiftDate)
+                            //.ThenBy(x => x.ShiftOrder)
+                            .ToListAsync()
+                            .ConfigureAwait(false);
+
+            return data;
+
+        }
     }
 }
