@@ -33,19 +33,59 @@ namespace FmsbwebCoreApi.Controllers.SAP
             }
 
             var result = await _sapLibRepo.GetDailyScrapByShift(resourceParameter).ConfigureAwait(false);
-
             var distinctShift = result.Select(x => new { x.Shift, x.ShiftOrder }).Distinct();
+
+            var startDate = result.Min(x => x.ShiftDate);
+            var endDate = result.Max(x => x.ShiftDate);
+
+
+            var result2 = new List<dynamic>();
+            var tempStart = startDate;
+            while (tempStart <= endDate)
+            {
+                foreach (var shift in distinctShift.OrderBy(x => x.ShiftOrder))
+                {
+                    var isExist = result.Any(x => x.ShiftDate == tempStart && x.Shift == shift.Shift);
+                    if (isExist)
+                    {
+                        var data = result.First(x => x.ShiftDate == tempStart && x.Shift == shift.Shift);
+                        result2.Add(new
+                        {
+                            data.ShiftDate,
+                            data.Shift,
+                            data.ShiftOrder,
+                            data.ScrapCode,
+                            data.ScrapDesc,
+                            data.Qty
+                        });
+                    }
+                    else
+                    {
+                        result2.Add(new
+                        {
+                            ShiftDate = tempStart,
+                            shift.Shift,
+                            shift.ShiftOrder,
+                            resourceParameter.ScrapCode,
+                            ScrapDesc = "",
+                            Qty = 0
+                        });
+                    }
+                }
+                tempStart = tempStart.AddDays(1);
+            }
+
 
             var shifts = distinctShift.Select(x => new
             {
                 shift = x.Shift,
                 shiftOrder = x.ShiftOrder,
-                dailyScrap = result.Where(s => s.Shift == x.Shift)
+                dailyScrap = result2.Where(s => s.Shift == x.Shift)
             });
 
             var res = new
             {
-                AllShifts = result,
+                AllShifts = result2,
                 Shift = shifts
             };
 

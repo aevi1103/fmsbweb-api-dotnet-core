@@ -9,10 +9,9 @@ namespace FmsbwebCoreApi.ResourceParameters.SAP
     {
         public DateTime Start { get; set; } 
         public DateTime End { get; set; }
-        public string Area { get; set; }
         public string Line { get; set; }
         public string Program { get; set; }
         public string ScrapCode { get; set; }
-        public string ScrapType { get; set; }
+        public bool IsPurchasedScrap { get; set; } = false;
     }
 }

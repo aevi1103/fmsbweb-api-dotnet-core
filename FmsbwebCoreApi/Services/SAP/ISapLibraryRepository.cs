@@ -23,7 +23,7 @@ namespace FmsbwebCoreApi.Services.SAP
         Task<IEnumerable<dynamic>> GetScrapByShift(DateTime startDate, DateTime endDate, string area, bool isPurchasedScrap = false);
         Task<IEnumerable<dynamic>> GetScrapByDept(DateTime startDate, DateTime endDate, bool isPurchasedScrap = false);
         Task<IEnumerable<dynamic>> GetPlantWideScrapVariance(DateTime startDate, DateTime endDate, string area = "", bool isPurchasedScrap = false);
-        Task<IEnumerable<dynamic>> GetDailyScrapByCodeByShift(DateTime startDate, DateTime endDate, string scrapCode, bool isPurchasedScrap = false, bool isTotalScrap = false);
+    
 
         //prod
         Task<IEnumerable<SapProdDto>> GetSapProdByAreaFromDb(DateTime startDate, DateTime endDate, string area);
