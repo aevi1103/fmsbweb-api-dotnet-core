@@ -1389,6 +1389,7 @@ namespace FmsbwebCoreApi.Services.SAP
                                 .Where(x => x.ShiftDate >= resourceParams.Start && x.ShiftDate <= resourceParams.End)
                                 .Where(x => x.IsPurchashedExclude == resourceParams.IsPurchasedScrap)
                                 .Where(x => x.ScrapCode == resourceParams.ScrapCode)
+                                .Where(x => x.Department == resourceParams.Department)
                                 .AsQueryable();
 
 

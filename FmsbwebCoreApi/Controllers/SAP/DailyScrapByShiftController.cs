@@ -40,8 +40,8 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
 
             var result2 = new List<dynamic>();
-            var tempStart = startDate;
-            while (tempStart <= endDate)
+            var tempStart = resourceParameter.Start;
+            while (tempStart <= resourceParameter.End)
             {
                 foreach (var shift in distinctShift.OrderBy(x => x.ShiftOrder))
                 {
@@ -80,8 +80,10 @@ namespace FmsbwebCoreApi.Controllers.SAP
             {
                 shift = x.Shift,
                 shiftOrder = x.ShiftOrder,
-                dailyScrap = result2.Where(s => s.Shift == x.Shift),
-                trendline = Helpers.TrendLine.GetTrendLine(result2.Where(s => s.Shift == x.Shift), "Qty")
+                dailyScrap = new { 
+                    data = result2.Where(s => s.Shift == x.Shift),
+                    trendline = Helpers.TrendLine.GetTrendLine(result2.Where(s => s.Shift == x.Shift), "Qty")
+                }       
             });
 
             var res = new
