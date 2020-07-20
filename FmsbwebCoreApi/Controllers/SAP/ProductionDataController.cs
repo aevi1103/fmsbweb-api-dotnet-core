@@ -1,9 +1,9 @@
 ﻿using FmsbwebCoreApi.ResourceParameters.SAP;
-using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -12,9 +12,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/productiondata")]
     public class ProductionDataController : ControllerBase
     {
-        private readonly ISapLibraryRepository _sapLibRepo;
+        private readonly ISapLibraryService _sapLibRepo;
         public ProductionDataController(
-            ISapLibraryRepository sapLibRepo)
+            ISapLibraryService sapLibRepo)
         {
             _sapLibRepo = sapLibRepo ??
                 throw new ArgumentNullException(nameof(sapLibRepo));

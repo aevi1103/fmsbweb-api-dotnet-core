@@ -1,7 +1,7 @@
-﻿using FmsbwebCoreApi.Services.SAP;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -9,9 +9,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/workcenters")]
     public class MachineMappingController : ControllerBase
     {
-        private readonly ISapLibraryRepository _sapLibRepo;
+        private readonly ISapLibraryService _sapLibRepo;
 
-        public MachineMappingController(ISapLibraryRepository sapLibRepo)
+        public MachineMappingController(ISapLibraryService sapLibRepo)
         {
             _sapLibRepo = sapLibRepo ??
                 throw new ArgumentNullException(nameof(sapLibRepo));
@@ -20,7 +20,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
         public async Task<IActionResult> GetWorkCenters(string area)
         {
             if (string.IsNullOrEmpty(area)) return BadRequest();
-            var result = await _sapLibRepo.GetWorkcentersByDept(area).ConfigureAwait(false);
+            var result = await _sapLibRepo.GetWorkCentersByDept(area).ConfigureAwait(false);
             return Ok(result);
         }
     }

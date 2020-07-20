@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using FmsbwebCoreApi.Models.SAP;
-using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -9,6 +8,7 @@ using RestSharp.Authenticators;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -19,9 +19,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
     public class OdataController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly ISapLibraryRepository _sapLibRepo;
+        private readonly ISapLibraryService _sapLibRepo;
 
-        public OdataController(IMapper mapper, ISapLibraryRepository sapLibRepo)
+        public OdataController(IMapper mapper, ISapLibraryService sapLibRepo)
         {
             _mapper = mapper ??
                 throw new ArgumentNullException(nameof(mapper));

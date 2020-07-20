@@ -1,9 +1,9 @@
 ﻿using FmsbwebCoreApi.ResourceParameters.SAP;
-using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -12,9 +12,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/dailyscraprate")]
     public class DailyScrapRateController : ControllerBase
     {
-        private readonly ISapLibraryRepository _sapLibRepo;
+        private readonly ISapLibraryService _sapLibRepo;
         public DailyScrapRateController(
-            ISapLibraryRepository sapLibRepo)
+            ISapLibraryService sapLibRepo)
         {
             _sapLibRepo = sapLibRepo ??
                 throw new ArgumentNullException(nameof(sapLibRepo));
@@ -30,7 +30,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 return BadRequest();
             }
 
-            var prodData = await _sapLibRepo.GetDailyScrapRateByCode(
+            var prodData = await _sapLibRepo.GetDailyScrapRate(
                 resourceParameter.Start,
                 resourceParameter.End,
                 resourceParameter.Area).ConfigureAwait(false);

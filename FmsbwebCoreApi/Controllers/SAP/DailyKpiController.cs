@@ -1,11 +1,11 @@
 ﻿using FmsbwebCoreApi.ResourceParameters.SAP;
-using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -14,9 +14,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/dailykpi")]
     public class DailyKpiController : ControllerBase
     {
-        private readonly ISapLibraryRepository _sapLibRepo;
+        private readonly ISapLibraryService _sapLibRepo;
         public DailyKpiController(
-            ISapLibraryRepository sapLibRepo)
+            ISapLibraryService sapLibRepo)
         {
             _sapLibRepo = sapLibRepo ??
                 throw new ArgumentNullException(nameof(sapLibRepo));
@@ -26,16 +26,13 @@ namespace FmsbwebCoreApi.Controllers.SAP
         [HttpHead]
         public async Task<IActionResult> GetDailyKpi([FromQuery] SapResouceParameter resourceParameter)
         {
-            if (resourceParameter == null)
-            {
-                return BadRequest();
-            }
+            if (resourceParameter == null) return BadRequest();
 
             var prodData = await _sapLibRepo.GetDailyKpiChart(
                                     resourceParameter.Start,
                                     resourceParameter.End,
-                                    resourceParameter.Area).ConfigureAwait(false);
-
+                                    resourceParameter.Area)
+                                    .ConfigureAwait(false);
 
             var category = prodData.Select(x => x.ShiftDate.ToShortDateString()).Distinct();
             var series = new List<string> { "OAE %", "Downtime %", "Scrap % by Dept" };

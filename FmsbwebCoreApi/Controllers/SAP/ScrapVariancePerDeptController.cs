@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FmsbwebCoreApi.Services.SAP;
+using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +13,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/scrapvarianceperdept")]
     public class ScrapVariancePerDeptController : Controller
     {
-        private readonly ISapLibraryRepository _sapLibRepo;
+        private readonly ISapLibraryService _sapLibRepo;
         public ScrapVariancePerDeptController(
-            ISapLibraryRepository sapLibRepo)
+            ISapLibraryService sapLibRepo)
         {
             _sapLibRepo = sapLibRepo ??
                 throw new ArgumentNullException(nameof(sapLibRepo));

@@ -1,11 +1,11 @@
 ﻿using FmsbwebCoreApi.Services.FMSB2;
-using FmsbwebCoreApi.Services.SAP;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -14,10 +14,10 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/scrapvariance")]
     public class ScrapVarianceController : ControllerBase
     {
-        private readonly ISapLibraryRepository _sapLibRepo;
+        private readonly ISapLibraryService _sapLibRepo;
         private readonly IFmsb2LibraryRepository _fmsb2LibRepo;
         public ScrapVarianceController(
-            ISapLibraryRepository sapLibRepo,
+            ISapLibraryService sapLibRepo,
             IFmsb2LibraryRepository fmsb2LibRepo)
         {
             _sapLibRepo = sapLibRepo ??
