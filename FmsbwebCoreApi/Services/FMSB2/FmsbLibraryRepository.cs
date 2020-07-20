@@ -241,28 +241,23 @@ namespace FmsbwebCoreApi.Services.FMSB2
                 var scrapWeeks = scraps.Select(x => new { x.WeekNumber, x.Year }).Distinct();
                 var weeks = prodWeeks.Concat(scrapWeeks).Distinct().OrderBy(x => x.Year).ThenBy(x => x.WeekNumber);
 
-                var list = new List<WeeklyProductionLaborHoursDto>();
-                foreach (var week in weeks)
+                var list = (from week in weeks
+
+                let prod = prods.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year)
+                let scrap = scraps.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year)
+                let labor = labors.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year).ToList()
+                let details = GetRollingDaysPPMH(prod, labor, start, end)
+                let startOfWeek = Convert.ToDateTime(labor.Min(x => x.DateIn)).FirstDayOfWeek()
+                let endOfWeek = Convert.ToDateTime(labor.Max(x => x.DateIn)).LastDayOfWeek()
+
+                select new WeeklyProductionLaborHoursDto
                 {
-                    var prod = prods.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year);
-                    var scrap = scraps.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year);
-                    var labor = labors.Where(x => x.WeekNumber == week.WeekNumber && x.Year == week.Year).ToList();
-
-                    var details = GetRollingDaysPPMH(prod, labor, start, end);
-
-                    var startOfWeeek = Convert.ToDateTime(labor.Min(x => x.DateIn)).FirstDayOfWeek();
-                    var endOfWeek = Convert.ToDateTime(labor.Max(x => x.DateIn)).LastDayOfWeek();
-
-                    list.Add(new WeeklyProductionLaborHoursDto
-                    {
-                        WeekStart = startOfWeeek,
-                        WeekEnd = endOfWeek,
-                        WeekNumber = week.WeekNumber,
-                        Year = week.Year,
-                        Details = details
-                    });
-
-                }
+                    WeekStart = startOfWeek,
+                    WeekEnd = endOfWeek,
+                    WeekNumber = week.WeekNumber,
+                    Year = week.Year,
+                    Details = details
+                }).ToList();
 
                 return list.OrderBy(x => x.Year).ThenBy(x => x.WeekNumber).ToList();
             }
