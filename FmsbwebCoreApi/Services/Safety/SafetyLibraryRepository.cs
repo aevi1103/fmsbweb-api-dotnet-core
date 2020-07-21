@@ -246,17 +246,21 @@ namespace FmsbwebCoreApi.Services.Safety
                 var monthInt = (int)month;
                 var isExist = recordables.Any(x => x.Month == monthInt);
 
+
                 if (isExist)
                 {
+                    var monthHrs = manHours.FirstOrDefault(x => x.Month == monthInt);
+                    var hrs = monthHrs == null ? 0 : (double)monthHrs.ManHOurs;
+                    var recordableCount = recordables.Count(x => x.Month == monthInt);
+
+
                     monthlyIncidentRates.Add(new MonthlyIncidentRateDto
                     {
                         MonthNumber = monthInt,
                         Month = month.ToString(),
-                        NumberOfRecordable = recordables.Where(x => x.Month == monthInt).Count(),
-                        ManHours = (int)manHours.FirstOrDefault(x => x.Month == monthInt).ManHOurs,
-                        IncidentRate = new SafetyFormula().CalculateIncidentRates(
-                                            recordables.Where(x => x.Month == monthInt).Count(),
-                                            (double)manHours.FirstOrDefault(x => x.Month == monthInt).ManHOurs)
+                        NumberOfRecordable = recordableCount,
+                        ManHours = hrs,
+                        IncidentRate = new SafetyFormula().CalculateIncidentRates(recordableCount, hrs)
                     });
                 }
                 else

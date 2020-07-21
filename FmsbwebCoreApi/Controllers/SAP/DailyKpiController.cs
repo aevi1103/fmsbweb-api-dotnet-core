@@ -14,12 +14,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/dailykpi")]
     public class DailyKpiController : ControllerBase
     {
-        private readonly ISapLibraryService _sapLibRepo;
-        public DailyKpiController(
-            ISapLibraryService sapLibRepo)
+        private readonly IKpiService _kpiService;
+
+        public DailyKpiController(IKpiService kpiService)
         {
-            _sapLibRepo = sapLibRepo ??
-                throw new ArgumentNullException(nameof(sapLibRepo));
+            _kpiService = kpiService ?? throw new ArgumentNullException(nameof(kpiService));
         }
 
         [HttpGet(Name = "GetDailyKpi")]
@@ -28,11 +27,13 @@ namespace FmsbwebCoreApi.Controllers.SAP
         {
             if (resourceParameter == null) return BadRequest();
 
-            var prodData = await _sapLibRepo.GetDailyKpiChart(
-                                    resourceParameter.Start,
-                                    resourceParameter.End,
-                                    resourceParameter.Area)
-                                    .ConfigureAwait(false);
+            var prodData = await _kpiService.GetDailyKpiChart(
+                    resourceParameter.Start,
+                    resourceParameter.End,
+                    resourceParameter.Area)
+                .ConfigureAwait(false);
+
+            if (prodData == null) throw new ArgumentNullException(nameof(prodData));
 
             var category = prodData.Select(x => x.ShiftDate.ToShortDateString()).Distinct();
             var series = new List<string> { "OAE %", "Downtime %", "Scrap % by Dept" };

@@ -12,12 +12,10 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/departmentdetails")]
     public class DepartmentDetailsController : ControllerBase
     {
-        private readonly ISapLibraryService _sapLibRepo;
-        public DepartmentDetailsController(
-            ISapLibraryService sapLibRepo)
+        private readonly IKpiService _kpiService;
+        public DepartmentDetailsController(IKpiService kpiService)
         {
-            _sapLibRepo = sapLibRepo ??
-                throw new ArgumentNullException(nameof(sapLibRepo));
+            _kpiService = kpiService ?? throw new ArgumentNullException(nameof(kpiService));
         }
 
         [HttpGet(Name = "GetDepartmentDetails")]
@@ -30,7 +28,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 return BadRequest();
             }
 
-            var prodData = await _sapLibRepo.GetDepartmentDetails(
+            var prodData = await _kpiService.GetDepartmentDetails(
                                     resourceParameter.Start,
                                     resourceParameter.End,
                                     resourceParameter.Area).ConfigureAwait(false);

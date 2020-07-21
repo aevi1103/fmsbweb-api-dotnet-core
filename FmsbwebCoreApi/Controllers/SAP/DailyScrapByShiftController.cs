@@ -14,30 +14,20 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/dailyscrapbyshift")]
     public class DailyScrapByShiftController : ControllerBase
     {
-        private readonly ISapLibraryService _sapLibRepo;
-        public DailyScrapByShiftController(
-            ISapLibraryService sapLibRepo)
+        private readonly IScrapService _scrapService;
+
+        public DailyScrapByShiftController(IScrapService scrapService)
         {
-            _sapLibRepo = sapLibRepo ??
-                throw new ArgumentNullException(nameof(sapLibRepo));
+            _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
         }
 
         [HttpGet(Name = "GetDailyScrapByShift")]
         [HttpHead]
-        public async Task<IActionResult> GetDailyScrapByShift(
-            [FromQuery] DailyScrapByShiftResourceParameter resourceParameter)
+        public async Task<IActionResult> GetDailyScrapByShift([FromQuery] DailyScrapByShiftResourceParameter resourceParameter)
         {
-            if (resourceParameter == null) return BadRequest();
-
-            try
-            {
-                return Ok(await _sapLibRepo.GetDailyScrapByShift(resourceParameter).ConfigureAwait(false));
-            }
-            catch (Exception e)
-            {
-                return BadRequest(e.Message);
-            }
-
+            return resourceParameter == null 
+                ? BadRequest() 
+                : (IActionResult) Ok(await _scrapService.GetDailyScrapByShift(resourceParameter).ConfigureAwait(false));
         }
     }
 }

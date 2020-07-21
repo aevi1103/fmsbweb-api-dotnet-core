@@ -56,10 +56,10 @@ namespace FmsbwebCoreApi
 
             services.AddMvc();
 
-            services.AddHttpCacheHeaders((expirationModelOPtions) =>
+            services.AddHttpCacheHeaders((expirationModelOptions) =>
             {
-                expirationModelOPtions.MaxAge = 30;
-                expirationModelOPtions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
+                expirationModelOptions.MaxAge = 30;
+                expirationModelOptions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
             },
             (validationModelOptions) =>
             {
@@ -72,7 +72,7 @@ namespace FmsbwebCoreApi
             services
             .AddControllers(setupAction =>
             {
-                //content negotation
+                //content negotiation
                 setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
                 setupAction.CacheProfiles.Add("240SecCacheProfile",
                     new CacheProfile
@@ -93,7 +93,7 @@ namespace FmsbwebCoreApi
                     var problemDetails = new ValidationProblemDetails(context.ModelState)
                     {
                         Type = "https://safetylibrary.com/modelvalidationproblem",
-                        Title = "One or more validation erros opccured",
+                        Title = "One or more validation errors occured",
                         Status = StatusCodes.Status422UnprocessableEntity,
                         Detail = "See the errors property for details",
                         Instance = context.HttpContext.Request.Path
@@ -109,15 +109,12 @@ namespace FmsbwebCoreApi
 
             });
 
-            //add suport of custom accept header
+            //add support of custom accept header
             services.Configure<MvcOptions>(config =>
             {
 
                 var newtonsoftOutputFormatter = config.OutputFormatters.OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
-                if (newtonsoftOutputFormatter != null)
-                {
-                    newtonsoftOutputFormatter.SupportedMediaTypes.Add("application/vnd.fmsbweb.hateoas+json");
-                }
+                newtonsoftOutputFormatter?.SupportedMediaTypes.Add("application/vnd.fmsbweb.hateoas+json");
             });
 
             //register safety property mapping service
@@ -129,14 +126,26 @@ namespace FmsbwebCoreApi
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             //inject repositories
+            services.AddScoped<Repositories.Interfaces.IScrapRepository, Repositories.ScrapRepository>();
+            services.AddScoped<Repositories.Interfaces.IProductionRepository, Repositories.ProductionRepository>();
+            services.AddScoped<Repositories.Interfaces.IKpiTargetRepository, Repositories.KpiTargetRepository>();
+
             services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
             services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
-            services.AddScoped<Services.SAP.ISapLibraryRepository, Services.SAP.SapLibraryRepository>();
             services.AddScoped<Services.FMSB2.IFmsb2LibraryRepository, Services.FMSB2.FmsbLibraryRepository>();
             services.AddScoped<Services.Intranet.IIntranetLibraryRepository, Services.Intranet.IntranetLibraryRepository>();
             services.AddScoped<Services.FmsbQuality.IFmsbQualityLibraryRepository, Services.FmsbQuality.FmsbQualityLibraryRepository>();
             services.AddScoped<Services.FmsbMvc.IFmsbMvcLibraryRepository, Services.FmsbMvc.FmsbMvcLibraryRepository>();
             services.AddScoped<Services.Iconics.IIconicsLibraryRepository, Services.Iconics.IconicsLibraryRepository>();
+
+            //inject services
+            services.AddScoped<Services.Interfaces.ISapLibraryService, Services.SapLibraryService>();
+
+            services.AddScoped<Services.Interfaces.IScrapService, Services.ScrapService>();
+            services.AddScoped<Services.Interfaces.IProductionService, Services.ProductionService>();
+            services.AddScoped<Services.Interfaces.IKpiTargetService, Services.KpiTargetService>();
+            services.AddScoped<Services.Interfaces.IKpiService, Services.KpiService>();
+            services.AddScoped<Services.Interfaces.IUtilityService, Services.UtilityService>();
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));
@@ -179,7 +188,7 @@ namespace FmsbwebCoreApi
             //on the client side request header add 'If-Match' with the client current 'E-tag' generated from the latest 'GET' request
             //if the client does not have the latest E-Tag it will response with '412 precondition failed'
 
-            app.UseResponseCaching(); //use cachine store middleware
+            app.UseResponseCaching(); //use caching store middleware
 
             app.UseHttpCacheHeaders();
 

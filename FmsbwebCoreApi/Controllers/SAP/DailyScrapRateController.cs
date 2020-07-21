@@ -12,12 +12,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/dailyscraprate")]
     public class DailyScrapRateController : ControllerBase
     {
-        private readonly ISapLibraryService _sapLibRepo;
-        public DailyScrapRateController(
-            ISapLibraryService sapLibRepo)
+        private readonly IScrapService _scrapService;
+
+        public DailyScrapRateController(IScrapService scrapService)
         {
-            _sapLibRepo = sapLibRepo ??
-                throw new ArgumentNullException(nameof(sapLibRepo));
+            _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
         }
 
         [HttpGet(Name = "GetDailyScrapRate")]
@@ -26,11 +25,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
             [FromQuery] SapResouceParameter resourceParameter)
         {
             if (resourceParameter == null)
-            {
                 return BadRequest();
-            }
 
-            var prodData = await _sapLibRepo.GetDailyScrapRate(
+            var prodData = await _scrapService.GetDailyScrapRate(
                 resourceParameter.Start,
                 resourceParameter.End,
                 resourceParameter.Area).ConfigureAwait(false);

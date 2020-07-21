@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using FmsbwebCoreApi.Models.SAP;
+using FmsbwebCoreApi.Repositories.Interfaces;
+using FmsbwebCoreApi.ResourceParameters.SAP;
+
+namespace FmsbwebCoreApi.Services.Interfaces
+{
+    public interface IScrapService : IScrapRepository
+    {
+        Task<dynamic> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams);
+
+        Task<List<DailyScrapByShiftDateDto>> GetDailyScrapRate(DateTime start, DateTime end, string area, bool isPurchasedScrap = false);
+    }
+}

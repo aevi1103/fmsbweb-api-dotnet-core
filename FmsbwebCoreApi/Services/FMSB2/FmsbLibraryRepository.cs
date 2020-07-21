@@ -50,22 +50,14 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
         public async Task<List<FinanceLaborHoursView>> GetLaborHoursData(DateTime start, DateTime end, string area)
         {
-            var dept = area;
-            switch (area.Trim().ToLower())
+            var dept = area?.Trim().ToLower() switch
             {
-                case "foundry cell":
-                    dept = "FOUNDRY";
-                    break;
-                case "machine line":
-                    dept = "MACHINING";
-                    break;
-                case "skirt coat":
-                    dept = "FINISHING";
-                    break;
-                case "assembly":
-                    dept = "ASSEMBLY";
-                    break;
-            }
+                "foundry cell" => "FOUNDRY",
+                "machine line" => "MACHINING",
+                "skirt coat" => "FINISHING",
+                "assembly" => "ASSEMBLY",
+                _ => area
+            };
 
             return await _context.FinanceLaborHoursView
                             .Where(x => x.DateIn >= start && x.DateIn <= end)

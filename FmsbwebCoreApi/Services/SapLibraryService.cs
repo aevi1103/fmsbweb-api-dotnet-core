@@ -19,6 +19,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Repositories;
 using FmsbwebCoreApi.Repositories.Interfaces;
+using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
 using Scrap = FmsbwebCoreApi.Models.SAP.Scrap;
 
@@ -35,7 +36,7 @@ namespace FmsbwebCoreApi.Services
         private readonly IIntranetLibraryRepository _intranetRepo;
         private readonly IFmsbMvcLibraryRepository _fmsbMvcRepo;
 
-        private readonly IScrapRepository _scrapRepository;
+        private readonly IScrapService _scrapService;
         private readonly IProductionRepository _productionRepository;
 
         public SapLibraryService(
@@ -44,11 +45,11 @@ namespace FmsbwebCoreApi.Services
             IFmsb2LibraryRepository fmsb2Repo,
             IFmsbMvcLibraryRepository fmsbMvcRepo,
             IIntranetLibraryRepository intranetRepo,
-            IScrapRepository scrapRepository,
+            IScrapService scrapService,
             IProductionRepository productionRepository)
         {
 
-            _scrapRepository = scrapRepository ?? throw new ArgumentNullException(nameof(scrapRepository));
+            _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
             _productionRepository = productionRepository ?? throw new ArgumentNullException(nameof(productionRepository));
 
 
@@ -327,7 +328,7 @@ namespace FmsbwebCoreApi.Services
             return await _context.Scrap2Summary2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                                 .Where(x => x.Area == area)
-                                .Select(x => new Models.SAP.Scrap
+                                .Select(x => new Scrap
                                 {
                                     Department = x.Department,
                                     Area = x.Area,
@@ -499,6 +500,7 @@ namespace FmsbwebCoreApi.Services
                 HxHGross = hxh.Any(x => x.Line == line) ? (int)hxh.First(x => x.Line == line).Gross : 0,
                 SapNet = prod.Any(x => x.Line == line) ? prod.Where(x => x.Line == line).Sum(s => s.SapNet) : 0,
                 SapNetDetails = prod.Any(x => x.Line == line) ? prod.Where(x => x.Line == line).OrderBy(x => x.DateScanned).ToList() : new List<SapProdDetailDto>(),
+
                 TotalScrap = scrapByLine.Any(x => x.Line == line) ? scrapByLine.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
                 TotalSbScrap = sbScrap.Any(x => x.Line == line) ? sbScrap.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
                 TotalPurchaseScrap = purchasedScrap.Any(x => x.Line == line) ? purchasedScrap.Where(x => x.Line == line).Sum(s => s.Qty) : 0,
@@ -744,7 +746,13 @@ namespace FmsbwebCoreApi.Services
             try
             {
                 //query production data
-                var productionQry = _productionRepository.GetProductionQueryable(start, end, area);
+                var productionQry = _productionRepository.GetProductionQueryable(new ProductionResourceParameter
+                {
+                    StartDate = start,
+                    EndDate = end,
+                    Area = area
+                });
+
                 var productionByProgram = await productionQry
                         .GroupBy(x => new { x.Program })
                         .Select(x => new
@@ -757,7 +765,12 @@ namespace FmsbwebCoreApi.Services
 
                 //query scrap data
                 var finScrap = new List<string> { "anodize", "skirt coat" };
-                var scrapQry = _scrapRepository.GetScrapExcludeWarmersQueryable(start, end, isPurchasedScrap);
+                var scrapQry = _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+                {
+                    StartDate = start,
+                    EndDate = end,
+                    IsPurchasedScrap = isPurchasedScrap
+                });
                 scrapQry = scrapQry.Where(x =>
                         area.ToLower() == "skirt coat"
                             ? (finScrap.Contains(x.ScrapAreaName.ToLower()))
@@ -880,28 +893,32 @@ namespace FmsbwebCoreApi.Services
             if (resourceParams == null) throw new ArgumentNullException(nameof(resourceParams));
 
             //get scrap data from repo
-            var qryList = await _scrapRepository.GetScrapTask(resourceParams.Start, resourceParams.End,
-                    resourceParams.IsPurchasedScrap, resourceParams.ScrapCode, resourceParams.Department,
-                    resourceParams.Line, resourceParams.Program)
-                .ConfigureAwait(false);
+            var scrapQry = _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+            {
+                StartDate = resourceParams.Start,
+                EndDate = resourceParams.End,
+                IsPurchasedScrap = resourceParams.IsPurchasedScrap,
+                ScrapCode = resourceParams.ScrapCode,
+                Department = resourceParams.Department,
+                Line = resourceParams.Line,
+                Program = resourceParams.Program
+            });
 
-            if (!qryList.Any()) throw new OperationCanceledException("No records found.");
-
-            //summarize data by shift
-            var summary = qryList
+            var summary = await scrapQry
                 .GroupBy(x => new { x.ShiftDate, x.Shift, x.ScrapCode, x.ScrapDesc })
                 .Select(x => new DailyScrapByShiftDto
                 {
-                    ShiftDate = (DateTime)x.Key.ShiftDate,
+                    ShiftDate = x.Key.ShiftDate.ToDateTime(),
                     Shift = x.Key.Shift,
                     ShiftOrder = MapShiftToShiftOrder(x.Key.Shift),
                     ScrapCode = x.Key.ScrapCode,
                     ScrapDesc = x.Key.ScrapDesc,
-                    Qty = (int)x.Sum(s => s.Qty)
+                    Qty = x.Sum(s => s.Qty).ToInt()
                 })
                 .OrderBy(x => x.ShiftDate)
                 .ThenBy(x => x.ShiftOrder)
-                .ToList();
+                .ToListAsync()
+                .ConfigureAwait(false);
 
             return summary;
         }
@@ -914,6 +931,7 @@ namespace FmsbwebCoreApi.Services
         public async Task<dynamic> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams)
         {
             if (resourceParams == null) throw new ArgumentNullException(nameof(resourceParams));
+
             var summary = await GetDailyScrapByShiftList(resourceParams).ConfigureAwait(false);
             var distinctShift = summary.Select(x => new { x.Shift, x.ShiftOrder }).Distinct().ToList();
 
@@ -984,7 +1002,7 @@ namespace FmsbwebCoreApi.Services
             try
             {
                 //query production data
-                var productionQry = _productionRepository.GetProductionQueryable(start, end, area);
+                var productionQry = _productionRepository.GetProductionQueryable(new ProductionResourceParameter { StartDate = start, EndDate = end, Area = area});
                 var production = await productionQry.GroupBy(x => new { x.ShiftDate })
                         .Select(x => new
                         {
@@ -996,7 +1014,13 @@ namespace FmsbwebCoreApi.Services
 
                 //query scrap data
                 var finScrap = new List<string> { "anodize", "skirt coat" };
-                var scrapQry = _scrapRepository.GetScrapExcludeWarmersQueryable(start, end, isPurchasedScrap);
+                var scrapQry = _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+                {
+                    StartDate = start,
+                    EndDate = end,
+                    IsPurchasedScrap = isPurchasedScrap
+                });
+
                 scrapQry = scrapQry.Where(x => area.ToLower() == "skirt coat"
                         ? (finScrap.Contains(x.ScrapAreaName.ToLower()))
                         : (x.ScrapAreaName == _mapArea.RanameAreaToDepartment(area)));
@@ -1086,7 +1110,7 @@ namespace FmsbwebCoreApi.Services
             try
             {
                 //get production data
-                var productionQry = _productionRepository.GetProductionQueryable(start, end, area);
+                var productionQry = _productionRepository.GetProductionQueryable(new ProductionResourceParameter { StartDate = start, EndDate = end, Area = area});
                 var prodByShift = await productionQry
                                 .GroupBy(x => new { x.Shift })
                                 .Select(x => new
@@ -1099,7 +1123,14 @@ namespace FmsbwebCoreApi.Services
 
 
                 //get scrap data
-                var scrapQry = _scrapRepository.GetScrapExcludeWarmersQueryable(start, end, isPurchasedScrap, area);
+                var scrapQry = _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+                {
+                    StartDate = start,
+                    EndDate = end,
+                    IsPurchasedScrap = isPurchasedScrap,
+                    Area = area
+                });
+
                 var scrap = await scrapQry
                                     .GroupBy(x => new { x.Area, x.Shift, x.ScrapAreaName, x.MachineHxh })
                                     .Select(x => new
@@ -1840,7 +1871,7 @@ namespace FmsbwebCoreApi.Services
                                                         .Where(d => d.IsPurchashedExclude == false)
                                                         .Where(d => d.ScrapAreaName == s.Key.ScrapAreaName)
                                                         .GroupBy(d => new { d.Department, d.Area, d.ScrapAreaName, d.ScrapCode, d.ScrapDesc, d.IsPurchashedExclude2 })
-                                                        .Select(d => new Models.SAP.Scrap
+                                                        .Select(d => new Scrap
                                                         {
                                                             Department = d.Key.Department,
                                                             Area = d.Key.Area,
@@ -1855,7 +1886,7 @@ namespace FmsbwebCoreApi.Services
 
             var scrapList = scrap
                             .GroupBy(x => new { x.Department, x.Area, x.ScrapAreaName, x.ScrapCode, x.ScrapDesc, x.IsPurchashedExclude2, x.IsPurchashedExclude })
-                            .Select(x => new Models.SAP.Scrap
+                            .Select(x => new Scrap
                             {
                                 Department = x.Key.Department,
                                 Area = x.Key.Area,
@@ -1909,7 +1940,8 @@ namespace FmsbwebCoreApi.Services
                                    x.Key.ShiftDate,
                                    TotalProd = x.Sum(s => s.QtyProd)
                                })
-                               .ToListAsync().ConfigureAwait(false);
+                               .ToListAsync()
+                               .ConfigureAwait(false);
 
             var scrapData = await _context.Scrap2
                                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
@@ -1922,7 +1954,8 @@ namespace FmsbwebCoreApi.Services
                                     x.Key.ShiftDate,
                                     TotalScrap = x.Sum(s => s.Qty)
                                 })
-                                .ToListAsync().ConfigureAwait(false);
+                                .ToListAsync()
+                                .ConfigureAwait(false);
 
             var target = (await _intranetRepo.DailyHxHTargetByArea(start, end, area).ConfigureAwait(false)).ToList();
 

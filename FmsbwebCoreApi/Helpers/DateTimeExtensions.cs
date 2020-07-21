@@ -8,7 +8,7 @@ namespace FmsbwebCoreApi.Helpers
 {
     public static class DateTimeExtensions
     {
-        public static CultureInfo CultureInfo { get; } = new CultureInfo("en-US");
+        private static CultureInfo CultureInfo { get; } = new CultureInfo("en-US");
 
         public static bool IsYesterday(this DateTime date)
         {

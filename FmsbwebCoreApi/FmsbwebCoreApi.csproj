@@ -43,4 +43,8 @@
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.0.21" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\SAP\" />
+  </ItemGroup>
+
 </Project>

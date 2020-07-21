@@ -49,13 +49,14 @@ namespace FmsbwebCoreApi.Helpers
         public static TrendLine GetTrendLine<T>(IEnumerable<T> data, string propName)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
+            if (!data.Any()) return null;
 
             var tupleData = new List<Tuple<double, double>>();
-            int i = 0;
+            var i = 0;
             foreach (var item in data)
             {
                 i++;
-                var val = item.GetType().GetProperty(propName).GetValue(item, null);
+                var val = item.GetType().GetProperty(propName)?.GetValue(item, null);
                 tupleData.Add(new Tuple<double, double>(i, item2: Convert.ToDouble(val)));
             }
             return new TrendLine(tupleData);
