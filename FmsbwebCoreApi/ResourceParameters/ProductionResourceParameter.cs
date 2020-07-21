@@ -10,5 +10,7 @@ namespace FmsbwebCoreApi.ResourceParameters
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public string Area { get; set; } = "";
+        public string Line { get; set; } = "";
+        public string Shift { get; set; } = "";
     }
 }

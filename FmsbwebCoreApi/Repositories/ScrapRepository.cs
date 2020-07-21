@@ -50,6 +50,9 @@ namespace FmsbwebCoreApi.Repositories
             if (!string.IsNullOrEmpty(resourceParameter.Program))
                 qry = qry.Where(x => x.Program.ToLower().Trim() == resourceParameter.Program.ToLower().Trim());
 
+            if (!string.IsNullOrEmpty(resourceParameter.Shift))
+                qry = qry.Where(x => x.Shift == resourceParameter.Shift);
+
             return qry;
         }
     }

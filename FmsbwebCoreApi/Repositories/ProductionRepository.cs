@@ -32,9 +32,13 @@ namespace FmsbwebCoreApi.Repositories
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(resourceParameter.Area))
-            {
                 qry = qry.Where(x => x.Area == resourceParameter.Area);
-            }
+
+            if (!string.IsNullOrEmpty(resourceParameter.Line))
+                qry = qry.Where(x => x.MachineHxh == resourceParameter.Line);
+
+            if (!string.IsNullOrEmpty(resourceParameter.Shift))
+                qry = qry.Where(x => x.Shift == resourceParameter.Shift);
 
             return qry;
 
@@ -43,7 +47,8 @@ namespace FmsbwebCoreApi.Repositories
         public async Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(ProductionResourceParameter resourceParameter)
         {
             var data = await _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
-                            .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate && x.Area == resourceParameter.Area)
+                            .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate 
+                                                                              && x.Area == resourceParameter.Area)
                             .GroupBy(x => new { x.Department, x.Area, x.Line, x.Programs })
                             .Select(x => new
                             {
@@ -88,6 +93,48 @@ namespace FmsbwebCoreApi.Repositories
                 LineDetails = lines,
                 ProgramDetails = program
             };
+        }
+
+        public async Task<HxHProductionByLineDto> GetHxhProductionByLine(ProductionResourceParameter resourceParameter)
+        {
+            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
+                .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(resourceParameter.Area))
+                qry = qry.Where(x => x.Area.ToLower() == resourceParameter.Area.ToLower().Trim());
+
+            if (!string.IsNullOrEmpty(resourceParameter.Line))
+                qry = qry.Where(x => x.Line.ToLower() == resourceParameter.Line.ToLower().Trim());
+
+            if (!string.IsNullOrEmpty(resourceParameter.Shift))
+                qry = qry.Where(x => x.Shift.ToLower() == resourceParameter.Shift.ToLower().Trim());
+
+
+            var data = await qry
+                            .GroupBy(x => new { x.Department, x.Area, x.Line })
+                            .Select(x => new HxHProductionByLineDto
+                            {
+                                Department = x.Key.Department,
+                                Area = x.Key.Area,
+                                Line = x.Key.Line,
+                                Target = x.Sum(s => s.OeeTarget),
+                                Gross = x.Sum(s => s.FoundryGross)
+                                        + x.Sum(s => s.MachiningGross)
+                                        + x.Sum(s => s.AnodGross)
+                                        + x.Sum(s => s.ScGross)
+                                        + x.Sum(s => s.AssyGross)
+                            })
+                            .ToListAsync()
+                            .ConfigureAwait(false);
+
+            return data.Count > 0
+                ? data.FirstOrDefault()
+                : new HxHProductionByLineDto
+                {
+                    Target = 0,
+                    Gross = 0
+                };
         }
     }
 }

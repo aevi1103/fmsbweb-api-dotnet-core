@@ -47,6 +47,29 @@ namespace FmsbwebCoreApi.Repositories
                 .ConfigureAwait(false);
         }
 
+        public async Task<SwotTargetWithDeptId> GetSwotTarget(string line)
+        {
+            return await _fmsb2Context.SwotTargetWithDeptId.FirstOrDefaultAsync(x => x.Line2 == line).ConfigureAwait(false);
+        }
+
+        public async Task<decimal> GetScrapTarget(SwotTargetWithDeptId data, string scrapType)
+        {
+            switch (scrapType)
+            {
+                case "Foundry":
+                    return data.FoundryScrapTarget;
+                case "Machining":
+                    return data.MachineScrapTarget;
+                case "Anodize":
+                case "Skirt Coat":
+                case "Assembly":
+                    return data.AfScrapTarget;
+            }
+
+            return 0;
+
+        }
+
         public async Task<KpiTarget> GetDepartmentTargets(string dept, string area, DateTime startDateTime, DateTime endDateTime)
         {
             var data = await _fmsb2Context.KpiTarget

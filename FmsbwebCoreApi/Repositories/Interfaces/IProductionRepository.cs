@@ -13,5 +13,6 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
         IQueryable<Production2> GetProductionQueryable(ProductionResourceParameter resourceParameter);
 
         Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(ProductionResourceParameter resourceParameter);
+        Task<HxHProductionByLineDto> GetHxhProductionByLine(ProductionResourceParameter resourceParameter);
     }
 }

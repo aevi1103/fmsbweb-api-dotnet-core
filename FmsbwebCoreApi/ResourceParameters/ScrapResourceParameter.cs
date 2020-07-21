@@ -15,5 +15,6 @@ namespace FmsbwebCoreApi.ResourceParameters
         public string Department { get; set; } = "";
         public string Line { get; set; } = "";
         public string Program { get; set; } = "";
+        public string Shift { get; set; } = "";
     }
 }
