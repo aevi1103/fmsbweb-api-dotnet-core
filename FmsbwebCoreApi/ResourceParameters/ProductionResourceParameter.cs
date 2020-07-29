@@ -12,5 +12,7 @@ namespace FmsbwebCoreApi.ResourceParameters
         public string Area { get; set; } = "";
         public string Line { get; set; } = "";
         public string Shift { get; set; } = "";
+        public List<string> WorkCenters { get; set; } = new List<string>();
+        public List<string> MachinesHxh { get; set; } = new List<string>();
     }
 }

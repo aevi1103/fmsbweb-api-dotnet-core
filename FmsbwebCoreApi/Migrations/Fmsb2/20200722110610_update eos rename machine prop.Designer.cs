@@ -4,18 +4,20 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20200722110610_update eos rename machine prop")]
+    partial class updateeosrenamemachineprop
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.6")
+                .HasAnnotation("ProductVersion", "3.1.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -1308,9 +1310,6 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("MachineId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Manning")
                         .HasColumnType("int");
 
                     b.Property<string>("ScrapComment")

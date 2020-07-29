@@ -58,7 +58,7 @@ namespace FmsbwebCoreApi.Controllers.Safety
         [HttpPost]
         public ActionResult<IEnumerable<IncidentDto>> CreateIncidentCollection(IEnumerable<IncidentForCreationDto> incidentCollections)
         {
-            if (incidentCollections == null || incidentCollections.Count() == 0)
+            if (incidentCollections == null || !incidentCollections.Any())
             {
                 return BadRequest();
             }

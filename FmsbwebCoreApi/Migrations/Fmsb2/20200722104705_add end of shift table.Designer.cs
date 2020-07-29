@@ -4,18 +4,20 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20200722104705_add end of shift table")]
+    partial class addendofshifttable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.6")
+                .HasAnnotation("ProductVersion", "3.1.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -1310,7 +1312,7 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.Property<int>("MachineId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Manning")
+                    b.Property<int?>("MachinesMachineId")
                         .HasColumnType("int");
 
                     b.Property<string>("ScrapComment")
@@ -1327,7 +1329,7 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
 
                     b.HasKey("EndOfShiftReportId");
 
-                    b.HasIndex("MachineId");
+                    b.HasIndex("MachinesMachineId");
 
                     b.ToTable("EndOfShiftReports");
                 });
@@ -4732,11 +4734,9 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.EndOfShiftReport", b =>
                 {
-                    b.HasOne("FmsbwebCoreApi.Entity.Fmsb2.Machines", "Machine")
+                    b.HasOne("FmsbwebCoreApi.Entity.Fmsb2.Machines", "Machines")
                         .WithMany()
-                        .HasForeignKey("MachineId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("MachinesMachineId");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.FoundryParamAttachments", b =>

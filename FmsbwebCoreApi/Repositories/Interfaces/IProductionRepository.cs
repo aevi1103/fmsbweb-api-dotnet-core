@@ -14,5 +14,7 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
 
         Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(ProductionResourceParameter resourceParameter);
         Task<HxHProductionByLineDto> GetHxhProductionByLine(ProductionResourceParameter resourceParameter);
+        Task<List<HxHProductionByLineDto>> GetHxhProduction(ProductionResourceParameter resourceParameter);
+
     }
 }

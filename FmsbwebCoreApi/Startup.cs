@@ -20,6 +20,8 @@ using FmsbwebCoreApi.Context.FmsbQuality;
 using FmsbwebCoreApi.Context.Master;
 using FmsbwebCoreApi.Context.FmsbMvc;
 using FmsbwebCoreApi.Context.Iconics;
+using UtilityLibrary.Service;
+using UtilityLibrary.Service.Interface;
 
 namespace FmsbwebCoreApi
 {
@@ -129,6 +131,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.IScrapRepository, Repositories.ScrapRepository>();
             services.AddScoped<Repositories.Interfaces.IProductionRepository, Repositories.ProductionRepository>();
             services.AddScoped<Repositories.Interfaces.IKpiTargetRepository, Repositories.KpiTargetRepository>();
+            services.AddScoped<Repositories.Interfaces.IEndOfShiftReportRepository, Repositories.EndOfShiftReportRepository>();
 
             services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
             services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
@@ -146,6 +149,12 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.IKpiTargetService, Services.KpiTargetService>();
             services.AddScoped<Services.Interfaces.IKpiService, Services.KpiService>();
             services.AddScoped<Services.Interfaces.IUtilityService, Services.UtilityService>();
+            services.AddScoped<Services.Interfaces.IDataAccessUtilityService, Services.DataAccessUtilityService>();
+            services.AddScoped<Services.Interfaces.IEndOfShiftReportService, Services.EndOFShiftReportService>();
+
+            //external class lib
+            services.AddScoped<IConverterService, ConverterService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));

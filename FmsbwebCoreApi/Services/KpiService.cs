@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Helpers;
@@ -11,6 +13,7 @@ using FmsbwebCoreApi.Models.SAP;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using UtilityLibrary.Service.Interface;
 using Scrap = FmsbwebCoreApi.Models.SAP.Scrap;
 
 namespace FmsbwebCoreApi.Services
@@ -21,17 +24,29 @@ namespace FmsbwebCoreApi.Services
         private readonly IProductionService _productionService;
         private readonly IKpiTargetService _kpiTargetService;
         private readonly IUtilityService _utilityService;
+        private readonly IDataAccessUtilityService _dataAccessUtilityService;
+        private readonly IEndOfShiftReportService _endOfShiftReportService;
+        private readonly IConverterService _converterService;
+        private readonly IEmailService _emailService;
 
         public KpiService(
             IScrapService scrapService,
             IProductionService productionService,
             IKpiTargetService kpiTargetService,
-            IUtilityService utilityService)
+            IUtilityService utilityService,
+            IDataAccessUtilityService dataAccessUtilityService,
+            IEndOfShiftReportService endOfShiftReportService,
+            IConverterService converterService,
+            IEmailService emailService)
         {
             _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
             _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
             _kpiTargetService = kpiTargetService ?? throw new ArgumentNullException(nameof(kpiTargetService));
             _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));
+            _dataAccessUtilityService = dataAccessUtilityService ?? throw new ArgumentNullException(nameof(dataAccessUtilityService));
+            _endOfShiftReportService = endOfShiftReportService ?? throw new ArgumentNullException(nameof(endOfShiftReportService));
+            _converterService = converterService ?? throw new ArgumentNullException(nameof(converterService));
+            _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
         }
         public async Task<List<DailyDepartmentKpiDto>> GetDailyKpiChart(DateTime startDateTime, DateTime endDateTime, string area)
         {
@@ -630,7 +645,22 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
-        private List<EndOfShiftScrapDetailDto> GetScrapDetails(IEnumerable<Scrap2> data, int sapGross, string line, SwotTargetWithDeptId target)
+        private static List<Scrap> GetScrapDefects(List<Scrap2> data)
+        {
+            return data.GroupBy(d => new {d.ScrapCode, d.ScrapAreaName, d.ScrapDesc, d.Department, d.Area, d.MachineHxh})
+                .Select(d => new Scrap
+                {
+                    Department = d.Key.Department,
+                    Area = d.Key.Area,
+                    Line = d.Key.MachineHxh,
+                    ScrapAreaName = d.Key.ScrapAreaName,
+                    ScrapCode = d.Key.ScrapCode,
+                    ScrapDesc = d.Key.ScrapDesc,
+                    Qty = d.Sum(q => q.Qty ?? 0)
+                }).OrderByDescending(d => d.Qty).ToList();
+        }
+
+        private List<EndOfShiftScrapDetailDto> GetScrapDetails(IEnumerable<Scrap2> data, int sapGross, SwotTargetWithDeptId target)
         {
             return data
                 .GroupBy(x => new {x.ScrapAreaName, x.MachineHxh})
@@ -638,7 +668,7 @@ namespace FmsbwebCoreApi.Services
                 {
                     ScrapArea = x.Key.ScrapAreaName,
                     Qty = x.Sum(q => q.Qty ?? 0),
-                    ScrapTargetRate = _kpiTargetService.GetScrapTarget(target, x.Key.ScrapAreaName).Result,
+                    ScrapTargetRate = _kpiTargetService.GetScrapTarget(target, x.Key.ScrapAreaName),
                     ScrapRate = sapGross == 0 ? 0 : (decimal)x.Sum(q => q.Qty ?? 0) / sapGross,
                     Details = x.GroupBy(d => new {d.ScrapCode, d.ScrapAreaName, d.ScrapDesc, d.Department, d.Area, d.MachineHxh})
                         .Select(d => new Scrap
@@ -652,13 +682,126 @@ namespace FmsbwebCoreApi.Services
                             Qty = d.Sum(q => q.Qty ?? 0)
                         }).OrderByDescending(d => d.Qty).ToList()
                 })
-                .OrderByDescending(x => x.ScrapRate)
+                .OrderByDescending(x => x.ScrapArea)
                 .ToList();
         }
 
-        public async Task<EndOfShiftDto> GetEndOfShiftDto(string line, string area, DateTime shiftDate, string shift)
+        private EndOfShiftDto MapEndOfShiftDto(
+            List<Production2> production,
+            List<Scrap2> scrap,
+            HxHProductionByLineDto hxh,
+            SwotTargetWithDeptId target,
+            EndOfShiftReport eos,
+            string dept, string shift, string hxhUrl, string line, int machineId, DateTime shiftDate)
         {
-            var dept = _utilityService.MapAreaToDepartment(area);
+            var area = _utilityService.MapDepartmentToArea(dept);
+
+            var oaeTarget = target?.OaeTarget ?? 0;
+            var afScrapRateTarget = target?.AfScrapTarget ?? 0;
+            var overallScrapRateTarget = target == null
+                ? 0
+                : target.FoundryScrapTarget + target.MachineScrapTarget + target.AfScrapTarget;
+
+            var hxhTarget = hxh?.Target ?? 0;
+            var hxhGross = hxh?.Gross ?? 0;
+
+
+            var sbScrap = scrap.Where(x => x.IsPurchashedExclude == false).ToList();
+            var purchasedScrap = scrap.Where(x => x.IsPurchashedExclude == true).ToList();
+            var afScrap = scrap.Where(x => x.IsPurchashedExclude == false && _utilityService.GetAssemblyFinishingScrapAreaNames().Contains(x.ScrapAreaName)).ToList();
+
+            var totalScrap = scrap.Sum(x => x.Qty ?? 0);
+            var totalSbScrap = sbScrap.Sum(x => x.Qty ?? 0);
+            var totalPurchasedScrap = purchasedScrap.Sum(x => x.Qty ?? 0);
+            var totalAfScrap = afScrap.Sum(x => x.Qty ?? 0);
+
+            var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
+            var hxhOae = hxhTarget == 0 ? 0 : hxhNet / hxhTarget;
+            var sapNet = production.Sum(x => x.QtyProd ?? 0);
+            var sapGross = sapNet + totalScrap;
+            var sapOae = hxhTarget == 0 ? 0 : sapNet / hxhTarget;
+
+            var sBScrapDetails = GetScrapDetails(sbScrap, sapGross, target);
+
+            var totalScrapRate = sapGross == 0 ? 0 : (decimal)totalScrap / sapGross;
+            var totalSbScrapRate = sapGross == 0 ? 0 : (decimal)totalSbScrap / sapGross;
+            var totalPurchasedScrapRate = sapGross == 0 ? 0 : (decimal)totalPurchasedScrap / sapGross;
+            var totalAfScrapRate = sapGross == 0 ? 0 : (decimal)totalAfScrap / sapGross;
+
+            var productionDetails = production.Select(x => new SapProdDetailDto
+            {
+                DateScanned = x.LocalDateTime.ToDateTime(),
+                ShiftDate = x.ShiftDate.ToDateTime(),
+                Shift = x.Shift,
+                Line = x.WorkCenter,
+                Program = x.Program,
+                Part = x.Material,
+                User = x.EnteredUser,
+                SapNet = x.QtyProd ?? 0
+            })
+                .OrderBy(x => x.DateScanned)
+                .ToList();
+
+            return new EndOfShiftDto
+            {
+                Id = eos?.EndOfShiftReportId ?? 0,
+
+                Department = dept.ToUpper(),
+                Area = area.ToUpper(),
+
+                Line = line.ToUpper(),
+                MachineId = machineId,
+                ShiftDate = shiftDate,
+                Shift = shift,
+
+                Target = hxhTarget,
+                OaeTarget = oaeTarget,
+                AfScrapRateTarget = afScrapRateTarget,
+                OverallScrapRateTarget = overallScrapRateTarget,
+                HxHGross = hxhGross,
+                HxHNet = hxhNet,
+                HxHOae = hxhOae,
+                SapGross = sapGross,
+                SapNet = sapNet,
+                SapOae = sapOae,
+
+                TotalScrap = totalScrap,
+                TotalSbScrap = totalSbScrap,
+                TotalPurchaseScrap = totalPurchasedScrap,
+                TotalAfScrap = totalAfScrap,
+
+                TotalScrapRate = totalScrapRate,
+                TotalSbScrapRate = totalSbScrapRate,
+                TotalPurchaseScrapRate = totalPurchasedScrapRate,
+                TotalAfScrapRate = totalAfScrapRate,
+
+                SbScrapDetails = sBScrapDetails,
+                SbScrapDefects = GetScrapDefects(sbScrap),
+                AfScrapDefects = GetScrapDefects(afScrap),
+                TotalScrapDefects = GetScrapDefects(scrap),
+
+                ProductionDetails = productionDetails,
+                HxHUrl = hxhUrl,
+
+                ScrapComment = eos?.ScrapComment,
+                DowntimeComment = eos?.DowntimeComment,
+                Manning = eos?.Manning,
+                Ppmh = _utilityService.CalculatePpmh(hxhGross, eos?.Manning)
+            };
+        }
+
+        public async Task<EndOfShiftDto> GetEndOfShiftDto(string line, string dept, DateTime shiftDate, string shift)
+        {
+            if (line == null) throw new ArgumentNullException(nameof(line));
+            if (dept == null) throw new ArgumentNullException(nameof(dept));
+            if (shift == null) throw new ArgumentNullException(nameof(shift));
+
+            var area = _utilityService.MapDepartmentToArea(dept);
+            var machine = await _dataAccessUtilityService.GetMachine(new Machines {Line2 = line}).ConfigureAwait(false);
+            var createHxh = await _dataAccessUtilityService.GerHourByHour(shiftDate, machine.MachineId, shift).ConfigureAwait(false);
+            var hxhUrl = _utilityService.CreateHourByHourUrl(createHxh, machine) ?? "";
+
+            if (machine == null) throw new OperationCanceledException("Line does not exist");
 
             //production
             var production = await _productionService.GetProductionQueryable(new ProductionResourceParameter
@@ -690,68 +833,229 @@ namespace FmsbwebCoreApi.Services
                 StartDate = shiftDate,
                 EndDate = shiftDate,
                 Line = line,
-                Shift = shift
+                Shift = shift,
+                Area = area
             }).ConfigureAwait(false);
 
             //targets
             var target = await _kpiTargetService.GetSwotTarget(line).ConfigureAwait(false);
 
+            //eos
+            var eos = await _endOfShiftReportService.GetEos(shiftDate, shift, machine.MachineId).ConfigureAwait(false);
+
+            return MapEndOfShiftDto(production, scrap, hxh, target, eos, dept, shift, hxhUrl, line, machine.MachineId, shiftDate);
+        }
+
+        public async Task<List<EndOfShiftDto>> GetEndOfShiftListDto(string dept, DateTime shiftDate, string shift)
+        {
+            var area = _utilityService.MapDepartmentToArea(dept);
+
+            //eos
+            var eosData = await _endOfShiftReportService.GetEos(shiftDate, shift, dept).ConfigureAwait(false);
+
+            if (eosData.Count == 0) return new List<EndOfShiftDto>();
+
+            var machines = await _dataAccessUtilityService.GetMachines(eosData.Select(x => x.MachineId).ToList()).ConfigureAwait(false);
+
+            //production
+            var prodData = await _productionService.GetProductionQueryable(new ProductionResourceParameter
+                {
+                    StartDate = shiftDate,
+                    EndDate = shiftDate,
+                    Area = area,
+                    Shift = shift,
+                    WorkCenters = machines.Select(x => x.Machine).ToList()
+                })
+                .ToListAsync()
+                .ConfigureAwait(false);
+
+            //scrap
+            var scrapData = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+                {
+                    StartDate = shiftDate,
+                    EndDate = shiftDate,
+                    Area = area,
+                    Shift = shift,
+                    WorkCenters = machines.Select(x => x.Machine).ToList()
+            })
+                .ToListAsync()
+                .ConfigureAwait(false);
+
+            //hxh production
+            var hxhData = await _productionService.GetHxhProduction(new ProductionResourceParameter
+            {
+                StartDate = shiftDate,
+                EndDate = shiftDate,
+                Shift = shift,
+                Area = area,
+                MachinesHxh = machines.Select(x => x.MachineHxh).ToList()
+            }).ConfigureAwait(false);
+
+            //targets
+            var targetData = await _kpiTargetService.GetSwotTargets(machines.Select(x => x.MachineHxh).ToList()).ConfigureAwait(false);
+
+            //hxh views
+            var createHxhData = await _dataAccessUtilityService.GetHxHs(shiftDate, shift, machines.Select(x => x.MachineId ?? 0).ToList()).ConfigureAwait(false);
+
             //transform data
-            var sbScrap = scrap.Where(x => x.IsPurchashedExclude == false).ToList();
-            var purchasedScrap = scrap.Where(x => x.IsPurchashedExclude == true).ToList();
-            var afScrap = scrap.Where(x => x.IsPurchashedExclude == false && _utilityService.GetAssemblyFinishingScrapAreaNames().Contains(x.ScrapAreaName)).ToList();
+            var res = eosData.Select(eos =>
+            {
+                var map = machines.First(m => m.MachineId == eos.MachineId);
 
-            var totalScrap = scrap.Sum(x => x.Qty ?? 0);
-            var totalSbScrap = sbScrap.Sum(x => x.Qty ?? 0);
-            var totalPurchasedScrap = purchasedScrap.Sum(x => x.Qty ?? 0);
-            var totalAfScrap = afScrap.Sum(x => x.Qty ?? 0);
+                var production = prodData.Where(p => p.WorkCenter == map.Machine).ToList();
+                var scrap = scrapData.Where(s => s.WorkCenter == map.Machine).ToList();
+                var hxh = hxhData.First(h => h.Line == map.MachineHxh);
+                var target = targetData.First(t => t.Line2 == map.MachineHxh);
+                var createHxh = createHxhData.First(c => c.Machineid == map.MachineId);
+                var hxhUrl = _utilityService.CreateHourByHourUrl(createHxh, map) ?? "";
 
-            var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line") ? hxh.Gross - totalScrap : hxh.Gross;
-            var hxhOae = hxh.Target == 0 ? 0 : hxhNet / hxh.Target;
-            var sapNet = production.Sum(x => x.QtyProd ?? 0);
-            var sapGross = sapNet + totalScrap;
-            var sapOae = hxh.Target == 0 ? 0 : sapNet / hxh.Target;
+                return MapEndOfShiftDto(production, scrap, hxh, target, eos, dept, shift, hxhUrl, map.MachineHxh, map.MachineId ?? 0, shiftDate);
+            })
+                .OrderBy(x => x.Line)
+                .ToList();
 
-            var sBScrapDetails = GetScrapDetails(sbScrap, sapGross, line, target);
-            var purchasedScrapDetails = GetScrapDetails(purchasedScrap, sapGross, line, target);
+            return res;
+        }
 
-            var totalScrapRate = sapGross == 0 ? 0 : (decimal)totalScrap / sapGross;
-            var totalSbScrapRate = sapGross == 0 ? 0 : (decimal)totalSbScrap / sapGross;
-            var totalPurchasedScrapRate = sapGross == 0 ? 0 : (decimal)totalPurchasedScrap / sapGross;
-            var totalAfScrapRate = sapGross == 0 ? 0 : (decimal)totalAfScrap / sapGross;
+        public async Task<EndOfShiftDto> GetOverallEosTotal(List<EndOfShiftDto> data, string dept, DateTime shiftDate, string shift)
+        {
+            var area = _utilityService.MapDepartmentToArea(dept);
+
+            //kpi target
+            var deptTargets = await _kpiTargetService.GetDepartmentTargets(dept, area, shiftDate, shiftDate).ConfigureAwait(false);
+            var oaeTarget = deptTargets.OaeTarget;
+            var scrapTarget = deptTargets.ScrapRateTarget;
+            var ppmhTarget = deptTargets.PpmhTarget;
+
+            //totals
+            var target = data.Sum(x => x.Target);
+            var hxhGross = data.Sum(x => x.HxHGross);
+            var hxhNet = data.Sum(x => x.HxHNet);
+            var hxhOae = target == 0 ? 0 : hxhNet / target;
+
+            var sapGross = data.Sum(x => x.SapGross);
+            var sapNet = data.Sum(x => x.SapNet);
+            var sapOae = target == 0 ? 0 : sapNet / target;
+
+            var sbScrap = data.Sum(x => x.TotalSbScrap);
+            var purchasedScrap = data.Sum(x => x.TotalPurchaseScrap);
+            var afScrap = data.Sum(x => x.TotalAfScrap);
+            var overallScrap = data.Sum(x => x.TotalScrap);
+
+            var sbScrapRate = sapGross == 0 ? 0 : (decimal)sbScrap / sapGross;
+            var purchasedScrapRate = sapGross == 0 ? 0 : (decimal)purchasedScrap / sapGross;
+            var afScrapRate = sapGross == 0 ? 0 : (decimal)afScrap / sapGross;
+            var overallScrapRate = sapGross == 0 ? 0 : (decimal)overallScrap / sapGross;
+
+            var manning = data.Sum(x => x.Manning);
+            var ppmh = _utilityService.CalculatePpmh(hxhGross, manning);
 
             return new EndOfShiftDto
             {
                 Department = dept,
-                Area = area,
-                Line = line,
+                ShiftDate = shiftDate,
                 Shift = shift,
-                Target = hxh.Target,
-                OaeTarget = target.OaeTarget,
-                HxHGross = hxh.Gross,
+                Target = target,
+                OaeTarget = oaeTarget,
+
+                PpmhTarget = ppmhTarget,
+                
+                HxHGross = hxhGross,
                 HxHNet = hxhNet,
                 HxHOae = hxhOae,
                 SapGross = sapGross,
                 SapNet = sapNet,
                 SapOae = sapOae,
-                TotalScrap = totalScrap,
-                TotalSbScrap = totalSbScrap,
-                TotalPurchaseScrap = totalPurchasedScrap,
-                TotalAfScrap = totalAfScrap,
-                TotalScrapRate = totalScrapRate,
-                TotalSbScrapRate = totalSbScrapRate,
-                TotalPurchaseScrapRate = totalPurchasedScrapRate,
-                TotalAfScrapRate = totalAfScrapRate,
-
-                SbScrapDetails = sBScrapDetails,
-                PurchasedScrapDetails = purchasedScrapDetails,
-
+                TotalSbScrap = sbScrap,
+                TotalPurchaseScrap = purchasedScrap,
+                TotalAfScrap = afScrap,
+                TotalScrap = overallScrap,
+                TotalSbScrapRate = sbScrapRate,
+                TotalPurchaseScrapRate = purchasedScrapRate,
+                TotalAfScrapRate = afScrapRate,
+                TotalScrapRate = overallScrapRate,
+                Manning = manning,
+                Ppmh = ppmh
             };
         }
 
-        public Task<List<EndOfShiftDto>> GetEndOfShiftListDto(string area, DateTime shiftDate, string shift)
+        public async Task<bool> SendEosReport(string dept, DateTime shiftDate, string shift)
         {
-            throw new NotImplementedException();
+            var data = await GetEndOfShiftListDto(dept, shiftDate, shift).ConfigureAwait(false);
+
+            var summaryList = new List<EndOfShiftDto>();
+            var summaryData = await GetOverallEosTotal(data, dept, shiftDate, shift).ConfigureAwait(false);
+            summaryList.Add(summaryData);
+
+            if (!data.Any()) throw new OperationCanceledException("No records found!");
+
+            var lines = data.Select(x => new EndOfShiftEmailDto
+            {
+                Department = x.Department,
+                Line = x.Line,
+                Shift_Date = x.ShiftDate.ToShortDateString(),
+                Shift = x.Shift,
+                Target = $"{x.Target:##,###}",
+                OAE_Target = $"{x.OaeTarget:P}",
+                AF_Scrap_Target = $"{x.AfScrapRateTarget:P}",
+                Overall_Scrap_Target = $"{x.OverallScrapRateTarget:P}",
+                HxH_Gross = $"{x.HxHGross:##,###}",
+                HxH_OAE = $"{x.HxHOae:P} ({x.HxHNet:##,###})",
+                SAP_OAE = $"{x.SapOae:P} ({x.SapNet:##,###})",
+                SB_Scrap = $"{x.TotalSbScrapRate:P} ({x.TotalSbScrap:##,###})",
+                Purchased_Scrap = $"{x.TotalPurchaseScrapRate:P} ({x.TotalPurchaseScrap:##,###})",
+                AF_Scrap = $"{x.TotalAfScrapRate:P} ({x.TotalAfScrap:##,###})",
+                Overall_Scrap = $"{x.TotalScrapRate:P} ({x.TotalScrap:##,###})",
+                Scrap_Comment = x.ScrapComment,
+                Downtime_Comment = x.DowntimeComment,
+                Manning = x.Manning,
+                PPMH = x.Ppmh
+            }).ToList();
+
+            var summary = summaryList.Select(x => new EndOfShiftEmailSummaryDto
+            {
+                Department = x.Department.ToUpper(),
+                Shift_Date = x.ShiftDate.ToShortDateString(),
+                Shift = x.Shift,
+                Target = $"{x.Target:##,###}",
+                OAE_Target = $"{x.OaeTarget/100:P}",
+                AF_Scrap_Target = $"{x.AfScrapRateTarget:P}",
+                Overall_Scrap_Target = $"{x.OverallScrapRateTarget:P}",
+                HxH_Gross = $"{x.HxHGross:##,###}",
+                HxH_OAE = $"{x.HxHOae:P} ({x.HxHNet:##,###})",
+                SAP_OAE = $"{x.SapOae:P} ({x.SapNet:##,###})",
+                SB_Scrap = $"{x.TotalSbScrapRate:P} ({x.TotalSbScrap:##,###})",
+                Purchased_Scrap = $"{x.TotalPurchaseScrapRate:P} ({x.TotalPurchaseScrap:##,###})",
+                AF_Scrap = $"{x.TotalAfScrapRate:P} ({x.TotalAfScrap:##,###})",
+                Overall_Scrap = $"{x.TotalScrapRate:P} ({x.TotalScrap:##,###})",
+                Manning = x.Manning,
+                PPMH = x.Ppmh
+            }).ToList();
+
+            var linesHtml = _converterService.ConvertToHtml(lines);
+            var summaryHtml = _converterService.ConvertToHtml(summary);
+
+            var sb = new StringBuilder();
+            sb.Append($"<h1>{dept.ToUpper()} EOS REPORT: {shiftDate.ToShortDateString()} - {shift} Shift</h1>");
+
+            sb.Append("<h2>DEPARTMENT SUMMARY:</h>");
+            sb.Append(summaryHtml);
+
+            sb.Append("<h2>LINE SUMMARY:</h>");
+            sb.Append(linesHtml);
+
+            var sender = $"{dept.Replace(" ", "-").ToLower()}-eos@tenneco.com";
+            var subject = $"{dept} End Of Shift Report - {shiftDate.ToShortDateString()} - {shift} Shift";
+            var recipientsList = await _endOfShiftReportService.GetEosEmailRecipients(dept).ConfigureAwait(false);
+            var recipients = string.Join(",", recipientsList.Select(x => x.Email));
+
+
+            recipients = "aebbie.rontos@tenneco.com";
+
+            await _emailService.SendEmailAsync(sender, recipients, subject, sb.ToString()).ConfigureAwait(false);
+
+            return true;
+
         }
     }
 }

@@ -32,8 +32,8 @@ namespace FmsbwebCoreApi.Controllers.Safety
                 throw new ArgumentNullException(nameof(mapper));
         }
 
-        [HttpGet(Name = "GetAtachmentsForIncident")]
-        public ActionResult<IEnumerable<AttachmentDto>> GetAtachmentsForIncident(int id)
+        [HttpGet(Name = "GetAttachmentsForIncident")]
+        public ActionResult<IEnumerable<AttachmentDto>> GetAttachmentsForIncident(int id)
         {
             if (!_safetyLibraryRepository.IncidentExists(id))
             {
@@ -44,8 +44,8 @@ namespace FmsbwebCoreApi.Controllers.Safety
             return Ok(_mapper.Map<IEnumerable<AttachmentDto>>(attachmentsFromRepo));
         }
 
-        [HttpGet("{attachmentId}", Name = "GetAtachmentForIncident")]
-        public ActionResult<AttachmentDto> GetAtachmentForIncident(int id, int attachmentId)
+        [HttpGet("{attachmentId}", Name = "GetAttachmentForIncident")]
+        public ActionResult<AttachmentDto> GetAttachmentForIncident(int id, int attachmentId)
         {
             if (!_safetyLibraryRepository.IncidentExists(id))
             {

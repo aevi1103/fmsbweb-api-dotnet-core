@@ -12,7 +12,9 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
         Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime startDateTime, DateTime endDateTime, string area);
         Task<List<SwotTargetWithDeptId>> GetLineTargets(string dept);
         Task<SwotTargetWithDeptId> GetSwotTarget(string line);
-        Task<decimal> GetScrapTarget(SwotTargetWithDeptId data, string line);
+        Task<List<SwotTargetWithDeptId>> GetSwotTargets(string dept);
+        Task<List<SwotTargetWithDeptId>> GetSwotTargets(List<string> machines);
+        decimal GetScrapTarget(SwotTargetWithDeptId data, string line);
         Task<KpiTarget> GetDepartmentTargets(string dept, string area, DateTime startDateTime, DateTime endDateTime);
     }
 }

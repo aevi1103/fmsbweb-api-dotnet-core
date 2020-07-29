@@ -40,6 +40,10 @@ namespace FmsbwebCoreApi.Repositories
             if (!string.IsNullOrEmpty(resourceParameter.Shift))
                 qry = qry.Where(x => x.Shift == resourceParameter.Shift);
 
+            if (resourceParameter.WorkCenters.Count > 0)
+                qry = qry.Where(x => resourceParameter.WorkCenters.Contains(x.WorkCenter));
+
+
             return qry;
 
         }
@@ -135,6 +139,44 @@ namespace FmsbwebCoreApi.Repositories
                     Target = 0,
                     Gross = 0
                 };
+        }
+
+        public async Task<List<HxHProductionByLineDto>> GetHxhProduction(ProductionResourceParameter resourceParameter)
+        {
+            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
+                .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(resourceParameter.Area))
+                qry = qry.Where(x => x.Area.ToLower() == resourceParameter.Area.ToLower().Trim());
+
+            if (!string.IsNullOrEmpty(resourceParameter.Line))
+                qry = qry.Where(x => x.Line.ToLower() == resourceParameter.Line.ToLower().Trim());
+
+            if (!string.IsNullOrEmpty(resourceParameter.Shift))
+                qry = qry.Where(x => x.Shift.ToLower() == resourceParameter.Shift.ToLower().Trim());
+
+            if (resourceParameter.MachinesHxh.Count > 0)
+                qry = qry.Where(x => resourceParameter.MachinesHxh.Contains(x.Line));
+
+            var data = await qry
+                            .GroupBy(x => new { x.Department, x.Area, x.Line })
+                            .Select(x => new HxHProductionByLineDto
+                            {
+                                Department = x.Key.Department,
+                                Area = x.Key.Area,
+                                Line = x.Key.Line,
+                                Target = x.Sum(s => s.OeeTarget),
+                                Gross = x.Sum(s => s.FoundryGross)
+                                        + x.Sum(s => s.MachiningGross)
+                                        + x.Sum(s => s.AnodGross)
+                                        + x.Sum(s => s.ScGross)
+                                        + x.Sum(s => s.AssyGross)
+                            })
+                            .ToListAsync()
+                            .ConfigureAwait(false);
+
+            return data;
         }
     }
 }

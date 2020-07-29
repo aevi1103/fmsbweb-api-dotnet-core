@@ -186,8 +186,8 @@ namespace FmsbwebCoreApi.Controllers.Safety
             //check if media type include hateoas
             var includeLinks = parsedMediaType.SubTypeWithoutSuffix.EndsWith("hateoas", StringComparison.InvariantCultureIgnoreCase);
             IEnumerable<LinkDto> links = new List<LinkDto>();
-            
-            if (includeLinks) 
+
+            if (includeLinks)
             {
                 links = CreateLinksForIncident(id, fields); //store links in a variable if harteoas exist
             }

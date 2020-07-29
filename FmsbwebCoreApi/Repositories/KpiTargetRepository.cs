@@ -7,8 +7,6 @@ using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Repositories.Interfaces;
-using FmsbwebCoreApi.Services;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Repositories
@@ -52,7 +50,17 @@ namespace FmsbwebCoreApi.Repositories
             return await _fmsb2Context.SwotTargetWithDeptId.FirstOrDefaultAsync(x => x.Line2 == line).ConfigureAwait(false);
         }
 
-        public async Task<decimal> GetScrapTarget(SwotTargetWithDeptId data, string scrapType)
+        public async Task<List<SwotTargetWithDeptId>> GetSwotTargets(string dept)
+        {
+            return await _fmsb2Context.SwotTargetWithDeptId.Where(x => x.DeptName == dept).ToListAsync().ConfigureAwait(false);
+        }
+
+        public async Task<List<SwotTargetWithDeptId>> GetSwotTargets(List<string> machines)
+        {
+            return await _fmsb2Context.SwotTargetWithDeptId.Where(x => machines.Contains(x.Line2)).ToListAsync().ConfigureAwait(false);
+        }
+
+        public decimal GetScrapTarget(SwotTargetWithDeptId data, string scrapType)
         {
             switch (scrapType)
             {
@@ -72,6 +80,7 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<KpiTarget> GetDepartmentTargets(string dept, string area, DateTime startDateTime, DateTime endDateTime)
         {
+
             var data = await _fmsb2Context.KpiTarget
                 .Where(x => x.Department.ToLower() == dept.ToLower() 
                             && x.Year >= startDateTime.Year && x.Year == endDateTime.Year 
@@ -89,5 +98,7 @@ namespace FmsbwebCoreApi.Repositories
                 DowntimeRateTarget = data.Average(x => x.DowntimeRateTarget),
             };
         }
+
+
     }
 }

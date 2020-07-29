@@ -20,5 +20,7 @@ namespace FmsbwebCoreApi.Services
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _intranetContext = intranetContext ?? throw new ArgumentNullException(nameof(intranetContext));
         }
+
+        
     }
 }

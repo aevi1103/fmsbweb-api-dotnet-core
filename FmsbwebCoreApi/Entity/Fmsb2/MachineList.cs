@@ -23,5 +23,7 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public int? LineNumber { get; set; }
         [StringLength(20)]
         public string MachineMapper { get; set; }
+        [StringLength(20)]
+        public string Line2 { get; set; }
     }
 }
