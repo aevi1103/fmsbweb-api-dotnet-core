@@ -11,5 +11,6 @@ namespace FmsbwebCoreApi.Models.Intranet
         public string Area { get; set; }
         public decimal Target { get; set; }
         public int Gross { get; set; }
+        public int Net { get; set; }
     }
 }

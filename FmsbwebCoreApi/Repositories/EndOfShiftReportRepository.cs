@@ -71,5 +71,6 @@ namespace FmsbwebCoreApi.Repositories
             dept = (dept == "Assembly" || dept == "Anodize" || dept == "Skirt Coat") ? "A&F" : dept;
             return await _fmsb2Context.EmailNotification.Where(x => x.Dept == dept).ToListAsync().ConfigureAwait(false);
         }
+
     }
 }

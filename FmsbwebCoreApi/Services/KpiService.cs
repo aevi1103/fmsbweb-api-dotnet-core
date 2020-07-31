@@ -704,6 +704,7 @@ namespace FmsbwebCoreApi.Services
 
             var hxhTarget = hxh?.Target ?? 0;
             var hxhGross = hxh?.Gross ?? 0;
+            var hxhNet = hxh?.Net ?? 0;
 
 
             var sbScrap = scrap.Where(x => x.IsPurchashedExclude == false).ToList();
@@ -715,7 +716,7 @@ namespace FmsbwebCoreApi.Services
             var totalPurchasedScrap = purchasedScrap.Sum(x => x.Qty ?? 0);
             var totalAfScrap = afScrap.Sum(x => x.Qty ?? 0);
 
-            var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
+            //var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
             var hxhOae = hxhTarget == 0 ? 0 : hxhNet / hxhTarget;
             var sapNet = production.Sum(x => x.QtyProd ?? 0);
             var sapGross = sapNet + totalScrap;
@@ -823,19 +824,19 @@ namespace FmsbwebCoreApi.Services
                 Area = area,
                 Line = line,
                 Shift = shift
-            })
+            }, false)
                 .ToListAsync()
                 .ConfigureAwait(false);
 
             //hxh production
-            var hxh = await _productionService.GetHxhProductionByLine(new ProductionResourceParameter
+            var hxh = await _productionService.GetHourByHourProduction(new ProductionResourceParameter
             {
                 StartDate = shiftDate,
                 EndDate = shiftDate,
                 Line = line,
                 Shift = shift,
                 Area = area
-            }).ConfigureAwait(false);
+            }, scrap).ConfigureAwait(false);
 
             //targets
             var target = await _kpiTargetService.GetSwotTarget(line).ConfigureAwait(false);
@@ -843,7 +844,7 @@ namespace FmsbwebCoreApi.Services
             //eos
             var eos = await _endOfShiftReportService.GetEos(shiftDate, shift, machine.MachineId).ConfigureAwait(false);
 
-            return MapEndOfShiftDto(production, scrap, hxh, target, eos, dept, shift, hxhUrl, line, machine.MachineId, shiftDate);
+            return MapEndOfShiftDto(production, scrap, hxh.FirstOrDefault(), target, eos, dept, shift, hxhUrl, line, machine.MachineId, shiftDate);
         }
 
         public async Task<List<EndOfShiftDto>> GetEndOfShiftListDto(string dept, DateTime shiftDate, string shift)
@@ -877,19 +878,19 @@ namespace FmsbwebCoreApi.Services
                     Area = area,
                     Shift = shift,
                     WorkCenters = machines.Select(x => x.Machine).ToList()
-            })
+            }, false)
                 .ToListAsync()
                 .ConfigureAwait(false);
 
             //hxh production
-            var hxhData = await _productionService.GetHxhProduction(new ProductionResourceParameter
+            var hxhData = await _productionService.GetHourByHourProduction(new ProductionResourceParameter
             {
                 StartDate = shiftDate,
                 EndDate = shiftDate,
                 Shift = shift,
                 Area = area,
                 MachinesHxh = machines.Select(x => x.MachineHxh).ToList()
-            }).ConfigureAwait(false);
+            }, scrapData).ConfigureAwait(false);
 
             //targets
             var targetData = await _kpiTargetService.GetSwotTargets(machines.Select(x => x.MachineHxh).ToList()).ConfigureAwait(false);
@@ -900,13 +901,13 @@ namespace FmsbwebCoreApi.Services
             //transform data
             var res = eosData.Select(eos =>
             {
-                var map = machines.First(m => m.MachineId == eos.MachineId);
+                var map = machines.FirstOrDefault(m => m.MachineId == eos.MachineId);
 
                 var production = prodData.Where(p => p.WorkCenter == map.Machine).ToList();
                 var scrap = scrapData.Where(s => s.WorkCenter == map.Machine).ToList();
-                var hxh = hxhData.First(h => h.Line == map.MachineHxh);
-                var target = targetData.First(t => t.Line2 == map.MachineHxh);
-                var createHxh = createHxhData.First(c => c.Machineid == map.MachineId);
+                var hxh = hxhData.FirstOrDefault(h => h.Line == map.MachineHxh);
+                var target = targetData.FirstOrDefault(t => t.Line2 == map.MachineHxh);
+                var createHxh = createHxhData.FirstOrDefault(c => c.Machineid == map.MachineId);
                 var hxhUrl = _utilityService.CreateHourByHourUrl(createHxh, map) ?? "";
 
                 return MapEndOfShiftDto(production, scrap, hxh, target, eos, dept, shift, hxhUrl, map.MachineHxh, map.MachineId ?? 0, shiftDate);
@@ -923,8 +924,8 @@ namespace FmsbwebCoreApi.Services
 
             //kpi target
             var deptTargets = await _kpiTargetService.GetDepartmentTargets(dept, area, shiftDate, shiftDate).ConfigureAwait(false);
-            var oaeTarget = deptTargets.OaeTarget;
-            var scrapTarget = deptTargets.ScrapRateTarget;
+            var oaeTarget = deptTargets.OaeTarget / 100;
+            var scrapTarget = deptTargets.ScrapRateTarget / 100;
             var ppmhTarget = deptTargets.PpmhTarget;
 
             //totals
@@ -979,15 +980,13 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
-        public async Task<bool> SendEosReport(string dept, DateTime shiftDate, string shift)
+        public async Task<bool> SendEosReport(List<EndOfShiftDto> data, string dept, DateTime shiftDate, string shift)
         {
-            var data = await GetEndOfShiftListDto(dept, shiftDate, shift).ConfigureAwait(false);
-
             var summaryList = new List<EndOfShiftDto>();
             var summaryData = await GetOverallEosTotal(data, dept, shiftDate, shift).ConfigureAwait(false);
             summaryList.Add(summaryData);
 
-            if (!data.Any()) throw new OperationCanceledException("No records found!");
+            if (!data.Any()) throw new OperationCanceledException($"No data available at {dept.ToUpper()}, Please enter data before sending report!");
 
             var lines = data.Select(x => new EndOfShiftEmailDto
             {
@@ -1018,7 +1017,7 @@ namespace FmsbwebCoreApi.Services
                 Shift_Date = x.ShiftDate.ToShortDateString(),
                 Shift = x.Shift,
                 Target = $"{x.Target:##,###}",
-                OAE_Target = $"{x.OaeTarget/100:P}",
+                OAE_Target = $"{x.OaeTarget:P}",
                 AF_Scrap_Target = $"{x.AfScrapRateTarget:P}",
                 Overall_Scrap_Target = $"{x.OverallScrapRateTarget:P}",
                 HxH_Gross = $"{x.HxHGross:##,###}",
@@ -1037,6 +1036,7 @@ namespace FmsbwebCoreApi.Services
 
             var sb = new StringBuilder();
             sb.Append($"<h1>{dept.ToUpper()} EOS REPORT: {shiftDate.ToShortDateString()} - {shift} Shift</h1>");
+            sb.Append($"<h2><a href='http://10.129.224.149:82/af/eos?dept={dept}&date={shiftDate.ToShortDateString()}&shift={shift}'>Click here to view report</a></h2>");
 
             sb.Append("<h2>DEPARTMENT SUMMARY:</h>");
             sb.Append(summaryHtml);
@@ -1050,12 +1050,17 @@ namespace FmsbwebCoreApi.Services
             var recipients = string.Join(",", recipientsList.Select(x => x.Email));
 
 
-            recipients = "aebbie.rontos@tenneco.com";
+            //recipients = "aebbie.rontos@tenneco.com";
 
             await _emailService.SendEmailAsync(sender, recipients, subject, sb.ToString()).ConfigureAwait(false);
 
             return true;
+        }
 
+        public async Task<bool> SendEosReport(string dept, DateTime shiftDate, string shift)
+        {
+            var data = await GetEndOfShiftListDto(dept, shiftDate, shift).ConfigureAwait(false);
+            return await SendEosReport(data, dept, shiftDate, shift);
         }
     }
 }
