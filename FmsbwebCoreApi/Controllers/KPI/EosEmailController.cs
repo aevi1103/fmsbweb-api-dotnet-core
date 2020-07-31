@@ -20,13 +20,32 @@ namespace FmsbwebCoreApi.Controllers.KPI
             _kpiService = kpiService ?? throw new ArgumentNullException(nameof(kpiService));
         }
 
+        private string EosErrorMsg(string dept) =>
+            $"No data available for {dept} department, Please enter data before sending the EOS report!";
+
         [HttpGet(Name = "SendEosReport")]
         public async Task<IActionResult> SendEosReport(string dept, DateTime shiftDate, string shift)
         {
             try
             {
-                var result = await _kpiService.SendEosReport(dept, shiftDate, shift).ConfigureAwait(false);
-                return Ok(result);
+                dept = dept.ToLower();
+                if (dept != "anodize" && dept != "skirt coat" && dept != "assembly")
+                    return Ok(await _kpiService.SendEosReport(dept, shiftDate, shift));
+
+                var anodize = await _kpiService.GetEndOfShiftListDto("Anodize", shiftDate, shift).ConfigureAwait(false);
+                var sc = await _kpiService.GetEndOfShiftListDto("Skirt Coat", shiftDate, shift).ConfigureAwait(false);
+                var assembly = await _kpiService.GetEndOfShiftListDto("Anodize", shiftDate, shift).ConfigureAwait(false);
+
+                if (!anodize.Any()) throw new OperationCanceledException(EosErrorMsg("Anodize"));
+                if (!sc.Any()) throw new OperationCanceledException(EosErrorMsg("Skirt Coat"));
+                if (!assembly.Any()) throw new OperationCanceledException(EosErrorMsg("Assembly"));
+
+                await _kpiService.SendEosReport(anodize, "Anodize", shiftDate, shift);
+                await _kpiService.SendEosReport(sc, "Skirt Coat", shiftDate, shift);
+                await _kpiService.SendEosReport(assembly, "Assembly", shiftDate, shift);
+
+                return Ok(true);
+
             }
             catch (Exception e)
             {

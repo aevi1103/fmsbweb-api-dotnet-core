@@ -15,6 +15,7 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<EndOfShiftDto> GetEndOfShiftDto(string line, string area, DateTime shiftDate, string shift);
         Task<List<EndOfShiftDto>> GetEndOfShiftListDto(string dept, DateTime shiftDate, string shift);
         Task<bool> SendEosReport(string dept, DateTime shiftDate, string shift);
+        Task<bool> SendEosReport(List<EndOfShiftDto> data, string dept, DateTime shiftDate, string shift);
         Task<EndOfShiftDto> GetOverallEosTotal(List<EndOfShiftDto> data, string dept, DateTime shiftDate, string shift);
     }
 }
