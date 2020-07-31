@@ -14,6 +14,7 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
 using System.Linq;
+using DateShiftLib.Helpers;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.FmsbQuality;
@@ -155,6 +156,7 @@ namespace FmsbwebCoreApi
             //external class lib
             services.AddScoped<IConverterService, ConverterService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<Hour, Hour>();
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));

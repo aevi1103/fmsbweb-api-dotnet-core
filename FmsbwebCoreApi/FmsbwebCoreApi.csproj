@@ -49,6 +49,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\FMSBWEB.Service\UtilityLibrary\UtilityLibrary.csproj" />
+    <ProjectReference Include="..\..\..\FMSBWEB2\DateShiftMethods\DateShiftLib.csproj" />
   </ItemGroup>
 
 </Project>
