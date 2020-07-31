@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.SAP;
+using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Repositories.Interfaces;
@@ -16,11 +18,13 @@ namespace FmsbwebCoreApi.Repositories
     {
         private readonly SapContext _context;
         private readonly IntranetContext _intranetContext;
+        private readonly Fmsb2Context _fmsb2Context;
 
-        public ProductionRepository(SapContext context, IntranetContext intranetContext)
+        public ProductionRepository(SapContext context, IntranetContext intranetContext, Fmsb2Context fmsb2Context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _intranetContext = intranetContext ?? throw new ArgumentNullException(nameof(intranetContext));
+            _fmsb2Context = fmsb2Context ?? throw new ArgumentNullException(nameof(fmsb2Context));
         }
 
         public IQueryable<Production2> GetProductionQueryable(ProductionResourceParameter resourceParameter)
@@ -141,7 +145,12 @@ namespace FmsbwebCoreApi.Repositories
                 };
         }
 
-        public async Task<List<HxHProductionByLineDto>> GetHxhProduction(ProductionResourceParameter resourceParameter)
+        /// <summary>
+        /// Get Hxh Production from a Temporary table, so its not always in sync with the actual table
+        /// </summary>
+        /// <param name="resourceParameter"></param>
+        /// <returns></returns>
+        public async Task<List<HxHProductionByLineDto>> GetHxhProductionTempTable(ProductionResourceParameter resourceParameter)
         {
             var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
                 .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate)
@@ -178,5 +187,33 @@ namespace FmsbwebCoreApi.Repositories
 
             return data;
         }
+
+        /// <summary>
+        /// HxH Production from actual table
+        /// </summary>
+        /// <param name="resourceParameter"></param>
+        /// <returns></returns>
+        public async Task<List<HxHProd>> GetHxHProduction(ProductionResourceParameter resourceParameter)
+        {
+            var qry = _fmsb2Context.HxHProd.Where(x =>
+                    x.ShiftDate >= resourceParameter.StartDate &&
+                    x.ShiftDate <= resourceParameter.EndDate)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(resourceParameter.Area))
+                qry = qry.Where(x => x.Area.ToLower() == resourceParameter.Area.ToLower().Trim());
+
+            if (!string.IsNullOrEmpty(resourceParameter.Line))
+                qry = qry.Where(x => x.Line.ToLower() == resourceParameter.Line.ToLower().Trim());
+
+            if (!string.IsNullOrEmpty(resourceParameter.Shift))
+                qry = qry.Where(x => x.Shift.ToLower() == resourceParameter.Shift.ToLower().Trim());
+
+            if (resourceParameter.MachinesHxh.Count > 0)
+                qry = qry.Where(x => resourceParameter.MachinesHxh.Contains(x.Line));
+
+            return await qry.ToListAsync();
+        }
+
     }
 }

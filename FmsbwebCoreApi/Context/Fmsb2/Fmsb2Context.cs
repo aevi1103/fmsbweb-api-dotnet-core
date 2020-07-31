@@ -242,6 +242,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<AnodizeChecklistEntries> AnodizeChecklistEntries { get; set; }
         public virtual DbSet<DowntimeOwner> DowntimeOwner { get; set; }
         public virtual DbSet<EndOfShiftReport> EndOfShiftReports { get; set; }
+        public virtual DbSet<HxHProd> HxHProd { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 //            if (!optionsBuilder.IsConfigured)
@@ -607,6 +608,12 @@ namespace FmsbwebCoreApi.Context.Fmsb2
                 entity.Property(e => e.MachineName).IsUnicode(false);
 
                 entity.Property(e => e.Shift).IsUnicode(false);
+            });
+
+            modelBuilder.Entity<HxHProd>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("hxhProd");
             });
 
             modelBuilder.Entity<CurrentGrossProdEolMach>(entity =>
