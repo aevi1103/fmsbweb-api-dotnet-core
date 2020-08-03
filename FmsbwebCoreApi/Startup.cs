@@ -21,6 +21,7 @@ using FmsbwebCoreApi.Context.FmsbQuality;
 using FmsbwebCoreApi.Context.Master;
 using FmsbwebCoreApi.Context.FmsbMvc;
 using FmsbwebCoreApi.Context.Iconics;
+using FmsbwebCoreApi.Context.QualityCheckSheets;
 using UtilityLibrary.Service;
 using UtilityLibrary.Service.Interface;
 
@@ -167,6 +168,7 @@ namespace FmsbwebCoreApi
             services.AddDbContext<IntranetContext>(options => options.UseSqlServer(Configuration.GetConnectionString("intranet")));
             services.AddDbContext<fmsbQualityContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality")));
             services.AddDbContext<masterContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmoMaster")));
+            services.AddDbContext<QualityCheckSheetsContext>(options => options.UseSqlServer(Configuration.GetConnectionString("qualityCheckSheetsConn")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
