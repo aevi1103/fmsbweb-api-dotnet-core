@@ -54,9 +54,17 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(ProductionResourceParameter resourceParameter)
         {
-            var data = await _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
-                            .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate 
-                                                                              && x.Area == resourceParameter.Area)
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
+            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram.AsQueryable();
+
+            qry = qry.Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate);
+            qry = qry.Where(x => x.Area == resourceParameter.Area);
+
+            if (!string.IsNullOrEmpty(resourceParameter.Shift))
+                qry = qry.Where(x => x.Shift == resourceParameter.Shift);
+
+            var data = await qry
                             .GroupBy(x => new { x.Department, x.Area, x.Line, x.Programs })
                             .Select(x => new
                             {
@@ -105,6 +113,8 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<HxHProductionByLineDto> GetHxhProductionByLine(ProductionResourceParameter resourceParameter)
         {
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
             var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
                 .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate)
                 .AsQueryable();
