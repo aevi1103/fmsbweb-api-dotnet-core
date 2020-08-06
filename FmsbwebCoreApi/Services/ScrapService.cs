@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.SAP;
+using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Models.SAP;
 using FmsbwebCoreApi.Repositories;
@@ -11,6 +12,7 @@ using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Scrap = FmsbwebCoreApi.Models.SAP.Scrap;
 
 namespace FmsbwebCoreApi.Services
 {
@@ -193,6 +195,21 @@ namespace FmsbwebCoreApi.Services
                 .ToList();
 
             return data;
+        }
+
+        public List<Scrap> GetScrapSummary(List<Scrap2> data)
+        {
+            return data.GroupBy(d => new { d.ScrapCode, d.ScrapAreaName, d.ScrapDesc, d.Department, d.Area, d.MachineHxh })
+                .Select(d => new Scrap
+                {
+                    Department = d.Key.Department,
+                    Area = d.Key.Area,
+                    Line = d.Key.MachineHxh,
+                    ScrapAreaName = d.Key.ScrapAreaName,
+                    ScrapCode = d.Key.ScrapCode,
+                    ScrapDesc = d.Key.ScrapDesc,
+                    Qty = d.Sum(q => q.Qty ?? 0)
+                }).OrderByDescending(d => d.Qty).ToList();
         }
     }
 }

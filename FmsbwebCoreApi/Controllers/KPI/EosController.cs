@@ -66,8 +66,6 @@ namespace FmsbwebCoreApi.Controllers.KPI
             }
         }
 
-
-
         [HttpPost(Name = "AddOrUpdate")]
         public async Task<IActionResult> AddOrUpdate(EndOfShiftReport data)
         {

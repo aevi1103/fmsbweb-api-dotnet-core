@@ -100,5 +100,7 @@ namespace FmsbwebCoreApi.Entity.SAP
         public string IsPurchashedExclude2 { get; set; }
         public int? WeekNumber { get; set; }
         public int? Year { get; set; }
+
+        public string CellSide => (Department == "Foundry" && Side == null) ? "n/a" : Side;
     }
 }

@@ -60,35 +60,55 @@ namespace FmsbwebCoreApi.Services
         {
             var machineIdsStr = machineIds.Select(x => x.ToString()).ToList();
             var machines = await _sapContext.MachineMapping.Where(x => machineIdsStr.Contains(x.MachineId.ToString()))
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
 
             return machines;
         }
 
         public async Task<CreateHxHview> GerHourByHour(DateTime shiftDate, int machineId, string shift)
         {
-            return (await _fmsb2Context.CreateHxHview.FirstOrDefaultAsync(x => x.Shiftdate == shiftDate && x.Shift == shift && x.Machineid == machineId));
+            return await _fmsb2Context.CreateHxHview
+                .FirstOrDefaultAsync(x => x.Shiftdate == shiftDate && x.Shift == shift && x.Machineid == machineId)
+                .ConfigureAwait(false);
         }
 
         public async Task<Department> GetDepartment(string dept)
         {
-            return await _fmsb2Context.Department.FirstOrDefaultAsync(x => x.DeptName.ToLower() == dept.ToLower());
+            return await _fmsb2Context.Department.FirstOrDefaultAsync(x => x.DeptName.ToLower() == dept.ToLower()).ConfigureAwait(false);
         }
 
         public async Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, string shift, int deptId)
         {
             return await _fmsb2Context.CreateHxHview
-                .Where(x => x.Shiftdate == shiftDate && x.Shift == shift && x.Deptid == deptId).ToListAsync();
+                .Where(x => x.Shiftdate == shiftDate && x.Shift == shift && x.Deptid == deptId)
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
 
         public async Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, string shift, List<int> machineIds)
         {
             var machineIdsStr = machineIds.Select(x => x.ToString()).ToList();
-            return await _fmsb2Context.CreateHxHview
+
+            var qry = _fmsb2Context.CreateHxHview
                 .Where(x => x.Shiftdate == shiftDate 
-                            && x.Shift == shift 
+                            && x.Shift == shift
                             && machineIdsStr.Contains(x.Machineid.ToString()))
-                .ToListAsync();
+                .AsQueryable();
+
+            return await qry.ToListAsync().ConfigureAwait(false);
+        }
+
+        public async Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, List<int> machineIds)
+        {
+            var machineIdsStr = machineIds.Select(x => x.ToString()).ToList();
+
+            var qry = _fmsb2Context.CreateHxHview
+                .Where(x => x.Shiftdate == shiftDate
+                            && machineIdsStr.Contains(x.Machineid.ToString()))
+                .AsQueryable();
+
+            return await qry.ToListAsync().ConfigureAwait(false);
         }
     }
 }

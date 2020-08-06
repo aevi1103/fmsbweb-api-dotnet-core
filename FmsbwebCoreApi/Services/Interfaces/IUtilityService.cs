@@ -14,8 +14,9 @@ namespace FmsbwebCoreApi.Services.Interfaces
         string MapAreaToDepartment(string area);
         string MapDepartmentToArea(string dept);
         List<string> GetAssemblyFinishingScrapAreaNames();
-        string CreateHourByHourUrl(CreateHxHview hxh, Machines machine);
-        string CreateHourByHourUrl(CreateHxHview hxh, MachineMapping machine);
+        string CreateHourByHourUrl(CreateHxHview hxh, Machines machine, bool readOnly = false);
+        string CreateHourByHourUrl(CreateHxHview hxh, MachineMapping machine, bool readOnly = false);
+        string CreateHourByHourUrl(CreateHxHview hxh, MachineList machine, bool readOnly = false);
         decimal CalculatePpmh(int gross, int? manning);
     }
 }

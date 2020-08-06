@@ -16,10 +16,14 @@ namespace FmsbwebCoreApi.Services
         }
         public async Task<EndOfShiftReport> AddOrUpdate(EndOfShiftReport data)
         {
-            if (data.EndOfShiftReportId == 0)
-                return await base.CreateEos(data);
+            if (data == null) throw new ArgumentNullException(nameof(data));
 
-            return await UpdateEos(data);
+            var isExist = await IsEosExist(data).ConfigureAwait(false);
+
+            if (!isExist)
+                return await base.CreateEos(data).ConfigureAwait(false);
+
+            return await UpdateEos(data).ConfigureAwait(false);
         }
     }
 }

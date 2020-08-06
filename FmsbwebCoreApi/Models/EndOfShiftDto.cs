@@ -47,6 +47,7 @@ namespace FmsbwebCoreApi.Models
         public int? Manning { get; set; }
         public decimal Ppmh { get; set; }
         public string HxHUrl { get; set; }
+        public DateTime? TimeStamp { get; set; }
 
     }
 }

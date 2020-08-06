@@ -11,6 +11,7 @@ using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Models.SAP;
 using FmsbwebCoreApi.ResourceParameters;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using UtilityLibrary.Service.Interface;
@@ -477,16 +478,17 @@ namespace FmsbwebCoreApi.Services
             return result.OrderBy(x => x.Program).ToList();
         }
 
-        public async Task<DepartmentDetailsDto> GetDepartmentDetails(DateTime start, DateTime end, string area)
+        public async Task<DepartmentDetailsDto> GetDepartmentDetails(SapResouceParameter parameters)
         {
-            var dept = _utilityService.MapAreaToDepartment(area);
+            var dept = _utilityService.MapAreaToDepartment(parameters.Area);
 
             //production
             var sapProdData = await _productionService.GetProductionQueryable(new ProductionResourceParameter
             {
-                StartDate = start,
-                EndDate = end,
-                Area = area
+                StartDate = parameters.Start,
+                EndDate = parameters.End,
+                Area = parameters.Area,
+                Shift = parameters.Shift
             })
                 .GroupBy(x => new { x.LocalDateTime, x.ShiftDate, x.Shift, x.Program, x.Material, x.MachineHxh, x.EnteredUser })
                 .Select(x => new SapProdDetailDto
@@ -506,9 +508,10 @@ namespace FmsbwebCoreApi.Services
             //scrap
             var scrapData = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
             {
-                StartDate = start,
-                EndDate = end,
-                Area = area
+                StartDate = parameters.Start,
+                EndDate = parameters.End,
+                Area = parameters.Area,
+                Shift = parameters.Shift
             }, false)
                 .Select(x => new Scrap
                 {
@@ -530,9 +533,10 @@ namespace FmsbwebCoreApi.Services
             var hxhProductionData = await _productionService.GetHxhProdByLineAndProgram(
                 new ProductionResourceParameter
                 {
-                    StartDate = start,
-                    EndDate = end,
-                    Area = area
+                    StartDate = parameters.Start,
+                    EndDate = parameters.End,
+                    Area = parameters.Area,
+                    Shift = parameters.Shift
                 }).ConfigureAwait(false);
 
             //targets
@@ -540,7 +544,7 @@ namespace FmsbwebCoreApi.Services
                 .GetLineTargets(dept)
                 .ConfigureAwait(false);
 
-            var deptTargets = await _kpiTargetService.GetDepartmentTargets(dept, area, start, end)
+            var deptTargets = await _kpiTargetService.GetDepartmentTargets(dept, parameters.Area, parameters.Start, parameters.End)
                 .ConfigureAwait(false);
 
             //transform data
@@ -563,7 +567,7 @@ namespace FmsbwebCoreApi.Services
             var sapOae = target == 0 ? 0 : (decimal)sapNet / target;
 
             var hxhGross = hxhProductionData.LineDetails.Sum(x => x.Gross);
-            var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
+            var hxhNet = (parameters.Area.ToLower() == "foundry cell" || parameters.Area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
             var hxhOae = target == 0 ? 0 : (decimal)hxhNet / target;
 
             //get scrap area details scrap
@@ -622,7 +626,7 @@ namespace FmsbwebCoreApi.Services
             //result
             return new DepartmentDetailsDto
             {
-                Area = area,
+                Area = parameters.Area,
                 Target = (int)target,
                 SapGross = sapGross,
                 OaeTarget = deptTargets.OaeTarget / 100,
@@ -643,21 +647,6 @@ namespace FmsbwebCoreApi.Services
                 SbScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == false),
                 PurchaseScrapDetails = scrapList.Where(s => s.IsPurchashedExclude)
             };
-        }
-
-        private static List<Scrap> GetScrapDefects(List<Scrap2> data)
-        {
-            return data.GroupBy(d => new {d.ScrapCode, d.ScrapAreaName, d.ScrapDesc, d.Department, d.Area, d.MachineHxh})
-                .Select(d => new Scrap
-                {
-                    Department = d.Key.Department,
-                    Area = d.Key.Area,
-                    Line = d.Key.MachineHxh,
-                    ScrapAreaName = d.Key.ScrapAreaName,
-                    ScrapCode = d.Key.ScrapCode,
-                    ScrapDesc = d.Key.ScrapDesc,
-                    Qty = d.Sum(q => q.Qty ?? 0)
-                }).OrderByDescending(d => d.Qty).ToList();
         }
 
         private List<EndOfShiftScrapDetailDto> GetScrapDetails(IEnumerable<Scrap2> data, int sapGross, SwotTargetWithDeptId target)
@@ -777,9 +766,9 @@ namespace FmsbwebCoreApi.Services
                 TotalAfScrapRate = totalAfScrapRate,
 
                 SbScrapDetails = sBScrapDetails,
-                SbScrapDefects = GetScrapDefects(sbScrap),
-                AfScrapDefects = GetScrapDefects(afScrap),
-                TotalScrapDefects = GetScrapDefects(scrap),
+                SbScrapDefects = _scrapService.GetScrapSummary(sbScrap),
+                AfScrapDefects = _scrapService.GetScrapSummary(afScrap),
+                TotalScrapDefects = _scrapService.GetScrapSummary(scrap),
 
                 ProductionDetails = productionDetails,
                 HxHUrl = hxhUrl,
@@ -787,7 +776,9 @@ namespace FmsbwebCoreApi.Services
                 ScrapComment = eos?.ScrapComment,
                 DowntimeComment = eos?.DowntimeComment,
                 Manning = eos?.Manning,
-                Ppmh = _utilityService.CalculatePpmh(hxhGross, eos?.Manning)
+                Ppmh = _utilityService.CalculatePpmh(hxhGross, eos?.Manning),
+
+                TimeStamp = eos?.TimeStamp
             };
         }
 
@@ -980,6 +971,90 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
+        public async Task<dynamic> GetHourlyProduction(string dept, DateTime shiftDate, string shift)
+        {
+            var area = _utilityService.MapDepartmentToArea(dept);
+
+            //scrap
+            var scrapData = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+                {
+                    StartDate = shiftDate,
+                    EndDate = shiftDate,
+                    Area = area,
+                    Shift = shift
+                }, false)
+                .ToListAsync()
+                .ConfigureAwait(false);
+
+            //targets
+            var targetData = await _kpiTargetService.GetSwotTargets(dept).ConfigureAwait(false);
+
+            var hxh = await _productionService.GetHourByHourProductionByHour(new ProductionResourceParameter
+            {
+                StartDate = shiftDate,
+                EndDate = shiftDate,
+                Shift = shift,
+                Area = area,
+                Department = dept
+            }, scrapData, targetData)
+                .ConfigureAwait(false);
+
+            var dataSet = hxh.Select(x => new
+                {
+                    x.ShiftDate,
+                    x.Shift,
+                    x.ShiftOrder,
+                    x.Department,
+                    x.Area,
+                    x.Line,
+                    x.CellSide,
+                    x.MachineId,
+                    x.Hour,
+
+                    x.SwotTarget,
+
+                    x.Target,
+                    x.Gross,
+                    x.Net,
+
+                    x.Warmers,
+                    x.Sol,
+                    x.GageScrap,
+                    x.VisualScrap,
+                    x.Eol,
+                    x.TotalScrap,
+
+                    WarmersDefects = _scrapService.GetScrapSummary(x.WarmersDefects),
+                    SolDefects = _scrapService.GetScrapSummary(x.SolDefects),
+                    GageScrapDefects = _scrapService.GetScrapSummary(x.GageScrapDefects),
+                    VisualScrapDefects = _scrapService.GetScrapSummary(x.VisualScrapDefects),
+                    EolDefects = _scrapService.GetScrapSummary(x.EolDefects),
+                    TotalScrapDefects = _scrapService.GetScrapSummary(x.TotalScrapDefects),
+
+                    HxHUrl = x.HxHUrl
+                })
+                .OrderBy(x => x.MachineId)
+                .ThenBy(x => x.CellSide)
+                .ThenBy(x => x.ShiftDate)
+                .ThenBy(x => x.ShiftOrder)
+                .ThenBy(x => x.Hour)
+                .ToList();
+
+            var rows = dataSet.Select(x => new {x.MachineId, x.Line}).Distinct().OrderBy(x => x.MachineId).ToList();
+            var columns = dataSet.Select(x => new {x.ShiftDate, x.Shift, x.ShiftOrder, x.Hour}).Distinct()
+                .OrderBy(x => x.ShiftDate)
+                .ThenBy(x => x.ShiftOrder)
+                .ThenBy(x => x.Hour)
+                .ToList();
+
+            return new
+            {
+                dataSet,
+                rows,
+                columns
+            };
+        }
+
         public async Task<bool> SendEosReport(List<EndOfShiftDto> data, string dept, DateTime shiftDate, string shift)
         {
             var summaryList = new List<EndOfShiftDto>();
@@ -1060,7 +1135,7 @@ namespace FmsbwebCoreApi.Services
         public async Task<bool> SendEosReport(string dept, DateTime shiftDate, string shift)
         {
             var data = await GetEndOfShiftListDto(dept, shiftDate, shift).ConfigureAwait(false);
-            return await SendEosReport(data, dept, shiftDate, shift);
+            return await SendEosReport(data, dept, shiftDate, shift).ConfigureAwait(false);
         }
     }
 }

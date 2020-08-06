@@ -86,7 +86,7 @@ namespace FmsbwebCoreApi.Services.Iconics
             var dh = new DateTimeHelpers();
 
             var list = new List<IconicsDowntimeDto>();
-            if (data.Count() == 0) return list;
+            if (!data.Any()) return list;
 
             var dataToSpreadDowntime = data.Where(x => x.StarHour != x.EndHour).ToList();
             var others = data.Where(x => x.StarHour == x.EndHour).ToList();

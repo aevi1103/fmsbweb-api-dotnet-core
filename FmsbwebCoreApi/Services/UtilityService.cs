@@ -58,16 +58,25 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
-        public string CreateHourByHourUrl(CreateHxHview hxh, Machines machine)
+        public string CreateHourByHourUrl(CreateHxHview hxh, Machines machine, bool readOnly = false)
         {
             if (hxh == null || machine == null) return "";
-            return $"http://10.129.224.149/FMSBHXH/HxH?h=1&id={hxh.HrId}&shift={hxh.Shift}&machine={machine.MachineName}&machineId={machine.MachineId}&dept={hxh.DeptName}&machineMapper={machine.MachineMapper}&threshold=-1&shiftDate={hxh.Shiftdate.ToShortDateString()}&side={hxh.CellSide}&deptId={hxh.Deptid}&e=1";
+            var enabledStr = readOnly ? "0" : "1";
+            return $"http://10.129.224.149/FMSBHXH/HxH?h=1&id={hxh.HrId}&shift={hxh.Shift}&machine={machine.MachineName}&machineId={machine.MachineId}&dept={hxh.DeptName}&machineMapper={machine.MachineMapper}&threshold=-1&shiftDate={hxh.Shiftdate.ToShortDateString()}&side={hxh.CellSide}&deptId={hxh.Deptid}&e={enabledStr}";
         }
 
-        public string CreateHourByHourUrl(CreateHxHview hxh, MachineMapping machine)
+        public string CreateHourByHourUrl(CreateHxHview hxh, MachineMapping machine, bool readOnly = false)
         {
             if (hxh == null || machine == null) return "";
-            return $"http://10.129.224.149/FMSBHXH/HxH?h=1&id={hxh.HrId}&shift={hxh.Shift}&machine={machine.Line}&machineId={machine.MachineId}&dept={hxh.DeptName}&machineMapper={machine.MachineMapping1}&threshold=-1&shiftDate={hxh.Shiftdate.ToShortDateString()}&side={hxh.CellSide}&deptId={hxh.Deptid}&e=1";
+            var enabledStr = readOnly ? "0" : "1";
+            return $"http://10.129.224.149/FMSBHXH/HxH?h=1&id={hxh.HrId}&shift={hxh.Shift}&machine={machine.Line}&machineId={machine.MachineId}&dept={hxh.DeptName}&machineMapper={machine.MachineMapping1}&threshold=-1&shiftDate={hxh.Shiftdate.ToShortDateString()}&side={hxh.CellSide}&deptId={hxh.Deptid}&e={enabledStr}";
+        }
+
+        public string CreateHourByHourUrl(CreateHxHview hxh, MachineList machine, bool readOnly = false)
+        {
+            if (hxh == null || machine == null) return "";
+            var enabledStr = readOnly ? "0" : "1";
+            return $"http://10.129.224.149/FMSBHXH/HxH?h=1&id={hxh.HrId}&shift={hxh.Shift}&machine={machine.MachineName}&machineId={machine.MachineId}&dept={hxh.DeptName}&machineMapper={machine.MachineMapper}&threshold=-1&shiftDate={hxh.Shiftdate.ToShortDateString()}&side={hxh.CellSide}&deptId={hxh.Deptid}&e={enabledStr}";
         }
 
         public decimal CalculatePpmh(int gross, int? manning)

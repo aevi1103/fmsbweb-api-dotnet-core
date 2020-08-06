@@ -16,5 +16,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<Department> GetDepartment(string dept);
         Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, string shift, int deptId);
         Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, string shift, List<int> machineIds);
+        Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, List<int> machineIds);
     }
 }

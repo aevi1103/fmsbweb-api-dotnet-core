@@ -20,18 +20,15 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetDepartmentDetails")]
         [HttpHead]
-        public async Task<IActionResult> GetDepartmentDetails(
-            [FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> GetDepartmentDetails([FromQuery] SapResouceParameter resourceParameter)
         {
             if (resourceParameter == null)
             {
                 return BadRequest();
             }
 
-            var prodData = await _kpiService.GetDepartmentDetails(
-                                    resourceParameter.Start,
-                                    resourceParameter.End,
-                                    resourceParameter.Area).ConfigureAwait(false);
+            var prodData = await _kpiService.GetDepartmentDetails(resourceParameter)
+                .ConfigureAwait(false);
 
             return Ok(prodData);
         }
