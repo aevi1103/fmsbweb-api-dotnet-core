@@ -12,6 +12,7 @@ namespace FmsbwebCoreApi.Models.Intranet
         public int Hour { get; set; }
         public int ShiftOrder => GetShiftOrder();
         public string CellSide { get; set; }
+        public bool IsCurrentHour { get; set; }
 
         private int GetShiftOrder()
         {

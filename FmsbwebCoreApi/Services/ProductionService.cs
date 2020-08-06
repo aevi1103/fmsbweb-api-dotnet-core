@@ -20,16 +20,19 @@ namespace FmsbwebCoreApi.Services
     {
         private readonly IDataAccessUtilityService _dataAccessUtilityService;
         private readonly IUtilityService _utilityService;
+        private readonly Hour _hour;
 
         public ProductionService(SapContext context,
             IntranetContext intranetContext,
             Fmsb2Context fmsb2Context,
             IDataAccessUtilityService dataAccessUtilityService,
-            IUtilityService utilityService) 
+            IUtilityService utilityService,
+            Hour hour) 
             : base(context, intranetContext, fmsb2Context)
         {
             _dataAccessUtilityService = dataAccessUtilityService ?? throw new ArgumentNullException(nameof(dataAccessUtilityService));
             _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));
+            _hour = hour ?? throw new ArgumentNullException(nameof(hour));
         }
 
         public async Task<List<HxHProductionByLineDto>> GetHourByHourProduction(ProductionResourceParameter resourceParameter, List<Scrap2> scrap)
@@ -160,6 +163,8 @@ namespace FmsbwebCoreApi.Services
                     var eol = eolDefects.Sum(s => s.Qty) ?? 0;
                     var totalScrap = totalScrapDefects.Sum(s => s.Qty) ?? 0;
 
+                    var isCurrentHour = _hour.IsCurrentHour(x.Key.ShiftDate, x.Key.Shift, x.Key.DeptName, x.Key.Hour);
+
                     var hxh = creteHxhs.FirstOrDefault(h => h.Machineid == x.Key.MachineId 
                                                             && h.Shiftdate == x.Key.ShiftDate 
                                                             && h.Shift == x.Key.Shift
@@ -215,7 +220,8 @@ namespace FmsbwebCoreApi.Services
                         EolDefects = eolDefects,
                         TotalScrapDefects = totalScrapDefects,
 
-                        HxHUrl = hxhUrl
+                        HxHUrl = hxhUrl,
+                        IsCurrentHour = isCurrentHour
 
                     };
                 })

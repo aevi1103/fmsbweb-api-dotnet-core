@@ -999,7 +999,7 @@ namespace FmsbwebCoreApi.Services
             }, scrapData, targetData)
                 .ConfigureAwait(false);
 
-            var dataSet = hxh.Select(x => new
+            var dataSet = hxh.Where(x => !x.IsCurrentHour).Select(x => new
                 {
                     x.ShiftDate,
                     x.Shift,
@@ -1031,7 +1031,8 @@ namespace FmsbwebCoreApi.Services
                     EolDefects = _scrapService.GetScrapSummary(x.EolDefects),
                     TotalScrapDefects = _scrapService.GetScrapSummary(x.TotalScrapDefects),
 
-                    HxHUrl = x.HxHUrl
+                    x.HxHUrl,
+                    x.IsCurrentHour
                 })
                 .OrderBy(x => x.MachineId)
                 .ThenBy(x => x.CellSide)
