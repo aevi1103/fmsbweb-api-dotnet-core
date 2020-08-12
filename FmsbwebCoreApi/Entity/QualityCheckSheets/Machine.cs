@@ -20,5 +20,6 @@ namespace FmsbwebCoreApi.Entity.QualityCheckSheets
         [Required]
         public DateTime TimeStamp { get; set; } = DateTime.Now;
 
+        public ICollection<SubMachine> SubMachines { get; set; } = new List<SubMachine>();
     }
 }

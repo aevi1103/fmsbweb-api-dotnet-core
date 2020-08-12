@@ -197,7 +197,7 @@ namespace FmsbwebCoreApi.Services
             return data;
         }
 
-        public List<Scrap> GetScrapSummary(List<Scrap2> data)
+        public List<Scrap> GetScrapSummary(List<Scrap2> data, DateTime startDate, DateTime endDate)
         {
             return data.GroupBy(d => new { d.ScrapCode, d.ScrapAreaName, d.ScrapDesc, d.Department, d.Area, d.MachineHxh })
                 .Select(d => new Scrap
@@ -208,7 +208,9 @@ namespace FmsbwebCoreApi.Services
                     ScrapAreaName = d.Key.ScrapAreaName,
                     ScrapCode = d.Key.ScrapCode,
                     ScrapDesc = d.Key.ScrapDesc,
-                    Qty = d.Sum(q => q.Qty ?? 0)
+                    Qty = d.Sum(q => q.Qty ?? 0),
+                    StartDate = startDate,
+                    EndDate = endDate
                 }).OrderByDescending(d => d.Qty).ToList();
         }
     }

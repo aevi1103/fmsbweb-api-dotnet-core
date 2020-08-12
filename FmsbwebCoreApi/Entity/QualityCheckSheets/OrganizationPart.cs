@@ -19,5 +19,7 @@ namespace FmsbwebCoreApi.Entity.QualityCheckSheets
 
         [Required]
         public DateTime TimeStamp { get; set; } = DateTime.Now;
+
+        public ICollection<Characteristic> Characteristics { get; set; } = new List<Characteristic>();
     }
 }

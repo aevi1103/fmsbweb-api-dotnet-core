@@ -123,7 +123,8 @@ namespace FmsbwebCoreApi.Services
             List<SapProdDetailDto> prod,
             List<HxHProductionByLineDto> hxh,
             IEnumerable<Scrap> warmers,
-            IEnumerable<SwotTargetWithDeptId> lineTargets)
+            IEnumerable<SwotTargetWithDeptId> lineTargets,
+            DateTime startDate, DateTime endDate)
         {
             if (scrap == null) throw new ArgumentNullException(nameof(scrap));
             if (prod == null) throw new ArgumentNullException(nameof(prod));
@@ -158,7 +159,9 @@ namespace FmsbwebCoreApi.Services
                                     ScrapDesc = x.Key.ScrapDesc,
                                     IsPurchashedExclude = x.Key.IsPurchashedExclude,
                                     IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
-                                    Qty = x.Sum(s => s.Qty)
+                                    Qty = x.Sum(s => s.Qty),
+                                    StartDate = startDate,
+                                    EndDate = endDate
                                 })
                                 .OrderByDescending(x => x.Qty)
                                 .ToList();
@@ -175,7 +178,9 @@ namespace FmsbwebCoreApi.Services
                                     ScrapDesc = x.Key.ScrapDesc,
                                     IsPurchashedExclude = x.Key.IsPurchashedExclude,
                                     IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
-                                    Qty = x.Sum(s => s.Qty)
+                                    Qty = x.Sum(s => s.Qty),
+                                    StartDate = startDate,
+                                    EndDate = endDate
                                 })
                                 .OrderByDescending(x => x.Qty)
                                 .ToList();
@@ -271,7 +276,9 @@ namespace FmsbwebCoreApi.Services
                                         IsPurchashedExclude2 = d.Key.IsPurchashedExclude2,
                                         ScrapCode = d.Key.ScrapCode,
                                         ScrapDesc = d.Key.ScrapDesc,
-                                        Qty = d.Sum(q => q.Qty)
+                                        Qty = d.Sum(q => q.Qty),
+                                        StartDate = startDate,
+                                        EndDate = endDate
                                     })
                                     .OrderByDescending(d => d.Qty)
                             };
@@ -322,7 +329,8 @@ namespace FmsbwebCoreApi.Services
         private static IEnumerable<ProductionByProgramDto> GetDepartmentDetailsByProgram(
             List<Scrap> scrap,
             List<SapProdDetailDto> prod,
-            List<HxhProductionByProgramDto> hxh)
+            List<HxhProductionByProgramDto> hxh,
+            DateTime startDate, DateTime endDate)
         {
             if (scrap == null) throw new ArgumentNullException(nameof(scrap));
             if (prod == null) throw new ArgumentNullException(nameof(prod));
@@ -347,7 +355,9 @@ namespace FmsbwebCoreApi.Services
                                     ScrapDesc = x.Key.ScrapDesc,
                                     IsPurchashedExclude = x.Key.IsPurchashedExclude,
                                     IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
-                                    Qty = x.Sum(s => s.Qty)
+                                    Qty = x.Sum(s => s.Qty),
+                                    StartDate = startDate,
+                                    EndDate = endDate
                                 })
                                 .OrderByDescending(x => x.Qty)
                                 .ToList();
@@ -430,7 +440,7 @@ namespace FmsbwebCoreApi.Services
                                     d.ScrapDesc,
                                     d.IsPurchashedExclude2
                                 })
-                                .Select(d => new Models.SAP.Scrap
+                                .Select(d => new Scrap
                                 {
                                     Department = d.Key.Department,
                                     Area = d.Key.Area,
@@ -439,7 +449,9 @@ namespace FmsbwebCoreApi.Services
                                     IsPurchashedExclude2 = d.Key.IsPurchashedExclude2,
                                     ScrapCode = d.Key.ScrapCode,
                                     ScrapDesc = d.Key.ScrapDesc,
-                                    Qty = d.Sum(q => q.Qty)
+                                    Qty = d.Sum(q => q.Qty),
+                                    StartDate = startDate,
+                                    EndDate = endDate
                                 })
                                 .OrderByDescending(d => d.Qty)
                         }).ToList();
@@ -590,7 +602,9 @@ namespace FmsbwebCoreApi.Services
                                     IsPurchashedExclude2 = d.Key.IsPurchashedExclude2,
                                     ScrapCode = d.Key.ScrapCode,
                                     ScrapDesc = d.Key.ScrapDesc,
-                                    Qty = d.Sum(q => q.Qty)
+                                    Qty = d.Sum(q => q.Qty),
+                                    StartDate = parameters.Start,
+                                    EndDate = parameters.End
                                 })
                                 .OrderByDescending(d => d.Qty);
 
@@ -619,7 +633,9 @@ namespace FmsbwebCoreApi.Services
                     ScrapDesc = x.Key.ScrapDesc,
                     IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
                     IsPurchashedExclude = x.Key.IsPurchashedExclude,
-                    Qty = x.Sum(s => s.Qty)
+                    Qty = x.Sum(s => s.Qty),
+                    StartDate = parameters.Start,
+                    EndDate = parameters.End
                 })
                 .OrderByDescending(x => x.Qty).ToList();
 
@@ -642,8 +658,8 @@ namespace FmsbwebCoreApi.Services
                 TotalSbScrapRate = totalSbScrapRate,
                 TotalPurchaseScrapRate = totalPurchasedScrapRate,
                 SbScrapAreaDetails = scrapAreaDetails,
-                DetailsByLine = GetDepartmentDetailsByLine(scrap, sapProdData, hxhProductionData.LineDetails.ToList(), warmers, lineTargets),
-                DetailsByProgram = GetDepartmentDetailsByProgram(scrap, sapProdData, hxhProductionData.ProgramDetails.ToList()),
+                DetailsByLine = GetDepartmentDetailsByLine(scrap, sapProdData, hxhProductionData.LineDetails.ToList(), warmers, lineTargets, parameters.Start, parameters.End),
+                DetailsByProgram = GetDepartmentDetailsByProgram(scrap, sapProdData, hxhProductionData.ProgramDetails.ToList(), parameters.Start, parameters.End),
                 SbScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == false),
                 PurchaseScrapDetails = scrapList.Where(s => s.IsPurchashedExclude)
             };
@@ -766,9 +782,9 @@ namespace FmsbwebCoreApi.Services
                 TotalAfScrapRate = totalAfScrapRate,
 
                 SbScrapDetails = sBScrapDetails,
-                SbScrapDefects = _scrapService.GetScrapSummary(sbScrap),
-                AfScrapDefects = _scrapService.GetScrapSummary(afScrap),
-                TotalScrapDefects = _scrapService.GetScrapSummary(scrap),
+                SbScrapDefects = _scrapService.GetScrapSummary(sbScrap, shiftDate, shiftDate),
+                AfScrapDefects = _scrapService.GetScrapSummary(afScrap, shiftDate, shiftDate),
+                TotalScrapDefects = _scrapService.GetScrapSummary(scrap, shiftDate, shiftDate),
 
                 ProductionDetails = productionDetails,
                 HxHUrl = hxhUrl,
@@ -1024,12 +1040,12 @@ namespace FmsbwebCoreApi.Services
                     x.Eol,
                     x.TotalScrap,
 
-                    WarmersDefects = _scrapService.GetScrapSummary(x.WarmersDefects),
-                    SolDefects = _scrapService.GetScrapSummary(x.SolDefects),
-                    GageScrapDefects = _scrapService.GetScrapSummary(x.GageScrapDefects),
-                    VisualScrapDefects = _scrapService.GetScrapSummary(x.VisualScrapDefects),
-                    EolDefects = _scrapService.GetScrapSummary(x.EolDefects),
-                    TotalScrapDefects = _scrapService.GetScrapSummary(x.TotalScrapDefects),
+                    WarmersDefects = _scrapService.GetScrapSummary(x.WarmersDefects, shiftDate, shiftDate),
+                    SolDefects = _scrapService.GetScrapSummary(x.SolDefects, shiftDate, shiftDate),
+                    GageScrapDefects = _scrapService.GetScrapSummary(x.GageScrapDefects, shiftDate, shiftDate),
+                    VisualScrapDefects = _scrapService.GetScrapSummary(x.VisualScrapDefects, shiftDate, shiftDate),
+                    EolDefects = _scrapService.GetScrapSummary(x.EolDefects, shiftDate, shiftDate),
+                    TotalScrapDefects = _scrapService.GetScrapSummary(x.TotalScrapDefects, shiftDate, shiftDate),
 
                     x.HxHUrl,
                     x.IsCurrentHour

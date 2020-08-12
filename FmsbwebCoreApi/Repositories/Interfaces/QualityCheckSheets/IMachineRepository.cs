@@ -6,8 +6,8 @@ using FmsbwebCoreApi.Entity.QualityCheckSheets;
 
 namespace FmsbwebCoreApi.Repositories.Interfaces.QualityCheckSheets
 {
-    public interface IMachineRepository
+    public interface IMachineRepository : ICrudRepository<Machine>
     {
-
+        IEnumerable<Machine> GetMachines();
     }
 }

@@ -15,6 +15,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<dynamic> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams);
 
         Task<List<DailyScrapByShiftDateDto>> GetDailyScrapRate(DateTime start, DateTime end, string area, bool isPurchasedScrap = false);
-        List<Scrap> GetScrapSummary(List<Scrap2> data);
+        List<Scrap> GetScrapSummary(List<Scrap2> data, DateTime startDate, DateTime endDate);
     }
 }

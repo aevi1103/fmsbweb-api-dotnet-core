@@ -91,7 +91,7 @@ namespace FmsbwebCoreApi.Context.QualityCheckSheets
                 }
             }
 
-            var displays = new List<string> { "Number", "Percent", "Degrees", "PositiveNegative", "PassFail" };
+            var displays = new List<string> { "Number", "Percent", "Degrees", "NegativePositive", "PassFail", "Positive", "Reference" };
             var displayCounter = 1;
             foreach (var display in displays)
             {

@@ -20,24 +20,56 @@ namespace FmsbwebCoreApi.Repositories
 
         public virtual async Task<EndOfShiftReport> CreateEos(EndOfShiftReport data)
         {
-            data.ShiftDate = data.ShiftDate.Date;
-            await _fmsb2Context.EndOfShiftReports.AddAsync(data);
-            await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
-            return data;
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+            try
+            {
+                data.ShiftDate = data.ShiftDate.Date;
+                await _fmsb2Context.EndOfShiftReports.AddAsync(data).ConfigureAwait(false);
+                await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+                return data;
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
         }
 
         public async Task<EndOfShiftReport> UpdateEos(EndOfShiftReport data)
         {
-            data.ShiftDate = data.ShiftDate.Date;
-            _fmsb2Context.EndOfShiftReports.Update(data);
-            await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
-            return data;
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+            try
+            {
+                data.ShiftDate = data.ShiftDate.Date;
+                _fmsb2Context.EndOfShiftReports.Update(data);
+                await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+                return data;
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
         }
 
         public async Task DeleteEos(int id)
         {
-            _fmsb2Context.EndOfShiftReports.Remove(new EndOfShiftReport {EndOfShiftReportId = id});
-            await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+            try
+            {
+                _fmsb2Context.EndOfShiftReports.Remove(new EndOfShiftReport { EndOfShiftReportId = id });
+                await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
         }
 
         public async Task<bool> IsEosExist(EndOfShiftReport data)

@@ -17,5 +17,7 @@ namespace FmsbwebCoreApi.Models.SAP
         public string ScrapCode { get; set; }
         public string ScrapDesc { get; set; }
         public int Qty { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
     }
 }

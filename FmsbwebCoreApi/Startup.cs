@@ -22,6 +22,10 @@ using FmsbwebCoreApi.Context.Master;
 using FmsbwebCoreApi.Context.FmsbMvc;
 using FmsbwebCoreApi.Context.Iconics;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
+using FmsbwebCoreApi.Entity.QualityCheckSheets;
+using Microsoft.AspNet.OData.Builder;
+using Microsoft.AspNet.OData.Extensions;
+using Microsoft.OData.Edm;
 using UtilityLibrary.Service;
 using UtilityLibrary.Service.Interface;
 
@@ -68,55 +72,27 @@ namespace FmsbwebCoreApi
             (validationModelOptions) =>
             {
                 validationModelOptions.MustRevalidate = true;
-            }
-            );
+            });
 
             services.AddResponseCaching(); //register http caching
 
-            services
-            .AddControllers(setupAction =>
-            {
-                //content negotiation
-                setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
-                setupAction.CacheProfiles.Add("240SecCacheProfile",
-                    new CacheProfile
-                    {
-                        Duration = 240
-                    });
-            })
-            .AddNewtonsoftJson(setupAction =>
-            {
-                setupAction.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver(); //enabled patch format in .net core
-            })
-            .AddXmlDataContractSerializerFormatters() //support xml input/output formatter 
-            .ConfigureApiBehaviorOptions(setupAction =>
-            {
-
-                setupAction.InvalidModelStateResponseFactory = context =>
+            services.AddControllers(setupAction =>
                 {
-                    var problemDetails = new ValidationProblemDetails(context.ModelState)
-                    {
-                        Type = "https://safetylibrary.com/modelvalidationproblem",
-                        Title = "One or more validation errors occured",
-                        Status = StatusCodes.Status422UnprocessableEntity,
-                        Detail = "See the errors property for details",
-                        Instance = context.HttpContext.Request.Path
-                    };
+                    //content negotiation
+                    setupAction.ReturnHttpNotAcceptable = true; //return a 406 error in client if the acceptable header is not supported
+                    setupAction.CacheProfiles.Add("240SecCacheProfile", new CacheProfile { Duration = 240 });
+                })
+                .AddNewtonsoftJson(setupAction =>
+                {
+                    setupAction.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver(); //enabled patch format in .net core
+                })
+                .AddXmlDataContractSerializerFormatters(); //support xml input/output formatter 
 
-                    problemDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
-                    return new UnprocessableEntityObjectResult(problemDetails)
-                    {
-                        ContentTypes = { "application/problem+json" }
-                    };
-
-                };
-
-            });
+            services.AddOData(); // register odata
 
             //add support of custom accept header
             services.Configure<MvcOptions>(config =>
             {
-
                 var newtonsoftOutputFormatter = config.OutputFormatters.OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
                 newtonsoftOutputFormatter?.SupportedMediaTypes.Add("application/vnd.fmsbweb.hateoas+json");
             });
@@ -135,17 +111,13 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.IKpiTargetRepository, Repositories.KpiTargetRepository>();
             services.AddScoped<Repositories.Interfaces.IEndOfShiftReportRepository, Repositories.EndOfShiftReportRepository>();
 
-            services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
-            services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
-            services.AddScoped<Services.FMSB2.IFmsb2LibraryRepository, Services.FMSB2.FmsbLibraryRepository>();
-            services.AddScoped<Services.Intranet.IIntranetLibraryRepository, Services.Intranet.IntranetLibraryRepository>();
-            services.AddScoped<Services.FmsbQuality.IFmsbQualityLibraryRepository, Services.FmsbQuality.FmsbQualityLibraryRepository>();
-            services.AddScoped<Services.FmsbMvc.IFmsbMvcLibraryRepository, Services.FmsbMvc.FmsbMvcLibraryRepository>();
-            services.AddScoped<Services.Iconics.IIconicsLibraryRepository, Services.Iconics.IconicsLibraryRepository>();
+            services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ICharacteristicRepository, Repositories.QualityCheckSheets.CharacteristicRepository>();
+            services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IMachineRepository, Repositories.QualityCheckSheets.MachineRepository>();
+            services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IOrganizationPartRepository, Repositories.QualityCheckSheets.OrganizationPartRepository>();
+            services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ISubMachineRepository, Repositories.QualityCheckSheets.SubMachineRepository>();
 
             //inject services
             services.AddScoped<Services.Interfaces.ISapLibraryService, Services.SapLibraryService>();
-
             services.AddScoped<Services.Interfaces.IScrapService, Services.ScrapService>();
             services.AddScoped<Services.Interfaces.IProductionService, Services.ProductionService>();
             services.AddScoped<Services.Interfaces.IKpiTargetService, Services.KpiTargetService>();
@@ -153,6 +125,19 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.IUtilityService, Services.UtilityService>();
             services.AddScoped<Services.Interfaces.IDataAccessUtilityService, Services.DataAccessUtilityService>();
             services.AddScoped<Services.Interfaces.IEndOfShiftReportService, Services.EndOFShiftReportService>();
+
+            services.AddScoped<Services.Interfaces.QualityCheckSheets.ICharacteristicService, Services.QualityCheckSheets.CharacteristicService>();
+            services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();
+            services.AddScoped<Services.Interfaces.QualityCheckSheets.IOrganizationPartService, Services.QualityCheckSheets.OrganizationPartService>();
+            services.AddScoped<Services.Interfaces.QualityCheckSheets.ISubMachineService, Services.QualityCheckSheets.SubMachineService>();
+
+            services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
+            services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
+            services.AddScoped<Services.FMSB2.IFmsb2LibraryRepository, Services.FMSB2.FmsbLibraryRepository>();
+            services.AddScoped<Services.Intranet.IIntranetLibraryRepository, Services.Intranet.IntranetLibraryRepository>();
+            services.AddScoped<Services.FmsbQuality.IFmsbQualityLibraryRepository, Services.FmsbQuality.FmsbQualityLibraryRepository>();
+            services.AddScoped<Services.FmsbMvc.IFmsbMvcLibraryRepository, Services.FmsbMvc.FmsbMvcLibraryRepository>();
+            services.AddScoped<Services.Iconics.IIconicsLibraryRepository, Services.Iconics.IconicsLibraryRepository>();
 
             //external class lib
             services.AddScoped<IConverterService, ConverterService>();
@@ -169,6 +154,7 @@ namespace FmsbwebCoreApi
             services.AddDbContext<fmsbQualityContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality")));
             services.AddDbContext<masterContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmoMaster")));
             services.AddDbContext<QualityCheckSheetsContext>(options => options.UseSqlServer(Configuration.GetConnectionString("qualityCheckSheetsConn")));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -193,7 +179,7 @@ namespace FmsbwebCoreApi
             }
 
             //if we want to implement Etag validation comment 'app.UseResponseCaching()'
-            //then on the client side request header add a 'If-None-Match' with the lates E-Tag generated' if the E tag does not
+            //then on the client side request header add a 'If-None-Match' with the latest E-Tag generated' if the E tag does not
             //match from the current E-tag generated it will it will hit the API
             //else it will response a '304 not-modified'
 
@@ -202,21 +188,28 @@ namespace FmsbwebCoreApi
             //if the client does not have the latest E-Tag it will response with '412 precondition failed'
 
             app.UseResponseCaching(); //use caching store middleware
-
             app.UseHttpCacheHeaders();
-
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseCors(MyAllowSpecificOrigins);
-
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                //endpoints.MapODataRoute("odata", "odata", GetEdmModel()); //uncomment this if you want to use odata models instead, the comment endpoints.EnableDependencyInjection();
+                endpoints.EnableDependencyInjection();
+                endpoints.Select().Filter().OrderBy().Count().MaxTop(null).Expand();
             });
+
+        }
+
+        private static IEdmModel GetEdmModel()
+        {
+            var odataBuilder = new ODataConventionModelBuilder();
+            odataBuilder.EntitySet<Machine>("Machines");
+            odataBuilder.EntitySet<Line>("Lines");
+            return odataBuilder.GetEdmModel();
         }
     }
 }
