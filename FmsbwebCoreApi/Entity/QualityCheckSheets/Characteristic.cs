@@ -9,16 +9,12 @@ namespace FmsbwebCoreApi.Entity.QualityCheckSheets
     public class Characteristic
     {
         public int CharacteristicId { get; set; }
-
-        public int ControlMethodId { get; set; }
-        public ControlMethod ControlMethod { get; set; }
-
-        public int MachineId { get; set; }
-        public virtual Machine Machine { get; set; }
-
+        [Required]
         public int OrganizationPartId { get; set; }
-        public virtual OrganizationPart OrganizationPart { get; set; }
-
+        public OrganizationPart OrganizationPart { get; set; }
+        [Required]
+        public int DisplayAsId { get; set; }
+        public DisplayAs DisplayAs { get; set; }
         [Required]
         public string ReferenceNo { get; set; }
         [Required]
@@ -26,18 +22,14 @@ namespace FmsbwebCoreApi.Entity.QualityCheckSheets
         [Required]
         public string Gauge { get; set; }
         [Required]
+        public string MachineName { get; set; }
+        [Required]
         public int Frequency { get; set; }
         public decimal? Min { get; set; }
         public decimal? Nom { get; set; }
         public decimal? Max { get; set; }
         public bool? PassFail { get; set; }
-
-        [Required]
-        public int DisplayAsId { get; set; }
-        public virtual DisplayAs DisplayAs { get; set; }
-
         public string HelperText { get; set; }
-
         [Required]
         public DateTime TimeStamp { get; set; } = DateTime.Now;
     }

@@ -28,7 +28,7 @@ namespace FmsbwebCoreApi.Services
         {
             if (filter == null) throw new ArgumentNullException(nameof(filter));
 
-            var machine = _fmsb2Context.Machines.AsQueryable();
+            var machine = _fmsb2Context.Machines.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(filter.MachineName))
                 return await machine.FirstOrDefaultAsync(x => x.MachineName == filter.MachineName).ConfigureAwait(false);
@@ -47,7 +47,7 @@ namespace FmsbwebCoreApi.Services
 
         public async Task<List<MachineList>> GetMachines(int deptId, bool showAllAfMachine = false)
         {
-            var qry = _fmsb2Context.MachineList.Where(x => x.LineNumber != null).AsQueryable();
+            var qry = _fmsb2Context.MachineList.AsNoTracking().Where(x => x.LineNumber != null).AsQueryable();
 
             qry = showAllAfMachine 
                 ? qry.Where(x => x.DeptId >= 4 && x.DeptId <= 6) 
@@ -68,19 +68,19 @@ namespace FmsbwebCoreApi.Services
 
         public async Task<CreateHxHview> GerHourByHour(DateTime shiftDate, int machineId, string shift)
         {
-            return await _fmsb2Context.CreateHxHview
+            return await _fmsb2Context.CreateHxHview.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Shiftdate == shiftDate && x.Shift == shift && x.Machineid == machineId)
                 .ConfigureAwait(false);
         }
 
         public async Task<Department> GetDepartment(string dept)
         {
-            return await _fmsb2Context.Department.FirstOrDefaultAsync(x => x.DeptName.ToLower() == dept.ToLower()).ConfigureAwait(false);
+            return await _fmsb2Context.Department.AsNoTracking().FirstOrDefaultAsync(x => x.DeptName.ToLower() == dept.ToLower()).ConfigureAwait(false);
         }
 
         public async Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, string shift, int deptId)
         {
-            return await _fmsb2Context.CreateHxHview
+            return await _fmsb2Context.CreateHxHview.AsNoTracking()
                 .Where(x => x.Shiftdate == shiftDate && x.Shift == shift && x.Deptid == deptId)
                 .ToListAsync()
                 .ConfigureAwait(false);
@@ -90,7 +90,7 @@ namespace FmsbwebCoreApi.Services
         {
             var machineIdsStr = machineIds.Select(x => x.ToString()).ToList();
 
-            var qry = _fmsb2Context.CreateHxHview
+            var qry = _fmsb2Context.CreateHxHview.AsNoTracking()
                 .Where(x => x.Shiftdate == shiftDate 
                             && x.Shift == shift
                             && machineIdsStr.Contains(x.Machineid.ToString()))
@@ -103,7 +103,7 @@ namespace FmsbwebCoreApi.Services
         {
             var machineIdsStr = machineIds.Select(x => x.ToString()).ToList();
 
-            var qry = _fmsb2Context.CreateHxHview
+            var qry = _fmsb2Context.CreateHxHview.AsNoTracking()
                 .Where(x => x.Shiftdate == shiftDate
                             && machineIdsStr.Contains(x.Machineid.ToString()))
                 .AsQueryable();

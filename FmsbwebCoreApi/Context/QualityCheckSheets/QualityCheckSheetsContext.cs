@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using FmsbwebCoreApi.Controllers.QualityCheckSheets;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using FmsbwebCoreApi.Entity.FmsbMvc;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
-using NUnit.Framework;
 using Machine = FmsbwebCoreApi.Entity.QualityCheckSheets.Machine;
 using SubMachine = FmsbwebCoreApi.Entity.QualityCheckSheets.SubMachine;
 
@@ -28,6 +25,8 @@ namespace FmsbwebCoreApi.Context.QualityCheckSheets
         public virtual DbSet<OrganizationPart> OrganizationParts { get; set; }
         public virtual DbSet<DisplayAs> DisplayAs { get; set; }
         public virtual DbSet<Characteristic> Characteristics { get; set; }
+        public virtual DbSet<CheckSheet> CheckSheets { get; set; }
+        public virtual DbSet<CheckSheetEntry> CheckSheetEntries { get; set; }
 
         private static void SeedData(ModelBuilder modelBuilder)
         {
@@ -79,6 +78,11 @@ namespace FmsbwebCoreApi.Context.QualityCheckSheets
                         }
                     }
 
+                    if (machine.ToLower().Contains("drill"))
+                    {
+                        modelBuilder.Entity<SubMachine>().HasData(new SubMachine { SubMachineId = innerCounter++, MachineId = machineId, Value = "Drill" });
+                    }
+
                     if (machine.ToLower().Contains("turmat"))
                     {
                         modelBuilder.Entity<SubMachine>().HasData(new SubMachine { SubMachineId = innerCounter++, MachineId = machineId, Value = "Turmat" });
@@ -102,16 +106,19 @@ namespace FmsbwebCoreApi.Context.QualityCheckSheets
             {
                 new OrganizationPart
                 {
+                    ControlMethodId = 1,
                     LeftHandPart = "81309",
                     RightHandPart = "81310"
                 },
                 new OrganizationPart
                 {
+                    ControlMethodId = 1,
                     LeftHandPart = "81311",
                     RightHandPart = "81312"
                 },
                 new OrganizationPart
                 {
+                    ControlMethodId = 1,
                     LeftHandPart = "81313",
                     RightHandPart = "81314"
                 }
@@ -130,6 +137,24 @@ namespace FmsbwebCoreApi.Context.QualityCheckSheets
             if (modelBuilder == null) throw new ArgumentNullException(nameof(modelBuilder));
 
             SeedData(modelBuilder);
+
+            modelBuilder.Entity<CheckSheetEntry>()
+                .HasOne(x => x.CheckSheet)
+                .WithMany(x => x.CheckSheetEntries)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.ClientCascade);
+
+            modelBuilder.Entity<CheckSheetEntry>()
+                .HasOne(x => x.SubMachine)
+                .WithMany(x => x.CheckSheetEntries)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.ClientCascade);
+
+            modelBuilder.Entity<OrganizationPart>()
+                .HasOne(x => x.ControlMethod)
+                .WithMany(x => x.OrganizationParts)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.ClientCascade);
 
             OnModelCreatingPartial(modelBuilder);
         }

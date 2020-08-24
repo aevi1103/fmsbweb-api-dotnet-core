@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
@@ -7,6 +6,7 @@ using FmsbwebCoreApi.Entity.QualityCheckSheets;
 using FmsbwebCoreApi.Services.Interfaces.QualityCheckSheets;
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
 {
@@ -14,27 +14,24 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
     [ApiController]
     public class MachineController : ControllerBase
     {
-        private readonly QualityCheckSheetsContext _context;
         private readonly IMachineService _service;
 
-        public MachineController(QualityCheckSheetsContext context, IMachineService service)
+        public MachineController(IMachineService service)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _service = service ?? throw new ArgumentNullException(nameof(service));
         }
 
         [EnableQuery]
         public IActionResult Get()
         {
-            return Ok(_context.Machines);
+            return Ok(_service.Query());
         }
 
         [HttpGet("{id}")]
         [EnableQuery]
         public IActionResult Get(int id)
         {
-            var result = _context.Machines.Include(x => x.Line).Where(x => x.MachineId == id);
-            return Ok(result);
+            return Ok(_service.Query(id));
         }
 
         [HttpPost]

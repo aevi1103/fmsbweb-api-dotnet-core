@@ -4,51 +4,47 @@ using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
-using FmsbwebCoreApi.Repositories.Interfaces;
 using FmsbwebCoreApi.Repositories.Interfaces.QualityCheckSheets;
 using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
 {
-    public class CharacteristicRepository : ICharacteristicRepository
+    public class CheckSheetEntryRepository : ICheckSheetEntryRepository
     {
         private readonly QualityCheckSheetsContext _context;
 
-        public CharacteristicRepository(QualityCheckSheetsContext context)
+        public CheckSheetEntryRepository(QualityCheckSheetsContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public IQueryable<Characteristic> Query()
+        public IQueryable<CheckSheetEntry> Query()
         {
-            return _context.Characteristics.AsNoTracking();
+            return _context.CheckSheetEntries;
         }
 
-        public Characteristic Query(int id)
-        {
-            return _context.Characteristics.AsNoTracking()
-                .Include(x => x.OrganizationPart)
-                .Include(x => x.DisplayAs)
-                .FirstOrDefault(x => x.CharacteristicId == id);
-        }
-
-        public Task<List<Characteristic>> GetAll()
+        public CheckSheetEntry Query(int id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Characteristic> GetById(int id)
+        public Task<List<CheckSheetEntry>> GetAll()
         {
             throw new NotImplementedException();
         }
 
-        public async Task<Characteristic> Create(Characteristic data)
+        public Task<CheckSheetEntry> GetById(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<CheckSheetEntry> Create(CheckSheetEntry data)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
             await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
-                await _context.Characteristics.AddAsync(data).ConfigureAwait(false);
+                await _context.CheckSheetEntries.AddAsync(data).ConfigureAwait(false);
                 await _context.SaveChangesAsync().ConfigureAwait(false);
                 await transaction.CommitAsync().ConfigureAwait(false);
                 return data;
@@ -60,13 +56,13 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
             }
         }
 
-        public async Task<Characteristic> Update(Characteristic data)
+        public async Task<CheckSheetEntry> Update(CheckSheetEntry data)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
             await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
-                _context.Characteristics.Update(data);
+                _context.CheckSheetEntries.Update(data);
                 await _context.SaveChangesAsync().ConfigureAwait(false);
                 await transaction.CommitAsync().ConfigureAwait(false);
                 return data;
@@ -83,7 +79,7 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
             await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
-                _context.Characteristics.Remove(new Characteristic { CharacteristicId = id});
+                _context.CheckSheetEntries.Remove(new CheckSheetEntry { CharacteristicId = id });
                 await _context.SaveChangesAsync().ConfigureAwait(false);
                 await transaction.CommitAsync().ConfigureAwait(false);
                 return true;
@@ -93,6 +89,22 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
                 await transaction.RollbackAsync().ConfigureAwait(false);
                 throw new Exception(e.Message);
             }
+        }
+
+        public async Task<CheckSheetEntry> IsExist(CheckSheetEntry data)
+        {
+            var result = await _context.CheckSheetEntries
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.CharacteristicId == data.CharacteristicId &&
+                    x.Part == data.Part &&
+                    x.Frequency == data.Frequency &&
+                    x.CheckSheetId == data.CheckSheetId &&
+                    x.SubMachineId == data.SubMachineId)
+                .ConfigureAwait(false);
+
+            return result;
+
         }
     }
 }

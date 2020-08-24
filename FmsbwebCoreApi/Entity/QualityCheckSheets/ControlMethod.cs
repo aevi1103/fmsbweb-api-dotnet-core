@@ -9,11 +9,11 @@ namespace FmsbwebCoreApi.Entity.QualityCheckSheets
     public class ControlMethod
     {
         public int ControlMethodId { get; set; }
-
         [Required]
         public string Method { get; set; }
-
         [Required]
         public DateTime TimeStamp { get; set; } = DateTime.Now;
+
+        public ICollection<OrganizationPart> OrganizationParts { get; set; }
     }
 }

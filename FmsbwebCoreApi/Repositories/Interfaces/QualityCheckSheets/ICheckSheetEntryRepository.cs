@@ -6,8 +6,8 @@ using FmsbwebCoreApi.Entity.QualityCheckSheets;
 
 namespace FmsbwebCoreApi.Repositories.Interfaces.QualityCheckSheets
 {
-    public interface ICharacteristicRepository : ICrudRepository<Characteristic>
+    public interface ICheckSheetEntryRepository : ICrudRepository<CheckSheetEntry>
     {
-
+        Task<CheckSheetEntry> IsExist(CheckSheetEntry data);
     }
 }

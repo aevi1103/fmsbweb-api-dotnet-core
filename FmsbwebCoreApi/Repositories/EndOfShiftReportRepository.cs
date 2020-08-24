@@ -74,13 +74,13 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<bool> IsEosExist(EndOfShiftReport data)
         {
-            return await _fmsb2Context.EndOfShiftReports.AnyAsync(x =>
+            return await _fmsb2Context.EndOfShiftReports.AsNoTracking().AnyAsync(x =>
                 x.ShiftDate == data.ShiftDate.Date && x.Shift == data.Shift && x.MachineId == data.MachineId).ConfigureAwait(false);
         }
 
         public async Task<List<EndOfShiftReport>> GetEos(DateTime shiftDate, string shift, string dept)
         {
-            return await _fmsb2Context.EndOfShiftReports
+            return await _fmsb2Context.EndOfShiftReports.AsNoTracking()
                 .Include(x => x.Machine)
                 .Where(x => x.ShiftDate == shiftDate 
                             && x.Shift == shift 
@@ -90,7 +90,7 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<EndOfShiftReport> GetEos(DateTime shiftDate, string shift, int machineId)
         {
-            return await _fmsb2Context.EndOfShiftReports
+            return await _fmsb2Context.EndOfShiftReports.AsNoTracking()
                 .Include(x => x.Machine)
                 .FirstOrDefaultAsync(x => x.ShiftDate == shiftDate
                                           && x.Shift == shift
@@ -101,7 +101,7 @@ namespace FmsbwebCoreApi.Repositories
         public async Task<List<EmailNotification>> GetEosEmailRecipients(string dept)
         {
             dept = (dept == "Assembly" || dept == "Anodize" || dept == "Skirt Coat") ? "A&F" : dept;
-            return await _fmsb2Context.EmailNotification.Where(x => x.Dept == dept).ToListAsync().ConfigureAwait(false);
+            return await _fmsb2Context.EmailNotification.AsNoTracking().Where(x => x.Dept == dept).ToListAsync().ConfigureAwait(false);
         }
 
     }

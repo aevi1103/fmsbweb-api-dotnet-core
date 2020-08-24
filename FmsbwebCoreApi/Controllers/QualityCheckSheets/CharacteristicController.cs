@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
@@ -9,6 +8,7 @@ using FmsbwebCoreApi.Services.Interfaces.QualityCheckSheets;
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
 {
@@ -16,32 +16,17 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
     [ApiController]
     public class CharacteristicController : ControllerBase
     {
-        private readonly QualityCheckSheetsContext _context;
         private readonly ICharacteristicService _service;
 
-        public CharacteristicController(QualityCheckSheetsContext context, ICharacteristicService service)
+        public CharacteristicController(ICharacteristicService service)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _service = service ?? throw new ArgumentNullException(nameof(service));
         }
 
         [EnableQuery]
         public IActionResult Get()
         {
-            return Ok(_context.Characteristics);
-        }
-
-        [HttpGet("{id}")]
-        [EnableQuery]
-        public IActionResult Get(int id)
-        {
-            var result = _context.Characteristics
-                .Include(x => x.ControlMethod)
-                .Include(x => x.MachineId)
-                .Include(x => x.OrganizationPart)
-                .Include(x => x.DisplayAs)
-                .Where(x => x.MachineId == id);
-            return Ok(result);
+            return Ok(_service.Query());
         }
 
         [HttpPost]

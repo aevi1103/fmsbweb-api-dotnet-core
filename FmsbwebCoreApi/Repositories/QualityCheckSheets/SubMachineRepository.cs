@@ -18,14 +18,25 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
-        public async Task<List<SubMachine>> GetAll()
+
+        public IQueryable<SubMachine> Query()
         {
-            return await _context.SubMachines.ToListAsync().ConfigureAwait(false);
+            return _context.SubMachines.AsNoTracking();
         }
 
-        public async Task<SubMachine> GetById(int id)
+        public SubMachine Query(int id)
         {
-            return await _context.SubMachines.FindAsync(new SubMachine { SubMachineId = id}).ConfigureAwait(false);
+            return _context.SubMachines.AsNoTracking().Include(x => x.Machine).FirstOrDefault(x => x.SubMachineId == id);
+        }
+
+        public Task<List<SubMachine>> GetAll()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<SubMachine> GetById(int id)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<SubMachine> Create(SubMachine data)

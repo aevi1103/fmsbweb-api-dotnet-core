@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
@@ -8,6 +7,7 @@ using FmsbwebCoreApi.Entity.Master;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
 using FmsbwebCoreApi.Repositories.Interfaces;
 using FmsbwebCoreApi.Repositories.Interfaces.QualityCheckSheets;
+using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
 {
@@ -22,26 +22,27 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
 
         public IEnumerable<Machine> GetMachines()
         {
-            return _context.Machines.Include(x => x.Line).ToList();
+            return _context.Machines.AsNoTracking().Include(x => x.Line).ToList();
         }
 
-        public async Task<List<Machine>> GetAll()
+        public IQueryable<Machine> Query()
         {
-            try
-            {
-                var machines = await _context.Machines.ToListAsync().ConfigureAwait(false);
-                return machines;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            return _context.Machines.AsNoTracking();
         }
 
-        public async Task<Machine> GetById(int id)
+        public Machine Query(int id)
         {
-            return await _context.Machines.FindAsync(new Machine { MachineId = id}).ConfigureAwait(false);
+            return _context.Machines.AsNoTracking().Include(x => x.Line).FirstOrDefault(x => x.MachineId == id);
+        }
+
+        public Task<List<Machine>> GetAll()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Machine> GetById(int id)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<Machine> Create(Machine data)

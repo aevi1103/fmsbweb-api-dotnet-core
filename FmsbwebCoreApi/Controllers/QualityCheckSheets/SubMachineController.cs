@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
@@ -9,6 +8,7 @@ using FmsbwebCoreApi.Services.Interfaces.QualityCheckSheets;
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
 {
@@ -16,12 +16,10 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
     [ApiController]
     public class SubMachineController : ControllerBase
     {
-        private readonly QualityCheckSheetsContext _context;
         private readonly ISubMachineService _service;
 
         public SubMachineController(QualityCheckSheetsContext context, ISubMachineService service)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _service = service ?? throw new ArgumentNullException(nameof(service));
         }
 
@@ -29,15 +27,14 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
         [EnableQuery]
         public IActionResult Get()
         {
-            return Ok(_context.SubMachines);
+            return Ok(_service.Query());
         }
 
         [HttpGet("{id}")]
         [EnableQuery]
         public IActionResult Get(int id)
         {
-            var result = _context.SubMachines.Include(x => x.Machine).Where(x => x.SubMachineId == id);
-            return Ok(result);
+            return Ok(_service.Query(id));
         }
 
         [HttpPost]

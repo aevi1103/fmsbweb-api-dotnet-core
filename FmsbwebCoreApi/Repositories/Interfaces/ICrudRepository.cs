@@ -8,6 +8,8 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
 {
     public interface ICrudRepository<T> where T : class
     {
+        IQueryable<T> Query();
+        T Query(int id);
         Task<List<T>> GetAll();
         Task<T> GetById(int id);
         Task<T> Create(T data);

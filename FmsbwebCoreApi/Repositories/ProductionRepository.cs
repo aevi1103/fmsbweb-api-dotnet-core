@@ -31,7 +31,7 @@ namespace FmsbwebCoreApi.Repositories
         {
             if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
 
-            var qry = _context.Production2
+            var qry = _context.Production2.AsNoTracking()
                 .Where(x => x.ShiftDate >= resourceParameter.StartDate && x.ShiftDate <= resourceParameter.EndDate)
                 .AsQueryable();
 
@@ -56,7 +56,7 @@ namespace FmsbwebCoreApi.Repositories
         {
             if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
 
-            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram.AsQueryable();
+            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram.AsNoTracking().AsQueryable();
 
             qry = qry.Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate);
             qry = qry.Where(x => x.Area == resourceParameter.Area);
@@ -115,7 +115,7 @@ namespace FmsbwebCoreApi.Repositories
         {
             if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
 
-            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
+            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram.AsNoTracking()
                 .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate)
                 .AsQueryable();
 
@@ -162,7 +162,7 @@ namespace FmsbwebCoreApi.Repositories
         /// <returns></returns>
         public async Task<List<HxHProductionByLineDto>> GetHxhProductionTempTable(ProductionResourceParameter resourceParameter)
         {
-            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram
+            var qry = _intranetContext.FmsbMasterProdPartsCopyDashboardProgram.AsNoTracking()
                 .Where(x => x.Date >= resourceParameter.StartDate && x.Date <= resourceParameter.EndDate)
                 .AsQueryable();
 
@@ -205,7 +205,7 @@ namespace FmsbwebCoreApi.Repositories
         /// <returns></returns>
         public async Task<List<HxHProd>> GetHxHProduction(ProductionResourceParameter resourceParameter)
         {
-            var qry = _fmsb2Context.HxHProd.Where(x =>
+            var qry = _fmsb2Context.HxHProd.AsNoTracking().Where(x =>
                     x.ShiftDate >= resourceParameter.StartDate &&
                     x.ShiftDate <= resourceParameter.EndDate)
                 .AsQueryable();

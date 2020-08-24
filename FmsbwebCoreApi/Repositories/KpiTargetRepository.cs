@@ -24,7 +24,7 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime startDateTime, DateTime endDateTime, string area)
         {
-            return await _context.FmsbMasterProdPartsCopyDashboard
+            return await _context.FmsbMasterProdPartsCopyDashboard.AsNoTracking()
                 .Where(x => x.Date >= startDateTime && x.Date <= endDateTime)
                 .Where(x => x.Area == area)
                 .GroupBy(x => new { x.Area, x.Date })
@@ -40,24 +40,24 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<List<SwotTargetWithDeptId>> GetLineTargets(string dept)
         {
-            return await _fmsb2Context.SwotTargetWithDeptId.Where(x => x.DeptName == dept)
+            return await _fmsb2Context.SwotTargetWithDeptId.AsNoTracking().Where(x => x.DeptName == dept)
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
 
         public async Task<SwotTargetWithDeptId> GetSwotTarget(string line)
         {
-            return await _fmsb2Context.SwotTargetWithDeptId.FirstOrDefaultAsync(x => x.Line2 == line).ConfigureAwait(false);
+            return await _fmsb2Context.SwotTargetWithDeptId.AsNoTracking().FirstOrDefaultAsync(x => x.Line2 == line).ConfigureAwait(false);
         }
 
         public async Task<List<SwotTargetWithDeptId>> GetSwotTargets(string dept)
         {
-            return await _fmsb2Context.SwotTargetWithDeptId.Where(x => x.DeptName == dept).ToListAsync().ConfigureAwait(false);
+            return await _fmsb2Context.SwotTargetWithDeptId.AsNoTracking().Where(x => x.DeptName == dept).ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<List<SwotTargetWithDeptId>> GetSwotTargets(List<string> machines)
         {
-            return await _fmsb2Context.SwotTargetWithDeptId.Where(x => machines.Contains(x.Line2)).ToListAsync().ConfigureAwait(false);
+            return await _fmsb2Context.SwotTargetWithDeptId.AsNoTracking().Where(x => machines.Contains(x.Line2)).ToListAsync().ConfigureAwait(false);
         }
 
         public decimal GetScrapTarget(SwotTargetWithDeptId data, string scrapType)
@@ -81,7 +81,7 @@ namespace FmsbwebCoreApi.Repositories
         public async Task<KpiTarget> GetDepartmentTargets(string dept, string area, DateTime startDateTime, DateTime endDateTime)
         {
 
-            var data = await _fmsb2Context.KpiTarget
+            var data = await _fmsb2Context.KpiTarget.AsNoTracking()
                 .Where(x => x.Department.ToLower() == dept.ToLower() 
                             && x.Year >= startDateTime.Year && x.Year == endDateTime.Year 
                             && x.MonthNumber >= startDateTime.Month 

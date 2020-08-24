@@ -25,7 +25,7 @@ namespace FmsbwebCoreApi.Repositories
         {
             if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
 
-            var qry = _context.Scrap2
+            var qry = _context.Scrap2.AsNoTracking()
                 .Where(x => x.ShiftDate >= resourceParameter.StartDate && x.ShiftDate <= resourceParameter.EndDate)
                 .AsQueryable();
 

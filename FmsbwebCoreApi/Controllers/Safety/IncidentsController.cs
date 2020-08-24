@@ -20,7 +20,6 @@ using FmsbwebCoreApi.Services;
 using FmsbwebCoreApi.Models;
 using Microsoft.Net.Http.Headers;
 using System.Dynamic;
-using Marvin.Cache.Headers;
 using Microsoft.AspNetCore.Cors;
 
 namespace FmsbwebCoreApi.Controllers.Safety
@@ -133,22 +132,20 @@ namespace FmsbwebCoreApi.Controllers.Safety
             {
                 return Ok(resourceToReturn);
             }
-            else
-            {
-                var resourceToReturnWithLinks = resourceToReturn.Select(incident =>
-                {
-                    var incidentAsDictionary = incident as IDictionary<string, object>;
-                    var incidentLinks = CreateLinksForIncident((int)incidentAsDictionary["Id"], null);
-                    incidentAsDictionary.Add("links", incidentLinks);
-                    return incidentAsDictionary;
-                });
 
-                return Ok(new
-                {
-                    value = resourceToReturnWithLinks,
-                    links
-                });
-            }
+            var resourceToReturnWithLinks = resourceToReturn.Select(incident =>
+            {
+                var incidentAsDictionary = incident as IDictionary<string, object>;
+                var incidentLinks = CreateLinksForIncident((int)incidentAsDictionary["Id"], null);
+                incidentAsDictionary.Add("links", incidentLinks);
+                return incidentAsDictionary;
+            });
+
+            return Ok(new
+            {
+                value = resourceToReturnWithLinks,
+                links
+            });
 
 
         }

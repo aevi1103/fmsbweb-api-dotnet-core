@@ -15,6 +15,7 @@ using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
 using System.Linq;
 using DateShiftLib.Helpers;
+using DateShiftMethods.Helpers;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.FmsbQuality;
@@ -26,6 +27,7 @@ using FmsbwebCoreApi.Entity.QualityCheckSheets;
 using Microsoft.AspNet.OData.Builder;
 using Microsoft.AspNet.OData.Extensions;
 using Microsoft.OData.Edm;
+using Newtonsoft.Json;
 using UtilityLibrary.Service;
 using UtilityLibrary.Service.Interface;
 
@@ -64,15 +66,15 @@ namespace FmsbwebCoreApi
 
             services.AddMvc();
 
-            services.AddHttpCacheHeaders((expirationModelOptions) =>
-            {
-                expirationModelOptions.MaxAge = 30;
-                expirationModelOptions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
-            },
-            (validationModelOptions) =>
-            {
-                validationModelOptions.MustRevalidate = true;
-            });
+            //services.AddHttpCacheHeaders((expirationModelOptions) =>
+            //{
+            //    expirationModelOptions.MaxAge = 30;
+            //    expirationModelOptions.CacheLocation = Marvin.Cache.Headers.CacheLocation.Private;
+            //},
+            //(validationModelOptions) =>
+            //{
+            //    validationModelOptions.MustRevalidate = true;
+            //});
 
             services.AddResponseCaching(); //register http caching
 
@@ -85,6 +87,7 @@ namespace FmsbwebCoreApi
                 .AddNewtonsoftJson(setupAction =>
                 {
                     setupAction.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver(); //enabled patch format in .net core
+                    setupAction.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
                 })
                 .AddXmlDataContractSerializerFormatters(); //support xml input/output formatter 
 
@@ -94,7 +97,7 @@ namespace FmsbwebCoreApi
             services.Configure<MvcOptions>(config =>
             {
                 var newtonsoftOutputFormatter = config.OutputFormatters.OfType<NewtonsoftJsonOutputFormatter>()?.FirstOrDefault();
-                newtonsoftOutputFormatter?.SupportedMediaTypes.Add("application/vnd.fmsbweb.hateoas+json");
+                //newtonsoftOutputFormatter?.SupportedMediaTypes.Add("application/vnd.fmsbweb.hateoas+json");
             });
 
             //register safety property mapping service
@@ -130,6 +133,8 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IOrganizationPartService, Services.QualityCheckSheets.OrganizationPartService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ISubMachineService, Services.QualityCheckSheets.SubMachineService>();
+            services.AddScoped<Services.Interfaces.QualityCheckSheets.ICheckSheetService, Services.QualityCheckSheets.CheckSheetService>();
+            services.AddScoped<Services.Interfaces.QualityCheckSheets.ICheckSheetEntryService, Services.QualityCheckSheets.CheckSheetEntryService>();
 
             services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
             services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
@@ -143,6 +148,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<IConverterService, ConverterService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<Hour, Hour>();
+            services.AddScoped<DateShift, DateShift>();
 
             //inject connection strings
             services.AddDbContext<Fmsb2Context>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));
@@ -187,8 +193,7 @@ namespace FmsbwebCoreApi
             //on the client side request header add 'If-Match' with the client current 'E-tag' generated from the latest 'GET' request
             //if the client does not have the latest E-Tag it will response with '412 precondition failed'
 
-            app.UseResponseCaching(); //use caching store middleware
-            app.UseHttpCacheHeaders();
+            //app.UseResponseCaching(); //use caching store middleware
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors(MyAllowSpecificOrigins);

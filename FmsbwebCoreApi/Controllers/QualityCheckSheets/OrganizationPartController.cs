@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
@@ -16,27 +15,24 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
     [ApiController]
     public class OrganizationPartController : ControllerBase
     {
-        private readonly QualityCheckSheetsContext _context;
         private readonly IOrganizationPartService _service;
 
-        public OrganizationPartController(QualityCheckSheetsContext context, IOrganizationPartService service)
+        public OrganizationPartController(IOrganizationPartService service)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _service = service ?? throw new ArgumentNullException(nameof(service));
         }
 
         [EnableQuery]
         public IActionResult Get()
         {
-            return Ok(_context.OrganizationParts);
+            return Ok(_service.Query());
         }
 
         [HttpGet("{id}")]
         [EnableQuery]
         public IActionResult Get(int id)
         {
-            var result = _context.OrganizationParts.Where(x => x.OrganizationPartId == id);
-            return Ok(result);
+            return Ok(_service.Query(id));
         }
 
         [HttpPost]
