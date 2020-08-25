@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Web.CodeGeneration.DotNet;
 
 namespace FmsbwebCoreApi.Entity.QualityCheckSheets
 {
@@ -32,5 +33,7 @@ namespace FmsbwebCoreApi.Entity.QualityCheckSheets
         public string HelperText { get; set; }
         [Required]
         public DateTime TimeStamp { get; set; } = DateTime.Now;
+
+        public ICollection<CheckSheetEntry> CheckSheetEntries { get; set; } = new List<CheckSheetEntry>();
     }
 }

@@ -118,6 +118,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IMachineRepository, Repositories.QualityCheckSheets.MachineRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IOrganizationPartRepository, Repositories.QualityCheckSheets.OrganizationPartRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ISubMachineRepository, Repositories.QualityCheckSheets.SubMachineRepository>();
+            services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IReCheckRepository, Repositories.QualityCheckSheets.ReCheckRepository>();
 
             //inject services
             services.AddScoped<Services.Interfaces.ISapLibraryService, Services.SapLibraryService>();
@@ -135,6 +136,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ISubMachineService, Services.QualityCheckSheets.SubMachineService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICheckSheetService, Services.QualityCheckSheets.CheckSheetService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICheckSheetEntryService, Services.QualityCheckSheets.CheckSheetEntryService>();
+            services.AddScoped<Services.Interfaces.QualityCheckSheets.IReCheckService, Services.QualityCheckSheets.ReChecksService>();
 
             services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
             services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();

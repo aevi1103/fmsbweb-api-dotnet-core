@@ -26,9 +26,9 @@ namespace FmsbwebCoreApi.Entity.QualityCheckSheets
         public decimal? Value { get; set; }
         public bool? ValueBool { get; set; }
         public string Comment { get; set; }
+        public bool IsReChecked { get; set; } = false;
         [Required]
         public DateTime TimeStamp { get; set; } = DateTime.Now;
-
-
+        public ICollection<ReCheck> Rechecks { get; set; } = new List<ReCheck>();
     }
 }

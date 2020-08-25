@@ -27,6 +27,7 @@ namespace FmsbwebCoreApi.Context.QualityCheckSheets
         public virtual DbSet<Characteristic> Characteristics { get; set; }
         public virtual DbSet<CheckSheet> CheckSheets { get; set; }
         public virtual DbSet<CheckSheetEntry> CheckSheetEntries { get; set; }
+        public virtual DbSet<ReCheck> ReChecks { get; set; }
 
         private static void SeedData(ModelBuilder modelBuilder)
         {
