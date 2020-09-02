@@ -16,10 +16,12 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
     public class ReChecksController : ControllerBase
     {
         private readonly IReCheckService _service;
+        private readonly ICheckSheetEntryService _checkSheetEntryService;
 
-        public ReChecksController(IReCheckService service)
+        public ReChecksController(IReCheckService service, ICheckSheetEntryService checkSheetEntryService)
         {
             _service = service ?? throw new ArgumentNullException(nameof(service));
+            _checkSheetEntryService = checkSheetEntryService ?? throw new ArgumentNullException(nameof(checkSheetEntryService));
         }
         [EnableQuery]
         public IActionResult Get()
@@ -35,8 +37,37 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
 
             try
             {
-                var result = await _service.Update(data);
-                return Ok(result);
+                await _service.Update(data);
+                var latestRecheck = await _service.GetLatestRecheck(data.CheckSheetEntryId);
+                var result = await _checkSheetEntryService.UpdateValueFromReCheck(latestRecheck);
+                return Ok(new
+                {
+                    reCheck = data,
+                    checkSheetEntry = result
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Route("{id}")]
+        [HttpDelete]
+        public async Task<IActionResult> Post(int id)
+        {
+            try
+            {
+                var reCheck = await _service.GetByIdNoTracking(id);
+                await _service.Delete(id);
+                var latestRecheck = await _service.GetLatestRecheck(reCheck.CheckSheetEntryId);
+                var result = await _checkSheetEntryService.UpdateValueFromReCheck(latestRecheck);
+                return Ok(new
+                {
+                    reCheck,
+                    checkSheetEntry = result
+                });
+
             }
             catch (Exception e)
             {

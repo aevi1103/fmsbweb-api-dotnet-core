@@ -33,9 +33,10 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
             throw new NotImplementedException();
         }
 
-        public Task<CheckSheetEntry> GetById(int id)
+        public async Task<CheckSheetEntry> GetById(int id)
         {
-            throw new NotImplementedException();
+            return await _context.CheckSheetEntries.Include(x => x.Rechecks)
+                    .FirstOrDefaultAsync(x => x.CheckSheetEntryId == id);
         }
 
         public async Task<CheckSheetEntry> Create(CheckSheetEntry data)
@@ -65,7 +66,8 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
                 _context.CheckSheetEntries.Update(data);
                 await _context.SaveChangesAsync().ConfigureAwait(false);
                 await transaction.CommitAsync().ConfigureAwait(false);
-                return data;
+                return await _context.CheckSheetEntries.Include(x => x.Rechecks)
+                        .FirstOrDefaultAsync(x => x.CheckSheetEntryId == data.CheckSheetEntryId);
             }
             catch (Exception e)
             {
@@ -105,6 +107,16 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
 
             return result;
 
+        }
+
+        public async Task<CheckSheetEntry> UpdateValueFromReCheck(ReCheck data)
+        {
+            var checkSheetEntry = await GetById(data.CheckSheetEntryId);
+            checkSheetEntry.Value = data.Value;
+            checkSheetEntry.ValueBool = data.ValueBool;
+            checkSheetEntry.TimeStamp = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return checkSheetEntry;
         }
     }
 }

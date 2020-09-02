@@ -10,5 +10,6 @@ namespace FmsbwebCoreApi.Services.Interfaces.QualityCheckSheets
     public interface ICheckSheetEntryService : ICheckSheetEntryRepository
     {
         Task<CheckSheetEntry> AddOrUpdate(CheckSheetEntry data);
+        Task<CheckSheetEntry> AddInitialReCheck(ReCheck data);
     }
 }

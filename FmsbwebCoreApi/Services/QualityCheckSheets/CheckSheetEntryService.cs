@@ -11,8 +11,13 @@ namespace FmsbwebCoreApi.Services.QualityCheckSheets
 {
     public class CheckSheetEntryService : CheckSheetEntryRepository, ICheckSheetEntryService
     {
-        public CheckSheetEntryService(QualityCheckSheetsContext context) : base(context)
+        private readonly QualityCheckSheetsContext _context;
+        private readonly IReCheckService _reCheckService;
+
+        public CheckSheetEntryService(QualityCheckSheetsContext context, IReCheckService reCheckService) : base(context)
         {
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _reCheckService = reCheckService ?? throw new ArgumentNullException(nameof(reCheckService));
         }
 
         public async Task<CheckSheetEntry> AddOrUpdate(CheckSheetEntry data)
@@ -23,6 +28,14 @@ namespace FmsbwebCoreApi.Services.QualityCheckSheets
                 data.CheckSheetEntryId = entity.CheckSheetEntryId;
 
             return await Update(data);
+        }
+
+        public async Task<CheckSheetEntry> AddInitialReCheck(ReCheck data)
+        {
+            var hasInitial = await _reCheckService.HasInitialReCheck(data.CheckSheetEntryId);
+            if (hasInitial) return null;
+            await _reCheckService.Update(data);
+            return await GetById(data.CheckSheetEntryId);
         }
     }
 }

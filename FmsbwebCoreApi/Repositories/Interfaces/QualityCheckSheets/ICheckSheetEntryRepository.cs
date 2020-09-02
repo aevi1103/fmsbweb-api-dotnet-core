@@ -9,5 +9,6 @@ namespace FmsbwebCoreApi.Repositories.Interfaces.QualityCheckSheets
     public interface ICheckSheetEntryRepository : ICrudRepository<CheckSheetEntry>
     {
         Task<CheckSheetEntry> IsExist(CheckSheetEntry data);
+        Task<CheckSheetEntry> UpdateValueFromReCheck(ReCheck data);
     }
 }

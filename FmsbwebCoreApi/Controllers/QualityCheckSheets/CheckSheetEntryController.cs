@@ -28,7 +28,7 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(CheckSheetEntry data)
+        public async Task<IActionResult> Post(CheckSheetEntry data)
         {
             if (data == null)
                 return BadRequest();
@@ -36,6 +36,21 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
             try
             {
                 var result = await _service.AddOrUpdate(data).ConfigureAwait(false);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [Route("initialRecheck")]
+        [HttpPost]
+        public async Task<IActionResult> AddInitialReCheck(ReCheck data)
+        {
+            try
+            {
+                var result = await _service.AddInitialReCheck(data);
                 return Ok(result);
             }
             catch (Exception e)

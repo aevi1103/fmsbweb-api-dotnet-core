@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
 using FmsbwebCoreApi.Repositories.Interfaces.QualityCheckSheets;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
 {
@@ -32,9 +34,14 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
             throw new NotImplementedException();
         }
 
-        public Task<ReCheck> GetById(int id)
+        public async Task<ReCheck> GetById(int id)
         {
-            throw new NotImplementedException();
+            return await _context.ReChecks.FindAsync(id);
+        }
+
+        public async Task<ReCheck> GetByIdNoTracking(int id)
+        {
+            return await _context.ReChecks.AsNoTracking().FirstOrDefaultAsync(x => x.ReCheckId == id);
         }
 
         public async Task<ReCheck> Create(ReCheck data)
@@ -89,5 +96,22 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
                 throw new Exception(e.Message);
             }
         }
+
+        public async Task<bool> HasInitialReCheck(int checkSheetEntryId)
+        {
+            return await _context.ReChecks.AsNoTracking().AnyAsync(x => x.IsInitialValue && x.CheckSheetEntryId == checkSheetEntryId);
+        }
+
+        public async Task<ReCheck> GetLatestRecheck(int checkSheetEntryId)
+        {
+            return await _context.ReChecks
+                .Where(x => x.CheckSheetEntryId == checkSheetEntryId)
+                .OrderByDescending(x => x.ReCheckId)
+                .Take(1)
+                .FirstOrDefaultAsync();
+
+        }
+
+
     }
 }

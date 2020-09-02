@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.QualityCheckSheets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
 {
     [DbContext(typeof(QualityCheckSheetsContext))]
-    partial class QualityCheckSheetsContextModelSnapshot : ModelSnapshot
+    [Migration("20200831113534_addInitialValueColumn")]
+    partial class addInitialValueColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,16 +46,13 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("Max")
-                        .HasColumnName("Max")
-                        .HasColumnType("decimal(18, 5)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("Min")
-                        .HasColumnName("Min")
-                        .HasColumnType("decimal(18, 5)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("Nom")
-                        .HasColumnName("Nom")
-                        .HasColumnType("decimal(18, 5)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("OrganizationPartId")
                         .HasColumnType("int");
@@ -143,6 +142,9 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                     b.Property<int>("Frequency")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsReChecked")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Part")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -154,8 +156,7 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         .HasColumnType("datetime2");
 
                     b.Property<decimal?>("Value")
-                        .HasColumnName("Value")
-                        .HasColumnType("decimal(18, 5)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool?>("ValueBool")
                         .HasColumnType("bit");
@@ -194,13 +195,13 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         {
                             ControlMethodId = 1,
                             Method = "Machining Check Sheet",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 216, DateTimeKind.Local).AddTicks(8877)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 100, DateTimeKind.Local).AddTicks(6164)
                         },
                         new
                         {
                             ControlMethodId = 2,
                             Method = "Quality Inspection Summary",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 223, DateTimeKind.Local).AddTicks(8872)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 107, DateTimeKind.Local).AddTicks(9628)
                         });
                 });
 
@@ -227,43 +228,43 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         {
                             DisplayAsId = 1,
                             Display = "Number",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(9191)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(1665)
                         },
                         new
                         {
                             DisplayAsId = 2,
                             Display = "Percent",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(1049)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(3361)
                         },
                         new
                         {
                             DisplayAsId = 3,
                             Display = "Degrees",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(1125)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(3442)
                         },
                         new
                         {
                             DisplayAsId = 4,
                             Display = "NegativePositive",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(1157)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(3474)
                         },
                         new
                         {
                             DisplayAsId = 5,
                             Display = "PassFail",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(1188)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(3504)
                         },
                         new
                         {
                             DisplayAsId = 6,
                             Display = "Positive",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(1224)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(3539)
                         },
                         new
                         {
                             DisplayAsId = 7,
                             Display = "Reference",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(1255)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(3573)
                         });
                 });
 
@@ -289,55 +290,55 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         new
                         {
                             LineId = 1,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 224, DateTimeKind.Local).AddTicks(1468),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 108, DateTimeKind.Local).AddTicks(3057),
                             Value = "1"
                         },
                         new
                         {
                             LineId = 2,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 224, DateTimeKind.Local).AddTicks(3604),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 108, DateTimeKind.Local).AddTicks(5152),
                             Value = "2"
                         },
                         new
                         {
                             LineId = 3,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 224, DateTimeKind.Local).AddTicks(3708),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 108, DateTimeKind.Local).AddTicks(5256),
                             Value = "3"
                         },
                         new
                         {
                             LineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 224, DateTimeKind.Local).AddTicks(3748),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 108, DateTimeKind.Local).AddTicks(5295),
                             Value = "4"
                         },
                         new
                         {
                             LineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3838),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6385),
                             Value = "5"
                         },
                         new
                         {
                             LineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4618),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7176),
                             Value = "6"
                         },
                         new
                         {
                             LineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5338),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8020),
                             Value = "7"
                         },
                         new
                         {
                             LineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6189),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8791),
                             Value = "8"
                         },
                         new
                         {
                             LineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6910),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9602),
                             Value = "9"
                         });
                 });
@@ -370,252 +371,252 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         {
                             MachineId = 1,
                             LineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 224, DateTimeKind.Local).AddTicks(5887),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 108, DateTimeKind.Local).AddTicks(7405),
                             Value = "Okuma SP"
                         },
                         new
                         {
                             MachineId = 2,
                             LineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3206),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5726),
                             Value = "Turmat"
                         },
                         new
                         {
                             MachineId = 3,
                             LineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3330),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5851),
                             Value = "Chiron SP"
                         },
                         new
                         {
                             MachineId = 4,
                             LineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3470),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5993),
                             Value = "Drill"
                         },
                         new
                         {
                             MachineId = 5,
                             LineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3549),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6160),
                             Value = "Diamond Turn SP"
                         },
                         new
                         {
                             MachineId = 6,
                             LineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3679),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6300),
                             Value = "Accuriser"
                         },
                         new
                         {
                             MachineId = 7,
                             LineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3899),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6439),
                             Value = "Okuma SP"
                         },
                         new
                         {
                             MachineId = 8,
                             LineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4055),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6601),
                             Value = "Turmat"
                         },
                         new
                         {
                             MachineId = 9,
                             LineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4133),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6684),
                             Value = "Chiron SP"
                         },
                         new
                         {
                             MachineId = 10,
                             LineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4254),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6816),
                             Value = "Drill"
                         },
                         new
                         {
                             MachineId = 11,
                             LineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4334),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6965),
                             Value = "Diamond Turn SP"
                         },
                         new
                         {
                             MachineId = 12,
                             LineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4457),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7094),
                             Value = "Accuriser"
                         },
                         new
                         {
                             MachineId = 13,
                             LineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4660),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7221),
                             Value = "Okuma SP"
                         },
                         new
                         {
                             MachineId = 14,
                             LineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4814),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7382),
                             Value = "Turmat"
                         },
                         new
                         {
                             MachineId = 15,
                             LineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4889),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7464),
                             Value = "Chiron SP"
                         },
                         new
                         {
                             MachineId = 16,
                             LineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5007),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7643),
                             Value = "Drill"
                         },
                         new
                         {
                             MachineId = 17,
                             LineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5085),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7728),
                             Value = "Diamond Turn SP"
                         },
                         new
                         {
                             MachineId = 18,
                             LineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5209),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7859),
                             Value = "Accuriser"
                         },
                         new
                         {
                             MachineId = 19,
                             LineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5380),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8067),
                             Value = "Okuma SP"
                         },
                         new
                         {
                             MachineId = 20,
                             LineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5540),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8238),
                             Value = "Turmat"
                         },
                         new
                         {
                             MachineId = 21,
                             LineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5620),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8320),
                             Value = "Chiron SP"
                         },
                         new
                         {
                             MachineId = 22,
                             LineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5737),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8503),
                             Value = "Drill"
                         },
                         new
                         {
                             MachineId = 23,
                             LineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5817),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8584),
                             Value = "Diamond Turn SP"
                         },
                         new
                         {
                             MachineId = 24,
                             LineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6105),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8711),
                             Value = "Accuriser"
                         },
                         new
                         {
                             MachineId = 25,
                             LineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6235),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8832),
                             Value = "Okuma SP"
                         },
                         new
                         {
                             MachineId = 26,
                             LineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6391),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8990),
                             Value = "Turmat"
                         },
                         new
                         {
                             MachineId = 27,
                             LineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6467),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9071),
                             Value = "Chiron SP"
                         },
                         new
                         {
                             MachineId = 28,
                             LineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6586),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9317),
                             Value = "Drill"
                         },
                         new
                         {
                             MachineId = 29,
                             LineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6663),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9400),
                             Value = "Diamond Turn SP"
                         },
                         new
                         {
                             MachineId = 30,
                             LineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6833),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9520),
                             Value = "Accuriser"
                         },
                         new
                         {
                             MachineId = 31,
                             LineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6956),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9649),
                             Value = "Okuma SP"
                         },
                         new
                         {
                             MachineId = 32,
                             LineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7110),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9808),
                             Value = "Turmat"
                         },
                         new
                         {
                             MachineId = 33,
                             LineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7186),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9889),
                             Value = "Chiron SP"
                         },
                         new
                         {
                             MachineId = 34,
                             LineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7308),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(73),
                             Value = "Drill"
                         },
                         new
                         {
                             MachineId = 35,
                             LineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7384),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(152),
                             Value = "Diamond Turn SP"
                         },
                         new
                         {
                             MachineId = 36,
                             LineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7714),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(309),
                             Value = "Accuriser"
                         });
                 });
@@ -653,7 +654,7 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                             ControlMethodId = 1,
                             LeftHandPart = "81309",
                             RightHandPart = "81310",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(3222)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(5322)
                         },
                         new
                         {
@@ -661,7 +662,7 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                             ControlMethodId = 1,
                             LeftHandPart = "81311",
                             RightHandPart = "81312",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(5463)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(8611)
                         },
                         new
                         {
@@ -669,7 +670,7 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                             ControlMethodId = 1,
                             LeftHandPart = "81313",
                             RightHandPart = "81314",
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 226, DateTimeKind.Local).AddTicks(5530)
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(8677)
                         });
                 });
 
@@ -693,8 +694,7 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         .HasColumnType("datetime2");
 
                     b.Property<decimal?>("Value")
-                        .HasColumnName("Value")
-                        .HasColumnType("decimal(18, 5)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool?>("ValueBool")
                         .HasColumnType("bit");
@@ -734,420 +734,420 @@ namespace FmsbwebCoreApi.Migrations.QualityCheckSheets
                         {
                             SubMachineId = 1,
                             MachineId = 1,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(508),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(2049),
                             Value = "OK1"
                         },
                         new
                         {
                             SubMachineId = 2,
                             MachineId = 1,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3020),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5526),
                             Value = "OK2"
                         },
                         new
                         {
                             SubMachineId = 3,
                             MachineId = 1,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3125),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5639),
                             Value = "OK3"
                         },
                         new
                         {
                             SubMachineId = 4,
                             MachineId = 2,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3292),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5810),
                             Value = "Turmat"
                         },
                         new
                         {
                             SubMachineId = 5,
                             MachineId = 3,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3383),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5904),
                             Value = "Chiron 1"
                         },
                         new
                         {
                             SubMachineId = 6,
                             MachineId = 3,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3427),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(5950),
                             Value = "Chiron 2"
                         },
                         new
                         {
                             SubMachineId = 7,
                             MachineId = 4,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3512),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6113),
                             Value = "Drill"
                         },
                         new
                         {
                             SubMachineId = 8,
                             MachineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3598),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6215),
                             Value = "DT1"
                         },
                         new
                         {
                             SubMachineId = 9,
                             MachineId = 5,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3634),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6253),
                             Value = "DT2"
                         },
                         new
                         {
                             SubMachineId = 10,
                             MachineId = 6,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3723),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6347),
                             Value = "Accuriser"
                         },
                         new
                         {
                             SubMachineId = 11,
                             MachineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3943),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6483),
                             Value = "OK1"
                         },
                         new
                         {
                             SubMachineId = 12,
                             MachineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(3978),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6521),
                             Value = "OK2"
                         },
                         new
                         {
                             SubMachineId = 13,
                             MachineId = 7,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4013),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6556),
                             Value = "OK3"
                         },
                         new
                         {
                             SubMachineId = 14,
                             MachineId = 8,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4097),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6646),
                             Value = "Turmat"
                         },
                         new
                         {
                             SubMachineId = 15,
                             MachineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4178),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6734),
                             Value = "Chiron 1"
                         },
                         new
                         {
                             SubMachineId = 16,
                             MachineId = 9,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4214),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6773),
                             Value = "Chiron 2"
                         },
                         new
                         {
                             SubMachineId = 17,
                             MachineId = 10,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4294),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(6921),
                             Value = "Drill"
                         },
                         new
                         {
                             SubMachineId = 18,
                             MachineId = 11,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4380),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7012),
                             Value = "DT1"
                         },
                         new
                         {
                             SubMachineId = 19,
                             MachineId = 11,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4415),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7052),
                             Value = "DT2"
                         },
                         new
                         {
                             SubMachineId = 20,
                             MachineId = 12,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4583),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7141),
                             Value = "Accuriser"
                         },
                         new
                         {
                             SubMachineId = 21,
                             MachineId = 13,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4704),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7264),
                             Value = "OK1"
                         },
                         new
                         {
                             SubMachineId = 22,
                             MachineId = 13,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4739),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7301),
                             Value = "OK2"
                         },
                         new
                         {
                             SubMachineId = 23,
                             MachineId = 13,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4774),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7337),
                             Value = "OK3"
                         },
                         new
                         {
                             SubMachineId = 24,
                             MachineId = 14,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4855),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7426),
                             Value = "Turmat"
                         },
                         new
                         {
                             SubMachineId = 25,
                             MachineId = 15,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4931),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7508),
                             Value = "Chiron 1"
                         },
                         new
                         {
                             SubMachineId = 26,
                             MachineId = 15,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(4968),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7545),
                             Value = "Chiron 2"
                         },
                         new
                         {
                             SubMachineId = 27,
                             MachineId = 16,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5047),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7689),
                             Value = "Drill"
                         },
                         new
                         {
                             SubMachineId = 28,
                             MachineId = 17,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5132),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7778),
                             Value = "DT1"
                         },
                         new
                         {
                             SubMachineId = 29,
                             MachineId = 17,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5168),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7817),
                             Value = "DT2"
                         },
                         new
                         {
                             SubMachineId = 30,
                             MachineId = 18,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5306),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(7974),
                             Value = "Accuriser"
                         },
                         new
                         {
                             SubMachineId = 31,
                             MachineId = 19,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5425),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8112),
                             Value = "OK1"
                         },
                         new
                         {
                             SubMachineId = 32,
                             MachineId = 19,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5461),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8150),
                             Value = "OK2"
                         },
                         new
                         {
                             SubMachineId = 33,
                             MachineId = 19,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5495),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8190),
                             Value = "OK3"
                         },
                         new
                         {
                             SubMachineId = 34,
                             MachineId = 20,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5584),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8281),
                             Value = "Turmat"
                         },
                         new
                         {
                             SubMachineId = 35,
                             MachineId = 21,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5662),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8364),
                             Value = "Chiron 1"
                         },
                         new
                         {
                             SubMachineId = 36,
                             MachineId = 21,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5697),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8459),
                             Value = "Chiron 2"
                         },
                         new
                         {
                             SubMachineId = 37,
                             MachineId = 22,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5779),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8545),
                             Value = "Drill"
                         },
                         new
                         {
                             SubMachineId = 38,
                             MachineId = 23,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5864),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8630),
                             Value = "DT1"
                         },
                         new
                         {
                             SubMachineId = 39,
                             MachineId = 23,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(5900),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8668),
                             Value = "DT2"
                         },
                         new
                         {
                             SubMachineId = 40,
                             MachineId = 24,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6152),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8757),
                             Value = "Accuriser"
                         },
                         new
                         {
                             SubMachineId = 41,
                             MachineId = 25,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6278),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8873),
                             Value = "OK1"
                         },
                         new
                         {
                             SubMachineId = 42,
                             MachineId = 25,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6315),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8911),
                             Value = "OK2"
                         },
                         new
                         {
                             SubMachineId = 43,
                             MachineId = 25,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6349),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(8947),
                             Value = "OK3"
                         },
                         new
                         {
                             SubMachineId = 44,
                             MachineId = 26,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6432),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9032),
                             Value = "Turmat"
                         },
                         new
                         {
                             SubMachineId = 45,
                             MachineId = 27,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6510),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9115),
                             Value = "Chiron 1"
                         },
                         new
                         {
                             SubMachineId = 46,
                             MachineId = 27,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6545),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9267),
                             Value = "Chiron 2"
                         },
                         new
                         {
                             SubMachineId = 47,
                             MachineId = 28,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6626),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9361),
                             Value = "Drill"
                         },
                         new
                         {
                             SubMachineId = 48,
                             MachineId = 29,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6708),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9444),
                             Value = "DT1"
                         },
                         new
                         {
                             SubMachineId = 49,
                             MachineId = 29,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6743),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9480),
                             Value = "DT2"
                         },
                         new
                         {
                             SubMachineId = 50,
                             MachineId = 30,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6879),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9568),
                             Value = "Accuriser"
                         },
                         new
                         {
                             SubMachineId = 51,
                             MachineId = 31,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(6999),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9691),
                             Value = "OK1"
                         },
                         new
                         {
                             SubMachineId = 52,
                             MachineId = 31,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7035),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9730),
                             Value = "OK2"
                         },
                         new
                         {
                             SubMachineId = 53,
                             MachineId = 31,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7070),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9765),
                             Value = "OK3"
                         },
                         new
                         {
                             SubMachineId = 54,
                             MachineId = 32,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7151),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9851),
                             Value = "Turmat"
                         },
                         new
                         {
                             SubMachineId = 55,
                             MachineId = 33,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7232),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 109, DateTimeKind.Local).AddTicks(9994),
                             Value = "Chiron 1"
                         },
                         new
                         {
                             SubMachineId = 56,
                             MachineId = 33,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7268),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(32),
                             Value = "Chiron 2"
                         },
                         new
                         {
                             SubMachineId = 57,
                             MachineId = 34,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7348),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(114),
                             Value = "Drill"
                         },
                         new
                         {
                             SubMachineId = 58,
                             MachineId = 35,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7464),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(231),
                             Value = "DT1"
                         },
                         new
                         {
                             SubMachineId = 59,
                             MachineId = 35,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7660),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(268),
                             Value = "DT2"
                         },
                         new
                         {
                             SubMachineId = 60,
                             MachineId = 36,
-                            TimeStamp = new DateTime(2020, 9, 1, 14, 50, 38, 225, DateTimeKind.Local).AddTicks(7757),
+                            TimeStamp = new DateTime(2020, 8, 31, 7, 35, 34, 110, DateTimeKind.Local).AddTicks(351),
                             Value = "Accuriser"
                         });
                 });

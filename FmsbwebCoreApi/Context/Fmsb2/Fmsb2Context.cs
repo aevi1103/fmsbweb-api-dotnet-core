@@ -243,6 +243,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<DowntimeOwner> DowntimeOwner { get; set; }
         public virtual DbSet<EndOfShiftReport> EndOfShiftReports { get; set; }
         public virtual DbSet<HxHProd> HxHProd { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
 //            if (!optionsBuilder.IsConfigured)
