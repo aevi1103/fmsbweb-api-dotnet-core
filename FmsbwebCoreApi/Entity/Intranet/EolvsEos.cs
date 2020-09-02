@@ -10,7 +10,7 @@ namespace FmsbwebCoreApi.Entity.Intranet
     {
         [Key]
         [Column("ID")]
-        public int Id { get; set; }
+        public int EolvsEosId { get; set; }
         [Column("shiftDate", TypeName = "datetime")]
         public DateTime ShiftDate { get; set; }
         [Required]
@@ -66,5 +66,7 @@ namespace FmsbwebCoreApi.Entity.Intranet
         public bool? ToolChanged { get; set; }
         [Column("offLoads")]
         public int? OffLoads { get; set; }
+
+        public ICollection<EolManning> EolManning { get; set; } = new List<EolManning>();
     }
 }
