@@ -46,13 +46,13 @@ namespace FmsbwebCoreApi.Controllers.SAP
                     var details = await _sapLibRepo.GetPlantWideScrapVariance(start, end, a, isPurchasedScrap).ConfigureAwait(false);
                     var rec = new
                     {
-                        ScrapType = a == "Foundry Cell"
-                                        ? "Foundry"
-                                        : a == "Machine Line"
-                                            ? "Machining"
-                                            : a == "Skirt Coat"
-                                                ? "Finishing"
-                                                : a,
+                        ScrapType = a switch
+                        {
+                            "Foundry Cell" => "Foundry",
+                            "Machine Line" => "Machining",
+                            "Skirt Coat" => "Finishing",
+                            _ => a
+                        },
                         Details = details
                     };
                     list.Add(rec);

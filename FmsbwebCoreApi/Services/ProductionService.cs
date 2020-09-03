@@ -13,6 +13,7 @@ using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Repositories;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Services
 {
@@ -20,27 +21,313 @@ namespace FmsbwebCoreApi.Services
     {
         private readonly IDataAccessUtilityService _dataAccessUtilityService;
         private readonly IUtilityService _utilityService;
+        private readonly IScrapService _scrapService;
         private readonly Hour _hour;
 
         public ProductionService(SapContext context,
             IntranetContext intranetContext,
             Fmsb2Context fmsb2Context,
+            Hour hour,
             IDataAccessUtilityService dataAccessUtilityService,
             IUtilityService utilityService,
-            Hour hour) 
+            IScrapService scrapService
+            ) 
             : base(context, intranetContext, fmsb2Context)
         {
             _dataAccessUtilityService = dataAccessUtilityService ?? throw new ArgumentNullException(nameof(dataAccessUtilityService));
             _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));
+            _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
             _hour = hour ?? throw new ArgumentNullException(nameof(hour));
         }
 
-        public async Task<List<HxHProductionByLineDto>> GetHourByHourProduction(ProductionResourceParameter resourceParameter, List<Scrap2> scrap)
+        public async Task<List<HxHProductionByLineDto>> GetHourByHourProductionByDepartment(ProductionResourceParameter resourceParameter)
+        {
+            var scrap = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+            {
+                StartDate = resourceParameter.StartDate,
+                EndDate = resourceParameter.EndDate,
+                Area = resourceParameter.Area
+            }, false).ToListAsync();
+
+            //if machining use EOS report production but use current SAP scrap, because sometimes supervisor enter their eos early before the scrap import catch up
+            if (resourceParameter.Area == "machine line")
+            {
+                var machProd = await GetMachiningEosProduction(resourceParameter.StartDate, resourceParameter.EndDate);
+                return machProd.GroupBy(x => new {x.Area, x.DeptName})
+                    .Select(x =>
+                    {
+                        var totalScrap = scrap.Sum(s => s.Qty ?? 0);
+                        var gross = x.Sum(s => s.Gross);
+                        var net = gross - totalScrap;
+
+                        return new HxHProductionByLineDto
+                        {
+                            Department = x.Key.DeptName,
+                            Area = x.Key.Area,
+                            Target = x.Sum(s => s.Target),
+                            Gross = gross,
+                            GrossWithWarmers = gross,
+                            Net = net
+                        };
+                    }).ToList();
+            }
+
+            var data = await GetHxHProduction(resourceParameter).ConfigureAwait(false);
+            var result = data
+                .GroupBy(x => new
+                {
+                    x.Area,
+                    x.DeptName
+                })
+                .Select(x =>
+                {
+                    var input = x.Sum(s => s.Production);
+                    var warmersScrap = scrap.Where(s => s.ScrapCode == "8888").ToList();
+                    var withoutWarmersScrap = scrap.Where(s => s.ScrapCode != "8888").ToList();
+
+                    var warmers = warmersScrap.Sum(s => s.Qty) ?? 0;
+
+                    var gageScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true).Sum(s => s.Qty) ?? 0;
+                    var visualScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false).Sum(s => s.Qty) ?? 0;
+                    var eol = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL").Sum(s => s.Qty) ?? 0;
+
+                    var gross = x.Key.DeptName switch
+                    {
+                        "Foundry" => input - warmers,
+                        "Machining" => input + gageScrap,
+                        _ => input + eol
+                    };
+
+                    var grossWithWarmers = x.Key.DeptName switch
+                    {
+                        "Foundry" => input,
+                        "Machining" => input + gageScrap,
+                        _ => input + eol
+                    };
+
+                    var net = x.Key.DeptName switch
+                    {
+                        "Foundry" => input - warmers - eol,
+                        "Machining" => input - visualScrap,
+                        _ => input
+                    };
+
+                    return new HxHProductionByLineDto
+                    {
+                        Department = x.Key.DeptName,
+                        Area = x.Key.Area,
+                        Target = x.Sum(s => s.Target),
+                        Gross = gross,
+                        GrossWithWarmers = grossWithWarmers,
+                        Net = net
+                    };
+                })
+                .ToList();
+
+            return result;
+        }
+
+        public async Task<List<HxhProductionByLineAndProgram2Dto>> GetHourByHourProductionByLineAndProgram(ProductionResourceParameter resourceParameter)
+        {
+            var scrap = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+            {
+                StartDate = resourceParameter.StartDate,
+                EndDate = resourceParameter.EndDate,
+                Area = resourceParameter.Area,
+                Shift = resourceParameter.Shift,
+            }, false).ToListAsync();
+
+            //if machining use EOS report production but use current SAP scrap, because sometimes supervisor enter their eos early before the scrap import catch up
+            if (resourceParameter.Area == "machine line")
+            {
+                var machProd = await GetMachiningEosProduction(resourceParameter.StartDate, resourceParameter.EndDate, resourceParameter.Shift);
+                return machProd.GroupBy(x => new
+                    {
+                        x.DeptName,
+                        x.Area,
+                        x.Line,
+                        x.Program
+                    })
+                    .Select(x =>
+                    {
+                        var scrapFilter = scrap.Where(s => s.MachineHxh == x.Key.Line && s.Program == x.Key.Program).ToList();
+                        var totalScrap = scrapFilter.Sum(s => s.Qty ?? 0);
+                        var gross = x.Sum(s => s.Gross);
+                        var net = gross - totalScrap;
+
+                        return new HxhProductionByLineAndProgram2Dto
+                        {
+                            Department = x.Key.DeptName,
+                            Area = x.Key.Area,
+                            Line = x.Key.Line,
+                            Program = x.Key.Program,
+                            Target = x.Sum(s => s.Target),
+                            Gross = gross,
+                            GrossWithWarmers = gross,
+                            Net = net
+                        };
+                    }).ToList();
+            }
+
+            var data = await GetHxHProduction(resourceParameter).ConfigureAwait(false);
+
+            var result = data
+                .GroupBy(x => new
+                {
+                    x.DeptName,
+                    x.Area,
+                    x.Line,
+                    x.Program
+                })
+                .Select(x =>
+                {
+
+                    var scrapFilter = scrap.Where(s => s.MachineHxh == x.Key.Line && s.Program == x.Key.Program).ToList();
+                    var warmersScrap = scrapFilter.Where(s => s.ScrapCode == "8888").ToList();
+                    var withoutWarmersScrap = scrapFilter.Where(s => s.ScrapCode != "8888").ToList();
+
+                    var input = x.Sum(s => s.Production);
+
+                    var warmers = warmersScrap.Sum(s => s.Qty ?? 0);
+
+                    var gageScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true).Sum(s => s.Qty ?? 0);
+                    var visualScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false).Sum(s => s.Qty ?? 0);
+                    var eol = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL").Sum(s => s.Qty ?? 0);
+
+                    var gross = x.Key.DeptName switch
+                    {
+                        "Foundry" => input - warmers,
+                        "Machining" => input + gageScrap,
+                        _ => input + eol
+                    };
+
+                    var grossWithWarmers = x.Key.DeptName switch
+                    {
+                        "Foundry" => input,
+                        "Machining" => input + gageScrap,
+                        _ => input + eol
+                    };
+
+                    var net = x.Key.DeptName switch
+                    {
+                        "Foundry" => input - warmers - eol,
+                        "Machining" => input - visualScrap,
+                        _ => input
+                    };
+
+                    return new HxhProductionByLineAndProgram2Dto
+                    {
+                        Department = x.Key.DeptName,
+                        Area = x.Key.Area,
+                        Line = x.Key.Line,
+                        Program = x.Key.Program,
+                        Target = x.Sum(s => s.Target),
+                        Gross = gross,
+                        GrossWithWarmers = grossWithWarmers,
+                        Net = net
+                    };
+                })
+                .ToList();
+
+            return result;
+        }
+
+        public async Task<List<HxHProductionByDay>> GetHourByHourProductionByShiftDate(ProductionResourceParameter resourceParameter)
+        {
+            var scrap = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
+            {
+                StartDate = resourceParameter.StartDate,
+                EndDate = resourceParameter.EndDate,
+                Area = resourceParameter.Area
+            }, false).ToListAsync();
+
+            //if machining use EOS report production but use current SAP scrap, because sometimes supervisor enter their eos early before the scrap import catch up
+            if (resourceParameter.Area == "machine line")
+            {
+                var machProd = await GetMachiningEosProduction(resourceParameter.StartDate, resourceParameter.EndDate);
+                return machProd.GroupBy(x => new {x.DeptName, x.Area, x.ShiftDate})
+                    .Select(x =>
+                    {
+                        var totalScrap = scrap.Sum(s => s.Qty ?? 0);
+                        var gross = x.Sum(s => s.Gross);
+                        var net = gross - totalScrap;
+
+                        return new HxHProductionByDay
+                        {
+                            Department = x.Key.DeptName,
+                            Area = x.Key.Area,
+                            ShiftDate = x.Key.ShiftDate,
+                            Target = x.Sum(s => s.Target),
+                            Gross = gross,
+                            GrossWithWarmers = gross,
+                            Net = net
+                        };
+                    }).ToList();
+            }
+
+            var data = await GetHxHProduction(resourceParameter).ConfigureAwait(false);
+            var result = data
+                .GroupBy(x => new
+                {
+                    x.DeptName,
+                    x.Area,
+                    x.ShiftDate
+                })
+                .Select(x =>
+                {
+                    var scrapFilter = scrap.Where(s => s.ShiftDate == x.Key.ShiftDate).ToList();
+                    var warmersScrap = scrapFilter.Where(s => s.ScrapCode == "8888").ToList();
+                    var withoutWarmersScrap = scrapFilter.Where(s => s.ScrapCode != "8888").ToList();
+
+                    var input = x.Sum(s => s.Production);
+
+                    var warmers = warmersScrap.Sum(s => s.Qty) ?? 0;
+                    var gageScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true).Sum(s => s.Qty) ?? 0;
+                    var visualScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false).Sum(s => s.Qty) ?? 0;
+                    var eol = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL").Sum(s => s.Qty) ?? 0;
+
+                    var gross = x.Key.DeptName switch
+                    {
+                        "Foundry" => input - warmers,
+                        "Machining" => input + gageScrap,
+                        _ => input + eol
+                    };
+
+                    var grossWithWarmers = x.Key.DeptName switch
+                    {
+                        "Foundry" => input,
+                        "Machining" => input + gageScrap,
+                        _ => input + eol
+                    };
+
+                    var net = x.Key.DeptName switch
+                    {
+                        "Foundry" => input - warmers - eol,
+                        "Machining" => input - visualScrap,
+                        _ => input
+                    };
+
+                    return new HxHProductionByDay
+                    {
+                        Department = x.Key.DeptName,
+                        Area = x.Key.Area,
+                        ShiftDate = x.Key.ShiftDate,
+                        Target = x.Sum(s => s.Target),
+                        Gross = gross,
+                        GrossWithWarmers = grossWithWarmers,
+                        Net = net
+                    };
+                })
+                .ToList();
+
+            return result;
+        }
+
+        public async Task<List<HxHProductionByLineDto>> GetHourByHourProductionByLine(ProductionResourceParameter resourceParameter, List<Scrap2> scrap)
         {
             
             var data = await GetHxHProduction(resourceParameter).ConfigureAwait(false);
             var result = data
-                //.Where(x => _hour.IsLessThanEqualCurrentHour(x.ShiftDate, x.Shift, x.Area, x.Hour))
                 .GroupBy(x => new
                 {
                     x.DeptId,
@@ -55,12 +342,15 @@ namespace FmsbwebCoreApi.Services
                 .Select(x =>
                 {
                     var scrapFilter = scrap.Where(s => s.ShiftDate == x.Key.ShiftDate && s.Shift == x.Key.Shift && s.MachineHxh == x.Key.Line).ToList();
+                    var warmersScrap = scrapFilter.Where(s => s.ScrapCode == "8888").ToList();
+                    var withoutWarmersScrap = scrapFilter.Where(s => s.ScrapCode != "8888").ToList();
+
                     var input = x.Sum(s => s.Production);
 
-                    var warmers = scrapFilter.Where(s => s.ScrapCode != "8888").Sum(s => s.Qty) ?? 0;
-                    var gageScrap = scrapFilter.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true && s.ScrapCode != "8888").Sum(s => s.Qty) ?? 0;
-                    var visualScrap = scrapFilter.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false && s.ScrapCode != "8888").Sum(s => s.Qty) ?? 0;
-                    var eol = scrapFilter.Where(s => s.OperationNumberLoc == "EOL" && s.ScrapCode != "8888").Sum(s => s.Qty) ?? 0;
+                    var warmers = warmersScrap.Sum(s => s.Qty ?? 0);
+                    var gageScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true).Sum(s => s.Qty ?? 0);
+                    var visualScrap = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false).Sum(s => s.Qty ?? 0);
+                    var eol = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL").Sum(s => s.Qty ?? 0);
 
                     var gross = x.Key.DeptName switch
                     {
@@ -70,6 +360,7 @@ namespace FmsbwebCoreApi.Services
                     };
 
                     var net = x.Key.DeptName switch
+
                     {
                         "Foundry" => input - warmers - eol,
                         "Machining" => input - visualScrap,
@@ -146,15 +437,18 @@ namespace FmsbwebCoreApi.Services
 
 
                     var scrapFilter = scrapQry.ToList();
+                    var warmersScrap = scrapFilter.Where(s => s.ScrapCode == "8888").ToList();
+                    var withoutWarmersScrap = scrapFilter.Where(s => s.ScrapCode != "8888").ToList();
 
                     var input = x.Sum(s => s.Production);
 
-                    var warmersDefects = scrapFilter.Where(s => s.ScrapCode == "8888").ToList();
-                    var solDefects = scrapFilter.Where(s => s.OperationNumberLoc == "SOL" && s.ScrapCode != "8888").ToList();
-                    var gageScrapDefects = scrapFilter.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true && s.ScrapCode != "8888").ToList();
-                    var visualScrapDefects = scrapFilter.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false && s.ScrapCode != "8888").ToList();
-                    var eolDefects = scrapFilter.Where(s => s.OperationNumberLoc == "EOL" && s.ScrapCode != "8888").ToList();
-                    var totalScrapDefects = scrapFilter.Where(s => s.ScrapCode != "8888").ToList();
+                    var warmersDefects = warmersScrap;
+
+                    var solDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "SOL").ToList();
+                    var gageScrapDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true).ToList();
+                    var visualScrapDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false).ToList();
+                    var eolDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL").ToList();
+                    var totalScrapDefects = withoutWarmersScrap;
 
                     var warmers = warmersDefects.Sum(s => s.Qty) ?? 0;
                     var sol = solDefects.Sum(s => s.Qty) ?? 0;
@@ -228,6 +522,92 @@ namespace FmsbwebCoreApi.Services
                 .ToList();
 
             return result;
+        }
+
+        public async Task<IEnumerable<HxhProductionDto>> GetHxhProduction(DateTime start, DateTime end, string area)
+        {
+            return await GetHourByHourProductionByDepartment(new ProductionResourceParameter
+            {
+                StartDate = start,
+                EndDate = end,
+                Area = area
+            });
+        }
+
+        public async Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(DateTime start, DateTime end, string area, string shift = "")
+        {
+            var data = await GetHourByHourProductionByLineAndProgram(new ProductionResourceParameter
+            {
+                StartDate = start,
+                EndDate = end,
+                Area = area,
+                Shift = shift
+            });
+
+            var lines = data.GroupBy(x => new { x.Department, x.Area, x.Line })
+                .Select(x => new HxHProductionByLineDto
+                {
+                    Department = x.Key.Department,
+                    Area = x.Key.Area,
+                    Line = x.Key.Line,
+                    Target = x.Sum(s => s.Target),
+                    Gross = x.Sum(s => s.Gross),
+                    GrossWithWarmers = x.Sum(s => s.GrossWithWarmers),
+                    Net = x.Sum(s => s.Net),
+                })
+                .ToList();
+
+            var program = data.GroupBy(x => new { x.Department, x.Area, x.Program })
+                .Select(x => new HxhProductionByProgramDto
+                {
+                    Department = x.Key.Department,
+                    Area = x.Key.Area,
+                    Program = x.Key.Program,
+                    Target = x.Sum(s => s.Target),
+                    Gross = x.Sum(s => s.Gross),
+                    GrossWithWarmers = x.Sum(s => s.GrossWithWarmers),
+                    Net = x.Sum(s => s.Net),
+                })
+                .ToList();
+
+            return new HxhProductionByLineAndProgramDto
+            {
+                LineDetails = lines,
+                ProgramDetails = program
+            };
+        }
+
+        public async Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime start, DateTime end, string area)
+        {
+            var result = await GetHourByHourProductionByShiftDate(new ProductionResourceParameter
+            {
+                StartDate = start,
+                EndDate = end,
+                Area = area
+            });
+
+            return result.Select(x => new DailyHxHTargetDto
+            {
+                Area = x.Area,
+                ShiftDate = x.ShiftDate,
+                Target = (int)x.Target
+            });
+        }
+
+        public async Task<IEnumerable<HxHTargetDto>> HxHTargetByArea(DateTime startDate, DateTime endDate, string area)
+        {
+            var result = await GetHourByHourProductionByDepartment(new ProductionResourceParameter
+            {
+                StartDate = startDate,
+                EndDate = endDate,
+                Area = area
+            });
+
+            return result.Select(x => new HxHTargetDto()
+            {
+                Area = x.Area,
+                Target = (int)x.Target
+            });
         }
     }
 }

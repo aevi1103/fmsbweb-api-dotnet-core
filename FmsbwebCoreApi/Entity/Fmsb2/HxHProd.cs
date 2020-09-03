@@ -22,6 +22,13 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public int Hour { get; set; }
         [Column("pn")]
         public string PartNumber { get; set; }
+
+        [Column("part2")]
+        public string Part2 { get; set; }
+
+        [Column("program")]
+        public string Program { get; set; }
+
         [Column("production")]
         public int Production { get; set; }
         [Column("cellSide_foundry")]

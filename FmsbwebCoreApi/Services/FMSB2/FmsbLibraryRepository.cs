@@ -307,17 +307,13 @@ namespace FmsbwebCoreApi.Services.FMSB2
         public async Task<List<KpiTarget>> GetTargets(string area, int startYear, int endYear)
         {
             if (area == null) throw new ArgumentNullException(nameof(area));
-
-            var dept = area;
-            switch (area.ToLower())
+            area = area.ToLower();
+            var dept = area switch
             {
-                case "foundry cell":
-                    dept = "Foundry";
-                    break;
-                case "machine line":
-                    dept = "Machining";
-                    break;
-            }
+                "foundry cell" => "Foundry",
+                "machine line" => "Machining",
+                _ => area
+            };
             return await _context.KpiTarget
                             .Where(x => x.Department.ToLower() == dept.ToLower())
                             .Where(x => x.Year >= startYear && x.Year <= endYear)
@@ -327,17 +323,13 @@ namespace FmsbwebCoreApi.Services.FMSB2
         public async Task<KpiTarget> GetTargets(string area, DateTime startDate, DateTime endDate)
         {
             if (area == null) throw new ArgumentNullException(nameof(area));
-
-            var dept = area;
-            switch (area.ToLower())
+            area = area.ToLower();
+            var dept = area switch
             {
-                case "foundry cell":
-                    dept = "Foundry";
-                    break;
-                case "machine line":
-                    dept = "Machining";
-                    break;
-            }
+                "foundry cell" => "Foundry",
+                "machine line" => "Machining",
+                _ => area
+            };
 
             var data = await _context.KpiTarget
                             .Where(x => x.Department.ToLower() == dept.ToLower())

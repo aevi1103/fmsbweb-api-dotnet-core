@@ -13,10 +13,12 @@ namespace FmsbwebCoreApi.Controllers.SAP
     public class DailyScrapRateController : ControllerBase
     {
         private readonly IScrapService _scrapService;
+        private readonly IProductionService _productionService;
 
-        public DailyScrapRateController(IScrapService scrapService)
+        public DailyScrapRateController(IScrapService scrapService, IProductionService productionService)
         {
             _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
+            _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
         }
 
         [HttpGet(Name = "GetDailyScrapRate")]
@@ -30,7 +32,9 @@ namespace FmsbwebCoreApi.Controllers.SAP
             var prodData = await _scrapService.GetDailyScrapRate(
                 resourceParameter.Start,
                 resourceParameter.End,
-                resourceParameter.Area).ConfigureAwait(false);
+                resourceParameter.Area,
+                _productionService)
+                .ConfigureAwait(false);
 
             return Ok(prodData);
         }

@@ -6,10 +6,13 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.SAP;
 using FmsbwebCoreApi.Entity.Fmsb2;
+using FmsbwebCoreApi.Entity.Intranet;
 using FmsbwebCoreApi.Entity.SAP;
+using FmsbwebCoreApi.Models.FMSB2;
 using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Repositories.Interfaces;
 using FmsbwebCoreApi.ResourceParameters;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Repositories
@@ -52,6 +55,7 @@ namespace FmsbwebCoreApi.Repositories
 
         }
 
+        [Obsolete]
         public async Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(ProductionResourceParameter resourceParameter)
         {
             if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
@@ -111,6 +115,7 @@ namespace FmsbwebCoreApi.Repositories
             };
         }
 
+        [Obsolete]
         public async Task<HxHProductionByLineDto> GetHxhProductionByLine(ProductionResourceParameter resourceParameter)
         {
             if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
@@ -155,6 +160,7 @@ namespace FmsbwebCoreApi.Repositories
                 };
         }
 
+        [Obsolete]
         /// <summary>
         /// Get Hxh Production from a Temporary table, so its not always in sync with the actual table
         /// </summary>
@@ -203,7 +209,7 @@ namespace FmsbwebCoreApi.Repositories
         /// </summary>
         /// <param name="resourceParameter"></param>
         /// <returns></returns>
-        public async Task<List<HxHProd>> GetHxHProduction(ProductionResourceParameter resourceParameter)
+        public async Task<List<HxHProdDto>> GetHxHProduction(ProductionResourceParameter resourceParameter)
         {
             var qry = _fmsb2Context.HxHProd.AsNoTracking().Where(x =>
                     x.ShiftDate >= resourceParameter.StartDate &&
@@ -222,7 +228,43 @@ namespace FmsbwebCoreApi.Repositories
             if (resourceParameter.MachinesHxh.Count > 0)
                 qry = qry.Where(x => resourceParameter.MachinesHxh.Contains(x.Line));
 
-            return await qry.ToListAsync();
+            var result = await qry.ToListAsync();
+            return result.Select(x => new HxHProdDto
+            {
+                DeptId = x.DeptId,
+                Area = x.Area,
+                DeptName = x.DeptName,
+                MachineId = x.MachineId,
+                Line = x.Line,
+                Hour = x.Hour,
+                Program = x.Program,
+                Production = x.Production,
+                CellSide = x.CellSide,
+                Target = x.Target,
+                Shift = x.Shift,
+                ShiftDate = x.ShiftDate
+            }).ToList();
+        }
+
+        public async Task<List<HxHProdDto>> GetMachiningEosProduction(DateTime start, DateTime end, string shift = "")
+        {
+            shift = (shift ?? "").ToLower().Trim();
+            var result = await _intranetContext.EolvsEosView
+                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end
+                            && x.Shift.ToLower().Contains(shift))
+                .ToListAsync();
+
+            return result.Select(x => new HxHProdDto
+            {
+                Area = "Machine Line",
+                DeptName = "Machining",
+                MachineName = $"Line {x.Line}",
+                Line = x.Line.ToString(),
+                Program = x.Program,
+                PartNumber = x.Part,
+                Target = x.Target,
+                Gross = x.Gross
+            }).ToList();
         }
 
     }

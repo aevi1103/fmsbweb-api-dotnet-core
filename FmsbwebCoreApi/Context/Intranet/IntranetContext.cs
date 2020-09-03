@@ -26,6 +26,7 @@ namespace FmsbwebCoreApi.Context.Intranet
         public virtual DbSet<Operator> Operators { get; set; }
         public virtual DbSet<OperatorJob> OperatorJobs { get; set; }
         public virtual DbSet<EolManning> EolManning { get; set; }
+        public virtual DbSet<EolvsEosView> EolvsEosView { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -96,6 +97,12 @@ namespace FmsbwebCoreApi.Context.Intranet
                 entity.Property(e => e.Supervisor).IsUnicode(false);
 
                 entity.Property(e => e.ToolChanged).HasDefaultValueSql("((0))");
+            });
+
+            modelBuilder.Entity<EolvsEosView>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("EOLVS_EOS_VIEW", "dbo");
             });
 
             modelBuilder.Entity<FmsbMasterProdPartsCopy2>(entity =>

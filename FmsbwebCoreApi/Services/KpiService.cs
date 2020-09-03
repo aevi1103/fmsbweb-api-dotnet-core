@@ -199,7 +199,7 @@ namespace FmsbwebCoreApi.Services
                     var dept = hxhByLine?.Department ?? "";
                     var area = hxhByLine?.Area ?? "";
                     var target = hxhByLine?.Target ?? 0;
-                    var hxhGross = hxhByLine?.Gross ?? 0;
+                    var hxhGross = hxhByLine?.GrossWithWarmers ?? 0;
 
                     //targets
                     var lineTarget = targets.FirstOrDefault(x => x.Line == line);
@@ -232,7 +232,7 @@ namespace FmsbwebCoreApi.Services
                         : new List<Scrap>();
 
                     //net, oae
-                    var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
+                    var hxhNet = hxhByLine?.Net ?? 0;
                     var hxhOae = target == 0 ? 0 : hxhNet / target;
 
                     var isLineExistInSapProd = prod.Any(x => x.Line == line);
@@ -328,6 +328,7 @@ namespace FmsbwebCoreApi.Services
 
         private static IEnumerable<ProductionByProgramDto> GetDepartmentDetailsByProgram(
             List<Scrap> scrap,
+            List<Scrap> warmers,
             List<SapProdDetailDto> prod,
             List<HxhProductionByProgramDto> hxh,
             DateTime startDate, DateTime endDate)
@@ -373,9 +374,12 @@ namespace FmsbwebCoreApi.Services
                     var dept = hxhByProgram?.Department ?? "";
                     var area = hxhByProgram?.Area ?? "";
                     var target = hxhByProgram?.Target ?? 0;
-                    var hxhGross = hxhByProgram?.Gross ?? 0;
+                    var hxhGross = hxhByProgram?.GrossWithWarmers ?? 0;
 
                     //scrap
+                    var totalWarmers = warmers.Any(x => x.Program == program)
+                        ? warmers.Where(x => x.Program == program).Sum(s => s.Qty)
+                        : 0;
                     var totalScrap = scrapByProgram.Any(x => x.Program == program)
                         ? scrapByProgram.Where(x => x.Program == program).Sum(s => s.Qty)
                         : 0;
@@ -400,14 +404,8 @@ namespace FmsbwebCoreApi.Services
                         ? prod.Where(x => x.Program == program).OrderBy(x => x.DateScanned).ToList()
                         : new List<SapProdDetailDto>();
 
-                    var hxhNet = (area.ToLower() == "foundry cell" || area.ToLower() == "machine line")
-                        ? hxhGross - totalScrap
-                        : hxhGross;
-                    var hxhOae = target == 0
-                        ? 0
-                        : ((area.ToLower() == "foundry cell" || area.ToLower() == "machine line")
-                            ? hxhGross - totalScrap
-                            : hxhGross) / target;
+                    var hxhNet = hxhByProgram?.Net ?? 0;
+                    var hxhOae = target == 0 ? 0 : hxhNet / target;
 
                     var sapOae = target == 0 ? 0 : sapNet / target;
 
@@ -472,6 +470,7 @@ namespace FmsbwebCoreApi.Services
                         SapOae = sapOae,
                         SapNetDetails = sapNetDetails,
 
+                        TotalWarmers = totalWarmers,
                         TotalScrap = totalScrap,
                         TotalSbScrap = totalSbScrap,
                         TotalPurchaseScrap = totalPurchaseScrap,
@@ -543,13 +542,8 @@ namespace FmsbwebCoreApi.Services
 
             //hxh production
             var hxhProductionData = await _productionService.GetHxhProdByLineAndProgram(
-                new ProductionResourceParameter
-                {
-                    StartDate = parameters.Start,
-                    EndDate = parameters.End,
-                    Area = parameters.Area,
-                    Shift = parameters.Shift
-                }).ConfigureAwait(false);
+                parameters.Start, parameters.End, parameters.Area, parameters.Shift)
+                .ConfigureAwait(false);
 
             //targets
             var lineTargets = await _kpiTargetService
@@ -566,6 +560,8 @@ namespace FmsbwebCoreApi.Services
             //get total
             var target = hxhProductionData.LineDetails.Sum(x => x.Target);
             var sapNet = sapProdData.Sum(x => x.SapNet);
+
+            var totalWarmers = warmers.Sum(x => x.Qty);
             var totalScrap = scrap.Sum(x => x.Qty);
             var totalSbScrap = scrap.Where(x => x.IsPurchashedExclude == false).Sum(x => x.Qty);
             var totalPurchasedScrap = scrap.Where(x => x.IsPurchashedExclude == true).Sum(x => x.Qty);
@@ -578,8 +574,8 @@ namespace FmsbwebCoreApi.Services
 
             var sapOae = target == 0 ? 0 : (decimal)sapNet / target;
 
-            var hxhGross = hxhProductionData.LineDetails.Sum(x => x.Gross);
-            var hxhNet = (parameters.Area.ToLower() == "foundry cell" || parameters.Area.ToLower() == "machine line") ? hxhGross - totalScrap : hxhGross;
+            var hxhGross = hxhProductionData.LineDetails.Sum(x => x.GrossWithWarmers);
+            var hxhNet = hxhProductionData.LineDetails.Sum(x => x.Net);
             var hxhOae = target == 0 ? 0 : (decimal)hxhNet / target;
 
             //get scrap area details scrap
@@ -651,6 +647,7 @@ namespace FmsbwebCoreApi.Services
                 HxhGross = hxhGross,
                 HxHNet = hxhNet,
                 HxHOae = hxhOae,
+                TotalWarmers = totalWarmers,
                 TotalScrap = totalScrap,
                 TotalSbScrap = totalSbScrap,
                 TotalPurchaseScrap = totalPurchasedScrap,
@@ -659,7 +656,7 @@ namespace FmsbwebCoreApi.Services
                 TotalPurchaseScrapRate = totalPurchasedScrapRate,
                 SbScrapAreaDetails = scrapAreaDetails,
                 DetailsByLine = GetDepartmentDetailsByLine(scrap, sapProdData, hxhProductionData.LineDetails.ToList(), warmers, lineTargets, parameters.Start, parameters.End),
-                DetailsByProgram = GetDepartmentDetailsByProgram(scrap, sapProdData, hxhProductionData.ProgramDetails.ToList(), parameters.Start, parameters.End),
+                DetailsByProgram = GetDepartmentDetailsByProgram(scrap, warmers, sapProdData, hxhProductionData.ProgramDetails.ToList(), parameters.Start, parameters.End),
                 SbScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == false),
                 PurchaseScrapDetails = scrapList.Where(s => s.IsPurchashedExclude)
             };
@@ -836,7 +833,7 @@ namespace FmsbwebCoreApi.Services
                 .ConfigureAwait(false);
 
             //hxh production
-            var hxh = await _productionService.GetHourByHourProduction(new ProductionResourceParameter
+            var hxh = await _productionService.GetHourByHourProductionByLine(new ProductionResourceParameter
             {
                 StartDate = shiftDate,
                 EndDate = shiftDate,
@@ -890,7 +887,7 @@ namespace FmsbwebCoreApi.Services
                 .ConfigureAwait(false);
 
             //hxh production
-            var hxhData = await _productionService.GetHourByHourProduction(new ProductionResourceParameter
+            var hxhData = await _productionService.GetHourByHourProductionByLine(new ProductionResourceParameter
             {
                 StartDate = shiftDate,
                 EndDate = shiftDate,

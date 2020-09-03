@@ -19,12 +19,10 @@ namespace FmsbwebCoreApi.Services
     public class ScrapService : ScrapRepository, IScrapService
     {
         private readonly IUtilityService _utilityService;
-        private readonly IProductionService _productionService;
 
-        public ScrapService(SapContext context, IUtilityService utilityService, IProductionService productionService) : base(context)
+        public ScrapService(SapContext context, IUtilityService utilityService) : base(context)
         {
             _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));
-            _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
         }
 
         private async Task<List<DailyScrapByShiftDto>> GetDailyScrapByShiftList(DailyScrapByShiftResourceParameter resourceParams)
@@ -137,9 +135,11 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
-        public async Task<List<DailyScrapByShiftDateDto>> GetDailyScrapRate(DateTime start, DateTime end, string area, bool isPurchasedScrap = false)
+        public async Task<List<DailyScrapByShiftDateDto>> GetDailyScrapRate(DateTime start, DateTime end, string area, IProductionService productionService, bool isPurchasedScrap = false)
         {
-            var productionQry = _productionService.GetProductionQueryable(new ProductionResourceParameter { StartDate = start, EndDate = end, Area = area });
+            if (productionService == null) throw new ArgumentNullException(nameof(productionService));
+
+            var productionQry = productionService.GetProductionQueryable(new ProductionResourceParameter { StartDate = start, EndDate = end, Area = area });
             var production = await productionQry.GroupBy(x => new { x.ShiftDate })
                 .Select(x => new
                 {

@@ -5,20 +5,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters;
+using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Services.Intranet
 {
+    //THIS METHOD GETS DATA FROM TEMPORARY HXH DATA THAT'S RUNS AS SQL SERVER JOB
+    [Obsolete]
     public class IntranetLibraryRepository : IIntranetLibraryRepository, IDisposable
     {
-
         private readonly IntranetContext _context;
 
-
-        public IntranetLibraryRepository(
-            IntranetContext context)
+        public IntranetLibraryRepository(IntranetContext context)
         {
-            _context = context ??
-                throw new ArgumentNullException(nameof(context));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public void Dispose()

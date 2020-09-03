@@ -15,6 +15,7 @@ namespace FmsbwebCoreApi.Models.Intranet
 
         public decimal Target { get; set; }
         public int Gross { get; set; }
+        public int GrossWithWarmers { get; set; }
         public int Net { get; set; }
 
         public int Warmers { get; set; }
