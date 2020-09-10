@@ -105,6 +105,8 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
         public async Task<ReCheck> GetLatestRecheck(int checkSheetEntryId)
         {
             return await _context.ReChecks
+                .Include(x => x.CheckSheetEntry)
+                .Include(x => x.CheckSheetEntry.CheckSheet)
                 .Where(x => x.CheckSheetEntryId == checkSheetEntryId)
                 .OrderByDescending(x => x.ReCheckId)
                 .Take(1)
