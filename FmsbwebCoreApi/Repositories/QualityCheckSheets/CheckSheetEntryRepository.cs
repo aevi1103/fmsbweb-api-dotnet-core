@@ -81,7 +81,7 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
             await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
-                _context.CheckSheetEntries.Remove(new CheckSheetEntry { CharacteristicId = id });
+                _context.CheckSheetEntries.Remove(new CheckSheetEntry { CheckSheetEntryId = id });
                 await _context.SaveChangesAsync().ConfigureAwait(false);
                 await transaction.CommitAsync().ConfigureAwait(false);
                 return true;
