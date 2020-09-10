@@ -41,7 +41,11 @@ namespace FmsbwebCoreApi.Repositories.QualityCheckSheets
 
         public async Task<ReCheck> GetByIdNoTracking(int id)
         {
-            return await _context.ReChecks.AsNoTracking().FirstOrDefaultAsync(x => x.ReCheckId == id);
+            return await _context.ReChecks
+                .AsNoTracking()
+                .Include(x => x.CheckSheetEntry)
+                .Include(x => x.CheckSheetEntry.CheckSheet)
+                .FirstOrDefaultAsync(x => x.ReCheckId == id);
         }
 
         public async Task<ReCheck> Create(ReCheck data)

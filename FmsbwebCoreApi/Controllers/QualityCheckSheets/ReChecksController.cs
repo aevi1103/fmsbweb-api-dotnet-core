@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
+using FmsbwebCoreApi.Models.QualityCheckSheets;
 using FmsbwebCoreApi.Services.Interfaces.QualityCheckSheets;
 using FmsbwebCoreApi.Services.QualityCheckSheets;
 using Microsoft.AspNet.OData;
@@ -29,6 +30,15 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
             return Ok(_service.Query());
         }
 
+        private async Task<CheckSheetEntry> GetCheckSheetEntry(int controlId, ReCheck latestRecheck)
+        {
+            return controlId == 1
+                //if control id is 1 or CS, then update the value of check sheet entry from the latest recheck
+                ? await _checkSheetEntryService.UpdateValueFromReCheck( latestRecheck)
+                //else get the current check entry object
+                : await _checkSheetEntryService.GetById(latestRecheck.CheckSheetEntryId); 
+        }
+
         [HttpPost]
         public async Task<IActionResult> Post(ReCheck data)
         {
@@ -37,14 +47,68 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
 
             try
             {
-                await _service.Update(data);
-                var latestRecheck = await _service.GetLatestRecheck(data.CheckSheetEntryId);
-                var result = await _checkSheetEntryService.UpdateValueFromReCheck(latestRecheck);
-                return Ok(new
+
+                ReCheck latestRecheck;
+                CheckSheetEntry checkSheetEntry;
+                int controlId;
+
+                switch (data.Value)
                 {
-                    reCheck = data,
-                    checkSheetEntry = result
-                });
+                    case null when data.ValueBool == null && data.ReCheckId == 0:
+
+                        return Ok(new CheckSheetResultDto
+                        {
+                            Status = 0,
+                            StatusText = "Null entry",
+                            Result = null
+                        });
+
+                    case null when data.ValueBool == null && data.ReCheckId > 0:
+
+                        //get the recheck object as readonly
+                        var reCheck = await _service.GetByIdNoTracking(data.ReCheckId); 
+
+                        //delete object
+                        await _service.Delete(data.ReCheckId); 
+
+                        //get the latest rechecks after delete, if null get the initial recheck object
+                        latestRecheck = await _service.GetLatestRecheck(reCheck.CheckSheetEntryId) ?? reCheck;
+
+                        //get the control id
+                        controlId = reCheck.CheckSheetEntry.CheckSheet.ControlMethodId; 
+                        checkSheetEntry = await GetCheckSheetEntry(controlId, latestRecheck);
+
+                        return Ok(new CheckSheetResultDto
+                        {
+                            Status = 1,
+                            StatusText = "Delete",
+                            Result = new
+                            {
+                                reCheck = data,
+                                checkSheetEntry
+                            }
+                        });
+
+                    default:
+
+                        await _service.Update(data);
+                        latestRecheck = await _service.GetLatestRecheck(data.CheckSheetEntryId);
+                        controlId = latestRecheck.CheckSheetEntry.CheckSheet.ControlMethodId;
+                        checkSheetEntry = await GetCheckSheetEntry(controlId, latestRecheck);
+
+                        return Ok(new CheckSheetResultDto
+                        {
+                            Status = 2,
+                            StatusText = "Add/Update",
+                            Result = new
+                            {
+                                reCheck = data,
+                                checkSheetEntry
+                            }
+                        });
+
+                }
+
             }
             catch (Exception e)
             {
@@ -54,18 +118,25 @@ namespace FmsbwebCoreApi.Controllers.QualityCheckSheets
 
         [Route("{id}")]
         [HttpDelete]
-        public async Task<IActionResult> Post(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
                 var reCheck = await _service.GetByIdNoTracking(id);
                 await _service.Delete(id);
                 var latestRecheck = await _service.GetLatestRecheck(reCheck.CheckSheetEntryId);
-                var result = await _checkSheetEntryService.UpdateValueFromReCheck(latestRecheck);
-                return Ok(new
+                var controlId = latestRecheck.CheckSheetEntry.CheckSheet.ControlMethodId;
+                var checkSheetEntry = await GetCheckSheetEntry(controlId, latestRecheck);
+
+                return Ok(new CheckSheetResultDto
                 {
-                    reCheck,
-                    checkSheetEntry = result
+                    Status = 1,
+                    StatusText = "Delete",
+                    Result = new
+                    {
+                        reCheck,
+                        checkSheetEntry
+                    }
                 });
 
             }
