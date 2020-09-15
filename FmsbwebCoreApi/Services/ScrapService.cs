@@ -171,28 +171,33 @@ namespace FmsbwebCoreApi.Services
                     .ToListAsync()
                     .ConfigureAwait(false);
 
-            //transform data
-            var data = scrapData
-                .Select(x =>
-                {
-                    var shiftDate = x.ShiftDate.ToDateTime();
-                    var totalScrap = x.TotalScrap.ToInt();
-                    var sapNet = production.Where(p => p.ShiftDate == x.ShiftDate).Sum(p => p.TotalProd ?? 0);
-                    var sapGross = sapNet + x.TotalScrap.ToInt();
-                    var scrapRate = sapNet == 0 ? null : (decimal?)totalScrap / sapGross;
+            var distinctShiftDates = production.Select(x => x.ShiftDate).Distinct().ToList();
+            var distinctShiftDatesScrap = scrapData.Select(x => x.ShiftDate).Distinct().ToList();
+            distinctShiftDates.AddRange(distinctShiftDatesScrap);
+            var shiftDates = distinctShiftDates.Select(x => x).Distinct().OrderBy(x => x).ToList();
 
-                    var dto = new DailyScrapByShiftDateDto
-                    {
-                        ShiftDate = shiftDate,
-                        TotalScrap = totalScrap,
-                        SapNet = sapNet,
-                        SapGross = sapGross,
-                        ScrapRate = scrapRate
-                    };
-                    return dto;
-                })
-                .OrderBy(x => x.ShiftDate)
-                .ToList();
+            var data = shiftDates.Select(x =>
+            {
+                var shiftDate = x.ToDateTime();
+                var scrap = scrapData.Where(q => q.ShiftDate == shiftDate);
+                var prod = production.Where(q => q.ShiftDate == shiftDate);
+
+                var totalScrap = scrap.Sum(q => q.TotalScrap ?? 0);
+                var sapNet = prod.Sum(p => p.TotalProd ?? 0);
+                var sapGross = sapNet + totalScrap;
+                var scrapRate = sapNet == 0 ? null : (decimal?)totalScrap / sapGross;
+
+                return new DailyScrapByShiftDateDto
+                {
+                    ShiftDate = shiftDate,
+                    TotalScrap = totalScrap,
+                    SapNet = sapNet,
+                    SapGross = sapGross,
+                    ScrapRate = scrapRate
+                };
+            })
+            .OrderBy(x => x.ShiftDate)
+            .ToList(); 
 
             return data;
         }

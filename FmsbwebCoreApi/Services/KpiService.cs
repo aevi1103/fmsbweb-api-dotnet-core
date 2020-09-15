@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using ClosedXML.Excel;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Helpers;
@@ -82,7 +84,7 @@ namespace FmsbwebCoreApi.Services
                 .ToListAsync()
                 .ConfigureAwait(false);
 
-            var targets = (await _kpiTargetService.DailyHxHTargetByArea(startDateTime, endDateTime, area).ConfigureAwait(false)).ToList();
+            var targets = (await _productionService.DailyHxHTargetByArea(startDateTime, endDateTime, area).ConfigureAwait(false)).ToList();
 
             //transform to chart object
             var result = production
@@ -94,8 +96,8 @@ namespace FmsbwebCoreApi.Services
                                 var target = targets.Where(s => s.ShiftDate == x.ShiftDate).Sum(s => s.Target);
 
                                 var sapGross = totalAreaScrap + totalProd;
-                                var sapOae = Math.Round((target == 0 ? 0 : totalProd / (decimal)target), 2);
-                                var scrapRate = Math.Round((sapGross == 0 ? 0 : totalAreaScrap / (decimal)sapGross), 2);
+                                var sapOae = Math.Round((target == 0 ? 0 : totalProd / (decimal)target), 5);
+                                var scrapRate = Math.Round((sapGross == 0 ? 0 : totalAreaScrap / (decimal)sapGross), 5);
                                 var downtimeRate = 1 - sapOae - scrapRate;
                                 downtimeRate = downtimeRate < 0 ? 0 : downtimeRate;
 
@@ -558,7 +560,7 @@ namespace FmsbwebCoreApi.Services
             var warmers = scrapData.Where(x => x.ScrapCode == "8888").ToList();
 
             //get total
-            var target = hxhProductionData.LineDetails.Sum(x => x.Target);
+            var target = hxhProductionData.LineDetails.Sum(x => Math.Round(x.Target, 0));
             var sapNet = sapProdData.Sum(x => x.SapNet);
 
             var totalWarmers = warmers.Sum(x => x.Qty);
@@ -576,7 +578,7 @@ namespace FmsbwebCoreApi.Services
 
             var hxhGross = hxhProductionData.LineDetails.Sum(x => x.GrossWithWarmers);
             var hxhNet = hxhProductionData.LineDetails.Sum(x => x.Net);
-            var hxhOae = target == 0 ? 0 : (decimal)hxhNet / target;
+            var hxhOae = target == 0 ? 0 : hxhNet / target;
 
             //get scrap area details scrap
             var scrapAreaDetails = scrap
@@ -639,7 +641,7 @@ namespace FmsbwebCoreApi.Services
             return new DepartmentDetailsDto
             {
                 Area = parameters.Area,
-                Target = (int)target,
+                Target = (int)Math.Round(target, 0),
                 SapGross = sapGross,
                 OaeTarget = deptTargets.OaeTarget / 100,
                 SapNet = sapNet,

@@ -13,29 +13,11 @@ namespace FmsbwebCoreApi.Repositories
 {
     public class KpiTargetRepository : IKpiTargetRepository
     {
-        private readonly IntranetContext _context;
         private readonly Fmsb2Context _fmsb2Context;
 
-        public KpiTargetRepository(IntranetContext context, Fmsb2Context fmsb2Context)
+        public KpiTargetRepository(Fmsb2Context fmsb2Context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _fmsb2Context = fmsb2Context ?? throw new ArgumentNullException(nameof(fmsb2Context));
-        }
-
-        public async Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime startDateTime, DateTime endDateTime, string area)
-        {
-            return await _context.FmsbMasterProdPartsCopyDashboard.AsNoTracking()
-                .Where(x => x.Date >= startDateTime && x.Date <= endDateTime)
-                .Where(x => x.Area == area)
-                .GroupBy(x => new { x.Area, x.Date })
-                .Select(x => new DailyHxHTargetDto
-                {
-                    Area = x.Key.Area,
-                    ShiftDate = (DateTime)x.Key.Date,
-                    Target = (int)x.Sum(s => s.OeeTarget)
-                })
-                .ToListAsync()
-                .ConfigureAwait(false);
         }
 
         public async Task<List<SwotTargetWithDeptId>> GetLineTargets(string dept)

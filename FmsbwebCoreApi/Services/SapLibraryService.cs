@@ -1698,48 +1698,57 @@ namespace FmsbwebCoreApi.Services
             }
 
             var result = hxh
-                            .Select(x => new ProductionMorningMeetingDto
+                            .Select(x =>
                             {
-                                Department = x.Department,
-                                Area = x.Area,
-                                Target = (int)x.Target,
+                                var prodByArea = sapProdByArea.Where(s => s.Area == x.Area).ToList();
+                                var sbScrapByArea = sbScrap.Where(w => w.Area == x.Area).ToList();
+                                var warmersByArea = warmers.Where(w => w.Area == x.Area).ToList();
 
-                                HxhGross = x.Gross,
-                                SapGross = sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)
-                                            + sbScrap.Where(w => w.Area == x.Area).Sum(w => w.qty), //with sb scrap only
+                                var sapGross = prodByArea.Sum(s => s.Qty) + sbScrapByArea.Sum(w => w.qty); // net + scrap in area
+                                var plannedWarmers = warmersByArea.Where(w => w.ScrapCode == "8888").Sum(w => w.qty);
+                                var unPlannedWarmers = warmersByArea.Where(w => w.ScrapCode == "8889").Sum(w => w.qty);
+                                var totalSbScrap = sbScrapByArea.Sum(w => w.qty);
+                                var sapNet = prodByArea.Sum(s => s.Qty);
+                                var sapOae = (int) x.Target == 0 ? 0 : (decimal)sapNet / x.Target;
+                                var sapColorCode = GetColorCode(targets, "oae", sapOae);
+                                var hxhOae = x.Target == 0 ? 0 : (decimal) x.Net / x.Target;
+                                var hxhOaeColorCode = GetColorCode(targets, "oae", hxhOae);
+                                var sbScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, true, sapNet);
+                                var purchasedScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, false, sapNet);
+                                var deptScrap = GetDepartmentScrap(scrapByDepartment, x.Area, sapNet);
+                                var scrapByCodeColorCode = GetColorCode(targets, "scrap", sbScrapByCode.ScrapRate);
+                                var ppmhColorCode = GetColorCode(targets, "ppmh",  _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, laborHrs, start, end).PPMH);
 
-                                PlannedWarmers = warmers.Where(w => w.Area == x.Area && w.ScrapCode == "8888").Sum(w => w.qty),
-                                UnPlannedWarmers = warmers.Where(w => w.Area == x.Area && w.ScrapCode == "8889").Sum(w => w.qty),
-                                TotalSbScrap = sbScrap.Where(w => w.Area == x.Area).Sum(w => w.qty),
-                                TotalScrapByDept = overallScrap.Where(w => w.Area == x.Area).Sum(w => w.qty),
+                                return new ProductionMorningMeetingDto
+                                {
+                                    Department = x.Department,
+                                    Area = x.Area,
+                                    Target = (int)x.Target,
+                                    HxhGross = x.Gross,
+                                    SapGross = sapGross,
 
-                                SapNet = sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty),
-                                SapOae = (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target,
-                                SapOaeColorCode = GetColorCode(targets, "oae",
-                                                    (int)x.Target == 0 ? 0 : sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty) / x.Target),
+                                    PlannedWarmers = plannedWarmers,
+                                    UnPlannedWarmers = unPlannedWarmers,
 
-                                HxHNet = x.Net,
+                                    TotalSbScrap = totalSbScrap,
+                                    TotalScrapByDept = overallScrap.Where(w => w.Area == x.Area).Sum(w => w.qty),
+                                    SapNet = sapNet,
+                                    SapOae = sapOae,
+                                    SapOaeColorCode = sapColorCode,
+                                    HxHNet = x.Net,
+                                    HxhOae = hxhOae,
+                                    HxhOaeColorCode = hxhOaeColorCode,
+                                    SbScrapByCode = sbScrapByCode,
+                                    PurchaseScrapByCode = purchasedScrapByCode,
+                                    DepartmentScrap = deptScrap,
+                                    SapProductionByType = GetSapProductionByType(sapProdByType, x.Area),
+                                    LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, laborHrs, start, end),
 
-                                HxhOae = x.Target == 0 ? 0 : (decimal)x.Net / x.Target,
-
-                                HxhOaeColorCode = GetColorCode(targets, "oae", ((decimal)x.Net / x.Target)),
-
-                                SbScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
-                                PurchaseScrapByCode = GetScrapByCode(scrapByScrapArea, x.Area, false, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
-                                DepartmentScrap = GetDepartmentScrap(scrapByDepartment, x.Area, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)),
-
-                                SapProductionByType = GetSapProductionByType(sapProdByType, x.Area),
-
-                                LaborHours = _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, laborHrs, start, end),
-
-
-                                ScrapByCodeColorCode = GetColorCode(targets, "scrap",
-                                                            GetScrapByCode(scrapByScrapArea, x.Area, true, sapProdByArea.Where(s => s.Area == x.Area).Sum(s => s.Qty)).ScrapRate),
-                                PpmhColorCode = GetColorCode(targets, "ppmh",
-                                                   _fmsb2Repo.GetRollingDaysPPMH(prodForLaborHours, laborHrs, start, end).PPMH),
-
-                                Targets = targets
-
+                                    ScrapByCodeColorCode = scrapByCodeColorCode,
+                                    PpmhColorCode = ppmhColorCode,
+                                    Targets = targets
+                                };
+                    
                             })
                             .FirstOrDefault();
 

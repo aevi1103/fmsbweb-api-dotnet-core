@@ -16,7 +16,9 @@ namespace FmsbwebCoreApi.Models.SAP
         public string IsPurchashedExclude2 { get; set; }
         public string ScrapCode { get; set; }
         public string ScrapDesc { get; set; }
+        public int SapGross { get; set; }
         public int Qty { get; set; }
+        public decimal ScrapRate { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }

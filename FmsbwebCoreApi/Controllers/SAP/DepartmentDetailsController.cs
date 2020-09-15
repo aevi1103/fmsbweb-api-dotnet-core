@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Services.Interfaces;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
+using System.Collections.Generic;
+using System.Linq;
+using System.IO;
 
 namespace FmsbwebCoreApi.Controllers.SAP
 {
@@ -27,8 +32,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 return BadRequest();
             }
 
-            var prodData = await _kpiService.GetDepartmentDetails(resourceParameter)
-                .ConfigureAwait(false);
+            var prodData = await _kpiService.GetDepartmentDetails(resourceParameter).ConfigureAwait(false);
 
             return Ok(prodData);
         }

@@ -263,7 +263,9 @@ namespace FmsbwebCoreApi.Repositories
                 Program = x.Program,
                 PartNumber = x.Part,
                 Target = x.Target,
-                Gross = x.Gross
+                Gross = x.Gross,
+                ShiftDate = x.ShiftDate,
+                Shift = x.Shift
             }).ToList();
         }
 

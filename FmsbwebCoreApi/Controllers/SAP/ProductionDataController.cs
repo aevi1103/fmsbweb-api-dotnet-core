@@ -12,12 +12,10 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/productiondata")]
     public class ProductionDataController : ControllerBase
     {
-        private readonly ISapLibraryService _sapLibRepo;
-        public ProductionDataController(
-            ISapLibraryService sapLibRepo)
+        private readonly ISapLibraryService _sapLibService;
+        public ProductionDataController(ISapLibraryService sapLibService)
         {
-            _sapLibRepo = sapLibRepo ??
-                throw new ArgumentNullException(nameof(sapLibRepo));
+            _sapLibService = sapLibService ?? throw new ArgumentNullException(nameof(sapLibService));
         }
 
         [HttpGet(Name = "GetProductionData")]
@@ -35,7 +33,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
                 return BadRequest();
             }
 
-            var prodData = await _sapLibRepo.GetProductionData(
+            var prodData = await _sapLibService.GetProductionData(
                 resourceParameter.Start,
                 resourceParameter.End,
                 resourceParameter.Area).ConfigureAwait(false);

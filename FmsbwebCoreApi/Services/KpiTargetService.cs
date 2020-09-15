@@ -14,7 +14,7 @@ namespace FmsbwebCoreApi.Services
         private readonly IntranetContext _context;
         private readonly Fmsb2Context _fmsb2Context;
 
-        public KpiTargetService(IntranetContext context, Fmsb2Context fmsb2Context) : base(context, fmsb2Context)
+        public KpiTargetService(IntranetContext context, Fmsb2Context fmsb2Context) : base(fmsb2Context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _fmsb2Context = fmsb2Context ?? throw new ArgumentNullException(nameof(fmsb2Context));

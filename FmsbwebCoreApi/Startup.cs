@@ -129,6 +129,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.IUtilityService, Services.UtilityService>();
             services.AddScoped<Services.Interfaces.IDataAccessUtilityService, Services.DataAccessUtilityService>();
             services.AddScoped<Services.Interfaces.IEndOfShiftReportService, Services.EndOFShiftReportService>();
+            services.AddScoped<Services.Interfaces.IExportService, Services.ExportService>();
 
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICharacteristicService, Services.QualityCheckSheets.CharacteristicService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();
@@ -203,6 +204,7 @@ namespace FmsbwebCoreApi
 
             app.UseEndpoints(endpoints =>
             {
+                //endpoints.SetTimeZoneInfo(TimeZoneInfo.Utc);
                 endpoints.MapControllers();
                 //endpoints.MapODataRoute("odata", "odata", GetEdmModel()); //uncomment this if you want to use odata models instead, the comment endpoints.EnableDependencyInjection();
                 endpoints.EnableDependencyInjection();

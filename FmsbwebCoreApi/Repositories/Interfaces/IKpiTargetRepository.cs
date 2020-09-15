@@ -9,7 +9,6 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
 {
     public interface IKpiTargetRepository
     {
-        Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime startDateTime, DateTime endDateTime, string area);
         Task<List<SwotTargetWithDeptId>> GetLineTargets(string dept);
         Task<SwotTargetWithDeptId> GetSwotTarget(string line);
         Task<List<SwotTargetWithDeptId>> GetSwotTargets(string dept);

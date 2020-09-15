@@ -590,7 +590,7 @@ namespace FmsbwebCoreApi.Services
             {
                 Area = x.Area,
                 ShiftDate = x.ShiftDate,
-                Target = (int)x.Target
+                Target = (int)Math.Round(x.Target, 0)
             });
         }
 
