@@ -158,7 +158,11 @@ namespace FmsbwebCoreApi
             services.AddDbContext<IconicsContext>(options =>  options.UseSqlServer(Configuration.GetConnectionString("iconicsConn")));
             services.AddDbContext<FmsbMvcContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbMvc")));
             services.AddDbContext<SafetyContext>(options => options.UseSqlServer(Configuration.GetConnectionString("safetyConn")));
-            services.AddDbContext<SapContext>(options => options.UseSqlServer(Configuration.GetConnectionString("sapConn")));
+
+            services.AddDbContext<SapContext>(options => 
+                options.UseSqlServer(Configuration.GetConnectionString("sapConn"),
+                    sqlServerOptions => sqlServerOptions.CommandTimeout(60)));
+
             services.AddDbContext<IntranetContext>(options => options.UseSqlServer(Configuration.GetConnectionString("intranet")));
             services.AddDbContext<fmsbQualityContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality")));
             services.AddDbContext<masterContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmoMaster")));

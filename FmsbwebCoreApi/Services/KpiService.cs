@@ -53,6 +53,7 @@ namespace FmsbwebCoreApi.Services
         }
         public async Task<List<DailyDepartmentKpiDto>> GetDailyKpiChart(DateTime startDateTime, DateTime endDateTime, string area)
         {
+            //fetch data
             var production = await _productionService.GetProductionQueryable(new ProductionResourceParameter
             {
                 StartDate = startDateTime,
@@ -84,40 +85,55 @@ namespace FmsbwebCoreApi.Services
                 .ToListAsync()
                 .ConfigureAwait(false);
 
-            var targets = (await _productionService.DailyHxHTargetByArea(startDateTime, endDateTime, area).ConfigureAwait(false)).ToList();
+            var hxh = (await _productionService.DailyHxHTargetByArea(startDateTime, endDateTime, area).ConfigureAwait(false)).ToList();
 
-            //transform to chart object
-            var result = production
-                            .Select(x =>
-                            {
-                                var shiftDate = x.ShiftDate.ToDateTime();
-                                var totalProd = x.TotalProd.ToInt();
-                                var totalAreaScrap = scrap.Where(s => s.ShiftDate == x.ShiftDate).Sum(s => s.TotalScrap ?? 0);
-                                var target = targets.Where(s => s.ShiftDate == x.ShiftDate).Sum(s => s.Target);
+            //get distinct dates
+            var distinctShiftDates = production.Select(x => x.ShiftDate.ToDateTime()).Distinct().ToList();
+            var distinctShiftDatesScrap = scrap.Select(x => x.ShiftDate.ToDateTime()).Distinct().ToList();
+            var distinctShiftDatesTargets = hxh.Select(x => x.ShiftDate).Distinct().ToList();
+            distinctShiftDates.AddRange(distinctShiftDatesScrap);
+            distinctShiftDates.AddRange(distinctShiftDatesTargets);
 
-                                var sapGross = totalAreaScrap + totalProd;
-                                var sapOae = Math.Round((target == 0 ? 0 : totalProd / (decimal)target), 5);
-                                var scrapRate = Math.Round((sapGross == 0 ? 0 : totalAreaScrap / (decimal)sapGross), 5);
-                                var downtimeRate = 1 - sapOae - scrapRate;
-                                downtimeRate = downtimeRate < 0 ? 0 : downtimeRate;
+            var shiftDates = distinctShiftDates.Select(x => x).Distinct().OrderBy(x => x).ToList();
 
-                                return new DailyDepartmentKpiDto
-                                {
-                                    Area = x.Area,
-                                    ShiftDate = shiftDate,
-                                    TotalProduction = totalProd,
-                                    TotalAreaScrap = totalAreaScrap,
-                                    Target = target,
-                                    SapGross = sapGross,
-                                    SapOae = sapOae,
-                                    ScrapRate = scrapRate,
-                                    DowntimeRate = downtimeRate
-                                };
-                            })
-                            .OrderBy(x => x.ShiftDate)
-                            .ToList();
+            return shiftDates.Select(x =>
+            {
+                var shiftDate = x;
 
-            return result;
+                var prodByDate = production.Where(s => s.ShiftDate == shiftDate).ToList();
+                var scrapByDate = scrap.Where(s => s.ShiftDate == shiftDate).ToList();
+                var hxhByDate = hxh.Where(s => s.ShiftDate == shiftDate).ToList();
+
+                var areaByDate = prodByDate.FirstOrDefault()?.Area;
+                var totalProd = prodByDate.Sum(s => s.TotalProd ?? 0);
+                var totalAreaScrap = scrapByDate.Sum(s => s.TotalScrap ?? 0);
+                var target = hxhByDate.Sum(s => s.Target);
+                var hxhGross = hxhByDate.Sum(s => s.Gross);
+                var hxhNet = hxhByDate.Sum(s => s.Net);
+
+                var sapGross = totalAreaScrap + totalProd;
+                var sapOae = Math.Round((target == 0 ? 0 : totalProd / (decimal)target), 5);
+                var scrapRate = Math.Round((sapGross == 0 ? 0 : totalAreaScrap / (decimal)sapGross), 5);
+                var downtimeRate = 1 - sapOae - scrapRate;
+                downtimeRate = downtimeRate < 0 ? 0 : downtimeRate;
+
+                return new DailyDepartmentKpiDto
+                {
+                    Area = areaByDate,
+                    ShiftDate = shiftDate,
+                    TotalProduction = totalProd,
+                    TotalAreaScrap = totalAreaScrap,
+                    Target = target,
+                    SapGross = sapGross,
+                    SapOae = sapOae,
+                    ScrapRate = scrapRate,
+                    DowntimeRate = downtimeRate,
+                    HxHGross = hxhGross,
+                    HxHNet = hxhNet
+                };
+            })
+            .OrderBy(x => x.ShiftDate)
+            .ToList();
         }
 
         private IEnumerable<ProductionByLineDto> GetDepartmentDetailsByLine(
@@ -197,14 +213,14 @@ namespace FmsbwebCoreApi.Services
             var result = distinctLines.Select(line =>
                 {
                     //hxh
-                    var hxhByLine = hxh.FirstOrDefault(x => x.Line == line);
+                    var hxhByLine = hxh.FirstOrDefault(x => string.Equals(x.Line.Trim(), line.Trim(), StringComparison.CurrentCultureIgnoreCase));
                     var dept = hxhByLine?.Department ?? "";
                     var area = hxhByLine?.Area ?? "";
                     var target = hxhByLine?.Target ?? 0;
                     var hxhGross = hxhByLine?.GrossWithWarmers ?? 0;
 
                     //targets
-                    var lineTarget = targets.FirstOrDefault(x => x.Line == line);
+                    var lineTarget = targets.FirstOrDefault(x => string.Equals(x.Line.Trim(), line.Trim(), StringComparison.CurrentCultureIgnoreCase));
                     var oaeTarget = lineTarget?.OaeTarget ?? 0;
                     var foundryScrapTarget = lineTarget?.FoundryScrapTarget ?? 0;
                     var machiningScrapTarget = lineTarget?.MachineScrapTarget ?? 0;

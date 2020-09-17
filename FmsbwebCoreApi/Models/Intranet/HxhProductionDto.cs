@@ -25,6 +25,8 @@ namespace FmsbwebCoreApi.Models.Intranet
         public int Eol { get; set; }
         public int TotalScrap { get; set; }
 
+        public int MachiningEosScrap { get; set; } //total scrap linked to mach. eos report
+
         public List<Scrap2> WarmersDefects { get; set; } = new List<Scrap2>();
         public List<Scrap2> SolDefects { get; set; } = new List<Scrap2>();
         public List<Scrap2> GageScrapDefects { get; set; } = new List<Scrap2>();

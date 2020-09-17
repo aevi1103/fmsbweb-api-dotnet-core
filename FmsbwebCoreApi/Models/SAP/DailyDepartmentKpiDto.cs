@@ -14,8 +14,10 @@ namespace FmsbwebCoreApi.Models.SAP
         public int TotalDowntime { get; set; }
         public int Target { get; set; }
         public int SapGross { get; set; }
-        public decimal SapOae { get; set; }
-        public decimal ScrapRate { get; set; }
-        public decimal DowntimeRate { get; set; }
+        public decimal? SapOae { get; set; }
+        public decimal? ScrapRate { get; set; }
+        public decimal? DowntimeRate { get; set; }
+        public int HxHGross { get; set; }
+        public int HxHNet { get; set; }
     }
 }

@@ -8,6 +8,7 @@ using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.Models.SAP;
 using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
+using NUnit.Framework.Interfaces;
 
 namespace FmsbwebCoreApi.Services
 {
@@ -19,6 +20,7 @@ namespace FmsbwebCoreApi.Services
         private readonly ISapLibraryService _sapLibService;
 
         private const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        private const string NumberFormat = "_(* #,##0.00000_);_(* (#,##0.00);_(* \"-\"??_);_(@_)";
 
         public ExportService(IKpiService kpiService,
             IScrapService scrapService,
@@ -85,6 +87,8 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(currentRow, 16).Value = line.HxHNet;
                 ws.Cell(currentRow, 17).Value = line.HxHOae;
             }
+
+            ws.Columns().AdjustToContents();
         }
 
         private static void ProgramsWorkSheet(IXLWorkbook wb, IEnumerable<ProductionByProgramDto> programs)
@@ -141,6 +145,8 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(currentRow, 16).Value = program.HxHNet;
                 ws.Cell(currentRow, 17).Value = program.HxHOae;
             }
+
+            ws.Columns().AdjustToContents();
         }
 
         private static void ScrapWorkSheet(IXLWorkbook wb, IEnumerable<Scrap> scrapList, int sapGross, string workSheetName, bool isDetails = false)
@@ -181,6 +187,8 @@ namespace FmsbwebCoreApi.Services
                                                         ? sapGross == 0 ? 0 : (decimal)scrap.Qty / sapGross
                                                         : scrap.ScrapRate;
             }
+
+            ws.Columns().AdjustToContents();
         }
 
         private static void SummaryWorkSheet(IXLWorkbook wb, DepartmentDetailsDto data)
@@ -240,6 +248,8 @@ namespace FmsbwebCoreApi.Services
             ws.Cell(currentRow, 15).Value = data.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "anodize")?.Qty;
             ws.Cell(currentRow, 16).Value = data.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "skirt coat")?.Qty;
             ws.Cell(currentRow, 17).Value = data.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "assembly")?.Qty;
+
+            ws.Columns().AdjustToContents();
         }
 
         public async Task<DownloadResult> DownloadDepartmentDetails(SapResouceParameter resourceParameter)
@@ -336,10 +346,18 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(currentRow, 3).Value = item.SapNet;
                 ws.Cell(currentRow, 4).Value = item.TotalScrap;
                 ws.Cell(currentRow, 5).Value = item.ScrapRate;
+
+                for (var i = 1; i < columnsNames.Count; i++)
+                {
+                    ws.Cell(currentRow, i + 1).Style.NumberFormat.Format = NumberFormat;
+                }
             }
+
+            ws.Columns().AdjustToContents();
+            ws.SheetView.FreezeRows(1);
         }
 
-        private static void DailyKpiWorkSheet(IXLWorkbook wb, IEnumerable<DailyDepartmentKpiDto> items)
+        private static void DailyKpiWorkSheet(IXLWorkbook wb, List<DailyDepartmentKpiDto> items)
         {
             var ws = wb.Worksheets.Add("Daily KPI").SetTabColor(XLColor.Green);
             var currentRow = 1;
@@ -349,6 +367,8 @@ namespace FmsbwebCoreApi.Services
                 "Department",
                 "Shift Date",
                 "Target",
+                "HxH Gross",
+                "HxH Net",
                 "Dept. SAP Gross",
                 "Total Department Scrap",
                 "SAP Net",
@@ -368,13 +388,68 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(currentRow, 1).Value = item.Area;
                 ws.Cell(currentRow, 2).Value = item.ShiftDate;
                 ws.Cell(currentRow, 3).Value = item.Target;
-                ws.Cell(currentRow, 4).Value = item.SapGross;
-                ws.Cell(currentRow, 5).Value = item.TotalAreaScrap;
-                ws.Cell(currentRow, 6).Value = item.TotalProduction;
-                ws.Cell(currentRow, 7).Value = item.SapOae;
-                ws.Cell(currentRow, 8).Value = item.ScrapRate;
-                ws.Cell(currentRow, 9).Value = item.DowntimeRate;
+                ws.Cell(currentRow, 4).Value = item.HxHGross;
+                ws.Cell(currentRow, 5).Value = item.HxHNet;
+                ws.Cell(currentRow, 6).Value = item.SapGross;
+                ws.Cell(currentRow, 7).Value = item.TotalAreaScrap;
+                ws.Cell(currentRow, 8).Value = item.TotalProduction;
+
+                ws.Cell(currentRow, 9).Value = item.SapOae;
+                ws.Cell(currentRow, 10).Value = item.ScrapRate;
+                ws.Cell(currentRow, 11).Value = item.DowntimeRate;
+
+                for (var i = 2; i < columnsNames.Count; i++)
+                {
+                    ws.Cell(currentRow, i + 1).Style.NumberFormat.Format = NumberFormat;
+                }
+
             }
+
+            //total
+            //currentRow++;
+
+            //var target = items.Sum(x => x.Target);
+            //var sapNet = items.Sum(x => x.TotalProduction);
+            //var totalScrap = items.Sum(x => x.TotalAreaScrap);
+            //var sapGross = items.Sum(x => x.SapGross);
+            //var hxhNet = items.Sum(x => x.HxHNet);
+            
+            //var sapOae = target == 0 ? 0 : (decimal) sapNet / target;
+            //var scrapRate = sapGross == 0 ? 0 : (decimal) totalScrap / sapGross;
+            //var downtimeRate = (1 - sapOae - scrapRate);
+
+            //ws.Cell(currentRow, 3).Value = target;
+            //ws.Cell(currentRow, 4).Value = items.Sum(x => x.HxHGross);
+            //ws.Cell(currentRow, 5).Value = hxhNet;
+            //ws.Cell(currentRow, 6).Value = sapGross;
+            //ws.Cell(currentRow, 7).Value = totalScrap;
+            //ws.Cell(currentRow, 8).Value = sapNet;
+
+            //ws.Cell(currentRow, 9).Value = sapOae;
+            //ws.Cell(currentRow, 10).Value = scrapRate;
+            //ws.Cell(currentRow, 11).Value = downtimeRate < 0 ? 0 : downtimeRate;
+
+            //for (var i = 2; i < columnsNames.Count; i++)
+            //{
+            //    ws.Cell(currentRow, i + 1).Style.NumberFormat.Format = NumberFormat;
+            //    ws.Cell(currentRow, i + 1).Style.Fill.BackgroundColor = XLColor.Black;
+            //    ws.Cell(currentRow, i + 1).Style.Font.FontColor = XLColor.White;
+            //}
+
+            //currentRow++;
+            //var scrapWithoutHxHProd = items.Where(x => x.Target == 0).Sum(x => x.TotalAreaScrap);
+            //var hxhNet2 = hxhNet - scrapWithoutHxHProd;
+            //ws.Cell(currentRow, 5).Value = hxhNet2;
+            //ws.Cell(currentRow, 5).Style.NumberFormat.Format = NumberFormat;
+            //ws.Cell(currentRow, 5).Style.Fill.BackgroundColor = XLColor.Black;
+            //ws.Cell(currentRow, 5).Style.Font.FontColor = XLColor.White;
+            //ws.Cell(currentRow, 5).Comment.Style.Alignment.SetAutomaticSize();
+            //ws.Cell(currentRow, 5).Comment.AddText($"Subtract scrap that target is zero");
+            //ws.Cell(currentRow, 5).Comment.AddNewLine();
+            //ws.Cell(currentRow, 5).Comment.AddText($"{hxhNet} (HxH Net) - {scrapWithoutHxHProd} (Scrap w/ target is zero) = {hxhNet2}");
+
+            ws.Columns().AdjustToContents();
+            ws.SheetView.FreezeRows(1);
         }
 
         private static void SummaryWorkSheet(IXLWorkbook wb, ProductionMorningMeetingDto item)
@@ -450,6 +525,13 @@ namespace FmsbwebCoreApi.Services
 
             ws.Cell(currentRow, 18).Value = item.PurchaseScrapByCode?.Total;
             ws.Cell(currentRow, 19).Value = item.PurchaseScrapByCode?.ScrapRate;
+
+            for (var i = 1; i < columnsNames.Count; i++)
+            {
+                ws.Cell(currentRow, i + 1).Style.NumberFormat.Format = NumberFormat;
+            }
+
+            ws.Columns().AdjustToContents();
         }
 
         private static void ScrapDetailsWorkSheet(IXLWorkbook wb, IEnumerable<ScrapByCodeDetailsDto> items, string wsName, int sapNet, int totalSbScrap)
@@ -484,6 +566,8 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(currentRow, 4).Value = item.Qty;
                 ws.Cell(currentRow, 5).Value = item.ScrapRate;
             }
+
+            ws.Columns().AdjustToContents();
         }
 
         private static void ScrapDefectDetailsWorkSheet(IXLWorkbook wb, IEnumerable<Scrap> items, string wsName, int sapNet, int totalSbScrap)
@@ -520,6 +604,8 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(currentRow, 6).Value = item.Qty;
                 ws.Cell(currentRow, 7).Value = item.ScrapRate;
             }
+
+            ws.Columns().AdjustToContents();
         }
 
         public async Task<DownloadResult> DownloadDepartmentKpi(SapResouceParameter resourceParameter)

@@ -12,10 +12,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
 {
     public interface IProductionService : IProductionRepository
     {
-        Task<List<HxHProductionByLineDto>> GetHourByHourProductionByDepartment(ProductionResourceParameter resourceParameter);
-        Task<List<HxhProductionByLineAndProgram2Dto>> GetHourByHourProductionByLineAndProgram(ProductionResourceParameter resourceParameter);
-        Task<List<HxHProductionByDay>> GetHourByHourProductionByShiftDate(ProductionResourceParameter resourceParameter);
-
         Task<List<HxHProductionByLineDto>> GetHourByHourProductionByLine(ProductionResourceParameter resourceParameter, List<Scrap2> scrap);
         Task<List<HourlyProductionDto>> GetHourByHourProductionByHour(ProductionResourceParameter resourceParameter, List<Scrap2> scrap, List<SwotTargetWithDeptId> target);
 

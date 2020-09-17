@@ -22,5 +22,8 @@ namespace FmsbwebCoreApi.Models.FMSB2
         public DateTime ShiftDate { get; set; }
         public string Shift { get; set; }
         public int Gross { get; set; }
+        public int GrossWithWarmers { get; set; }
+        public int Net { get; set; }
+        public int MachiningEosScrap { get; set; }
     }
 }

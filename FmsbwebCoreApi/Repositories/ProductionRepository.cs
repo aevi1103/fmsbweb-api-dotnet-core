@@ -235,12 +235,12 @@ namespace FmsbwebCoreApi.Repositories
                 Area = x.Area,
                 DeptName = x.DeptName,
                 MachineId = x.MachineId,
-                Line = x.Line,
+                Line = x.Line ?? "",
                 Hour = x.Hour,
-                Program = x.Program,
+                Program = x.Program ?? "",
                 Production = x.Production,
                 CellSide = x.CellSide,
-                Target = x.Target,
+                Target = Math.Round(x.Target),
                 Shift = x.Shift,
                 ShiftDate = x.ShiftDate
             }).ToList();
@@ -262,7 +262,7 @@ namespace FmsbwebCoreApi.Repositories
                 Line = x.Line.ToString(),
                 Program = x.Program,
                 PartNumber = x.Part,
-                Target = x.Target,
+                Target = Math.Round(x.Target),
                 Gross = x.Gross,
                 ShiftDate = x.ShiftDate,
                 Shift = x.Shift

@@ -33,6 +33,8 @@ namespace FmsbwebCoreApi.Controllers.SAP
                     resourceParameter.Area)
                 .ConfigureAwait(false);
 
+            prodData = prodData.Where(x => x.Area != null).ToList();
+
             if (prodData == null) throw new ArgumentNullException(nameof(prodData));
 
             var category = prodData.Select(x => x.ShiftDate.ToShortDateString()).Distinct();
