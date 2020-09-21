@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,11 +22,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetDeptKpi")]
         [HttpHead]
-        public async Task<IActionResult> GetDeptKpi(DateTime start, DateTime end, string area)
+        public async Task<IActionResult> GetDeptKpi([FromQuery] SapResourceParameter @params)
         {
             try
             {
-                var data = await _sapLibRepo.GetDepartmentKpi(start, end, area).ConfigureAwait(false);
+                var data = await _sapLibRepo.GetDepartmentKpi(@params).ConfigureAwait(false);
                 return Ok(data);
             }
             catch (Exception e)

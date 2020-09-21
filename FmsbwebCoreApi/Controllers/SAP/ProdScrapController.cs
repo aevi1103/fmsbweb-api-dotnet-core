@@ -22,18 +22,14 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetProdScrap")]
         [HttpHead]
-        public async Task<IActionResult> GetProdScrap(
-            [FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> GetProdScrap([FromQuery] SapResourceParameter @params)
         {
-            if (resourceParameter == null)
+            if (@params == null)
             {
                 return BadRequest();
             }
 
-            var prodData = await _sapLibRepo.GetSapProdAndScrap(
-                                    resourceParameter.Start,
-                                    resourceParameter.End,
-                                    resourceParameter.Area).ConfigureAwait(false);
+            var prodData = await _sapLibRepo.GetSapProdAndScrap(@params).ConfigureAwait(false);
 
             return Ok(prodData);
         }

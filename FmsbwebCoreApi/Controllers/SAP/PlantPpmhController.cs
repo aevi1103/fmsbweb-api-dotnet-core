@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -23,11 +24,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetPlantPpmh")]
         [HttpHead]
-        public async Task<IActionResult> GetPlantPpmh(DateTime start, DateTime end)
+        public async Task<IActionResult> GetPlantPpmh([FromQuery] SapResourceParameter @params)
         {
             try
             {
-                var result = await _sapLibRepo.GetPlantWidePpmh(start, end).ConfigureAwait(false);
+                var result = await _sapLibRepo.GetPlantWidePpmh(@params).ConfigureAwait(false);
                 return Ok(result);
             }
             catch (Exception e)

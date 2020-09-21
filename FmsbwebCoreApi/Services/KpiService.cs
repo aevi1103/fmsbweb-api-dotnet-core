@@ -507,7 +507,7 @@ namespace FmsbwebCoreApi.Services
             return result.OrderBy(x => x.Program).ToList();
         }
 
-        public async Task<DepartmentDetailsDto> GetDepartmentDetails(SapResouceParameter parameters)
+        public async Task<DepartmentDetailsDto> GetDepartmentDetails(SapResourceParameter parameters)
         {
             var dept = _utilityService.MapAreaToDepartment(parameters.Area);
 

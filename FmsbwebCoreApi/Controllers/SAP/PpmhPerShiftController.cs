@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -23,11 +24,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetPpmhPerShift")]
         [HttpHead]
-        public async Task<IActionResult> GetPpmhPerShift(DateTime start, DateTime end, string area)
+        public async Task<IActionResult> GetPpmhPerShift([FromQuery] SapResourceParameter @params)
         {
             try
             {
-                var result = await _sapLibRepo.GetPpmhPerShiftVariance(start, end, area).ConfigureAwait(false);
+                var result = await _sapLibRepo.GetPpmhPerShiftVariance(@params).ConfigureAwait(false);
                 return Ok(result);
             }
             catch (Exception e)

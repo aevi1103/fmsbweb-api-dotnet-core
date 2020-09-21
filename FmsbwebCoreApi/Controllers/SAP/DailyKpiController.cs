@@ -23,7 +23,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetDailyKpi")]
         [HttpHead]
-        public async Task<IActionResult> GetDailyKpi([FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> GetDailyKpi([FromQuery] SapResourceParameter resourceParameter)
         {
             if (resourceParameter == null) return BadRequest();
 

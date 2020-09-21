@@ -13,7 +13,7 @@ namespace FmsbwebCoreApi.Services.Interfaces
     public interface IKpiService
     {
         Task<List<DailyDepartmentKpiDto>> GetDailyKpiChart(DateTime startDateTime, DateTime endDateTime, string area);
-        Task<DepartmentDetailsDto> GetDepartmentDetails(SapResouceParameter parameters);
+        Task<DepartmentDetailsDto> GetDepartmentDetails(SapResourceParameter parameters);
         Task<EndOfShiftDto> GetEndOfShiftDto(string line, string area, DateTime shiftDate, string shift);
         Task<List<EndOfShiftDto>> GetEndOfShiftListDto(string dept, DateTime shiftDate, string shift);
         Task<bool> SendEosReport(string dept, DateTime shiftDate, string shift);

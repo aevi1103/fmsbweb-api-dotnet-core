@@ -23,7 +23,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetDailyScrapRate")]
         [HttpHead]
-        public async Task<IActionResult> GetDailyScrapRate([FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> GetDailyScrapRate([FromQuery] SapResourceParameter resourceParameter)
         {
             if (resourceParameter == null)
                 return BadRequest();

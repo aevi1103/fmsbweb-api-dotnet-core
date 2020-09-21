@@ -25,7 +25,7 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetDepartmentDetails")]
         [HttpHead]
-        public async Task<IActionResult> GetDepartmentDetails([FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> GetDepartmentDetails([FromQuery] SapResourceParameter resourceParameter)
         {
             if (resourceParameter == null)
             {

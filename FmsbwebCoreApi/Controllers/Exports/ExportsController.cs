@@ -25,11 +25,11 @@ namespace FmsbwebCoreApi.Controllers.Exports
 
         [HttpGet]
         [Route("department/details")]
-        public async Task<IActionResult> DepartmentDetails([FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> DepartmentDetails([FromQuery] SapResourceParameter resourceParameter)
         {
             try
             {
-                var result = await _exportService.DownloadDepartmentDetails(resourceParameter);
+                var result = await _exportService.DownloadDepartmentWorkCenters(resourceParameter);
                 return File(result.Content, result.ContentType, result.FileName);
             }
             catch (Exception e)
@@ -40,11 +40,26 @@ namespace FmsbwebCoreApi.Controllers.Exports
 
         [HttpGet]
         [Route("department")]
-        public async Task<IActionResult> Department([FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> Department([FromQuery] SapResourceParameter resourceParameter)
         {
             try
             {
                 var result = await _exportService.DownloadDepartmentKpi(resourceParameter);
+                return File(result.Content, result.ContentType, result.FileName);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("performance/level/0")]
+        public async Task<IActionResult> PerformanceLevel0([FromQuery] SapResourceParameter resourceParameter)
+        {
+            try
+            {
+                var result = await _exportService.DownloadPerformanceLevel0(resourceParameter);
                 return File(result.Content, result.ContentType, result.FileName);
             }
             catch (Exception e)

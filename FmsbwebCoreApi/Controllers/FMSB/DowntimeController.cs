@@ -16,11 +16,9 @@ namespace FmsbwebCoreApi.Controllers.FMSB
     public class DowntimeController : ControllerBase
     {
         private readonly IFmsbMvcLibraryRepository _repo;
-        public DowntimeController(
-            IFmsbMvcLibraryRepository libRepo)
+        public DowntimeController(IFmsbMvcLibraryRepository libRepo)
         {
-            _repo = libRepo ??
-                throw new ArgumentNullException(nameof(libRepo));
+            _repo = libRepo ?? throw new ArgumentNullException(nameof(libRepo));
         }
 
         [HttpGet(Name = "GetDowntime")]

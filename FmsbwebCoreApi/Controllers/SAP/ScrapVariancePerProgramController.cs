@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
@@ -23,15 +24,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetScrapVariancePerProgram")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariancePerProgram(DateTime start, DateTime end, string area = "",
-            bool isPurchasedScrap = false, bool isPlantTotal = false)
+        public async Task<IActionResult> GetScrapVariancePerProgram([FromQuery] SapResourceParameter @params)
         {
             try
             {
-                var result =
-                    await _sapLibRepo.GetScrapVariancePerProgram(start, end, area, isPurchasedScrap, isPlantTotal)
-                        .ConfigureAwait(false);
-
+                var result = await _sapLibRepo.GetScrapVariancePerProgram(@params).ConfigureAwait(false);
                 return Ok(result);
             }
             catch (Exception e)

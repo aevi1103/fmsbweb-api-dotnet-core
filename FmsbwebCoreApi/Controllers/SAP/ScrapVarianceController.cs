@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
@@ -14,56 +15,18 @@ namespace FmsbwebCoreApi.Controllers.SAP
     [Route("api/sap/scrapvariance")]
     public class ScrapVarianceController : ControllerBase
     {
-        private readonly ISapLibraryService _sapLibRepo;
-        private readonly IFmsb2LibraryRepository _fmsb2LibRepo;
-        public ScrapVarianceController(
-            ISapLibraryService sapLibRepo,
-            IFmsb2LibraryRepository fmsb2LibRepo)
+        private readonly ISapLibraryService _sapLibService;
+        public ScrapVarianceController(ISapLibraryService sapLibService)
         {
-            _sapLibRepo = sapLibRepo ??
-                throw new ArgumentNullException(nameof(sapLibRepo));
-
-            _fmsb2LibRepo = fmsb2LibRepo ??
-                throw new ArgumentNullException(nameof(fmsb2LibRepo));
+            _sapLibService = sapLibService ?? throw new ArgumentNullException(nameof(sapLibService));
         }
 
         [HttpGet(Name = "GetScrapVariance")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariance(DateTime start, DateTime end, string area = "",
-            bool isPurchasedScrap = false, bool isPlantTotal = false)
+        public async Task<IActionResult> GetScrapVariance([FromQuery] SapResourceParameter @params)
         {
-            try
-            {
-                var areas = new List<string> { "Foundry Cell", "Machine Line", "Skirt Coat", "Assembly" };
-                if (!isPlantTotal)
-                {
-                    areas = areas.Where(x => x.ToLower().Trim() == area.ToLower().Trim()).ToList();
-                }
 
-                var list = new List<dynamic>();
-                foreach (var a in areas)
-                {
-                    var details = await _sapLibRepo.GetPlantWideScrapVariance(start, end, a, isPurchasedScrap).ConfigureAwait(false);
-                    var rec = new
-                    {
-                        ScrapType = a switch
-                        {
-                            "Foundry Cell" => "Foundry",
-                            "Machine Line" => "Machining",
-                            "Skirt Coat" => "Finishing",
-                            _ => a
-                        },
-                        Details = details
-                    };
-                    list.Add(rec);
-                }
-
-                return Ok(list);
-            }
-            catch (Exception e)
-            {
-                throw new Exception(e.Message);
-            }
+            return Ok(await _sapLibService.GetScrapVariance(@params));
 
         }
     }

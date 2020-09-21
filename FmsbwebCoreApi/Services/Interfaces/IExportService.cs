@@ -9,7 +9,8 @@ namespace FmsbwebCoreApi.Services.Interfaces
 {
     public interface IExportService
     {
-        Task<DownloadResult> DownloadDepartmentKpi(SapResouceParameter resourceParameter);
-        Task<DownloadResult> DownloadDepartmentDetails(SapResouceParameter resourceParameter);
+        Task<DownloadResult> DownloadDepartmentKpi(SapResourceParameter resourceParameter);
+        Task<DownloadResult> DownloadDepartmentWorkCenters(SapResourceParameter @params);
+        Task<DownloadResult> DownloadPerformanceLevel0(SapResourceParameter resourceParameter);
     }
 }

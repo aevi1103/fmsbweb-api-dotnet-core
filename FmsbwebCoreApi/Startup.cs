@@ -150,6 +150,7 @@ namespace FmsbwebCoreApi
             //external class lib
             services.AddScoped<IConverterService, ConverterService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IStringUtilityService, StringUtilityService>();
             services.AddScoped<Hour, Hour>();
             services.AddScoped<DateShift, DateShift>();
 

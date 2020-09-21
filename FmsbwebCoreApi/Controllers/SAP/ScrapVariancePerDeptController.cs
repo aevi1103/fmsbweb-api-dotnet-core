@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -23,11 +24,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetScrapVariancePerDept")]
         [HttpHead]
-        public async Task<IActionResult> GetScrapVariancePerDept(DateTime start, DateTime end, bool isPurchasedScrap = false)
+        public async Task<IActionResult> GetScrapVariancePerDept([FromQuery] SapResourceParameter @params)
         {
             try
             {
-                var result = await _sapLibRepo.GetScrapByDept(start, end, isPurchasedScrap).ConfigureAwait(false);
+                var result = await _sapLibRepo.GetScrapByDept(@params).ConfigureAwait(false);
                 return Ok(result);
             }
             catch (Exception e)

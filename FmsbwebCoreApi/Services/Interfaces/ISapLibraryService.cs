@@ -16,46 +16,22 @@ namespace FmsbwebCoreApi.Services.Interfaces
         #region Scrap
 
         Task<dynamic> GetDailyScrapByShift(DailyScrapByShiftResourceParameter resourceParams);
-        Task<IEnumerable<dynamic>> GetScrapByShift(DateTime startDate, DateTime endDate, string area, bool isPurchasedScrap = false);
+        Task<IEnumerable<dynamic>> GetScrapByShift(SapResourceParameter @params);
         Task<IEnumerable<DailyScrapByShiftDateDto>> GetDailyScrapRate(DateTime startDate, DateTime endDate, string area,bool isPurchasedScrap = false);
-        Task<IEnumerable<dynamic>> GetScrapByDept(DateTime startDate, DateTime endDate, bool isPurchasedScrap = false);
+        Task<IEnumerable<dynamic>> GetScrapByDept(SapResourceParameter @params);
         Task<IEnumerable<dynamic>> GetPlantWideScrapVariance(DateTime startDate, DateTime endDate, string area = "", bool isPurchasedScrap = false);
 
-        Task<List<dynamic>> GetScrapVariancePerProgram(DateTime startDate, DateTime endDate, string area = "",
-            bool isPurchasedScrap = false, bool isPlantTotal = false);
+        Task<List<dynamic>> GetScrapVariance(SapResourceParameter @params);
+
+        Task<List<dynamic>> GetScrapVariancePerProgram(SapResourceParameter @params);
 
         #endregion
 
         #region Production KPI
 
-        Task<GetSapProdAndScrapDto> GetSapProdAndScrap(DateTime startDate, DateTime endDate, string area);
-
-        /// <summary>
-        /// Get production data with labor hours
-        /// </summary>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="area"></param>
-        /// <returns></returns>
-        Task<ProductionMorningMeetingDto> GetProductionData(DateTime startDate, DateTime endDate, string area);
-
-
-        /// <summary>
-        /// Get production data with downtime
-        /// </summary>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="area"></param>
-        /// <returns></returns>
-        Task<DepartmentKpiDto> GetDepartmentKpi(DateTime startDate, DateTime endDate, string area);
-
-        /// <summary>
-        /// Get Production details by line filtered by area
-        /// </summary>
-        /// <param name="startDate"></param>
-        /// <param name="endDate"></param>
-        /// <param name="area"></param>
-        /// <returns></returns>
+        Task<GetSapProdAndScrapDto> GetSapProdAndScrap(SapResourceParameter @params);
+        Task<ProductionMorningMeetingDto> GetProductionData(SapResourceParameter @params);
+        Task<DepartmentKpiDto> GetDepartmentKpi(SapResourceParameter @params);
         Task<DepartmentDetailsDto> GetDepartmentDetails(DateTime startDate, DateTime endDate, string area);
 
         Task<IEnumerable<DailyDepartmentKpiDto>> GetDailyKpiChart(DateTime startDate, DateTime endDate, string area);
@@ -64,9 +40,9 @@ namespace FmsbwebCoreApi.Services.Interfaces
 
         #region Labor Hours
 
-        Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(DateTime startDate, DateTime endDate, string area);
-        Task<IEnumerable<dynamic>> GetPpmhPerShiftVariance(DateTime startDate, DateTime endDate, string area);
-        Task<IEnumerable<dynamic>> GetPlantWidePpmh(DateTime startDate, DateTime endDate);
+        Task<IEnumerable<dynamic>> GetPpmhPerDeptPlantWideVariance(SapResourceParameter @params);
+        Task<IEnumerable<dynamic>> GetPpmhPerShiftVariance(SapResourceParameter @params);
+        Task<IEnumerable<dynamic>> GetPlantWidePpmh(SapResourceParameter @params);
 
         #endregion
 

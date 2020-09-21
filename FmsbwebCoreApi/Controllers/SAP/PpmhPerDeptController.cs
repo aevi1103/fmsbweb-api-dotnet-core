@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 
 namespace FmsbwebCoreApi.Controllers.SAP
@@ -21,11 +22,11 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetPpmhPerDept")]
         [HttpHead]
-        public async Task<IActionResult> GetPpmhPerDept(DateTime start, DateTime end, string area)
+        public async Task<IActionResult> GetPpmhPerDept([FromQuery] SapResourceParameter @params)
         {
             try
             {
-                var result = await _sapLibRepo.GetPpmhPerDeptPlantWideVariance(start, end, area).ConfigureAwait(false);
+                var result = await _sapLibRepo.GetPpmhPerDeptPlantWideVariance(@params).ConfigureAwait(false);
                 return Ok(result);
             }
             catch (Exception e)

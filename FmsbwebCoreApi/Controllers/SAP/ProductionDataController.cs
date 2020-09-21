@@ -20,23 +20,19 @@ namespace FmsbwebCoreApi.Controllers.SAP
 
         [HttpGet(Name = "GetProductionData")]
         [HttpHead]
-        public async Task<IActionResult> GetProductionData(
-        [FromQuery] SapResouceParameter resourceParameter)
+        public async Task<IActionResult> GetProductionData([FromQuery] SapResourceParameter @params)
         {
-            if (resourceParameter == null)
+            if (@params == null)
             {
                 return BadRequest();
             }
 
-            if (string.IsNullOrWhiteSpace(resourceParameter.Area))
+            if (string.IsNullOrWhiteSpace(@params.Area))
             {
                 return BadRequest();
             }
 
-            var prodData = await _sapLibService.GetProductionData(
-                resourceParameter.Start,
-                resourceParameter.End,
-                resourceParameter.Area).ConfigureAwait(false);
+            var prodData = await _sapLibService.GetProductionData(@params).ConfigureAwait(false);
 
             return Ok(prodData);
         }
