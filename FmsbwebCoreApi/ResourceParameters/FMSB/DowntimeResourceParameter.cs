@@ -12,5 +12,7 @@ namespace FmsbwebCoreApi.ResourceParameters.FMSB
         public string Dept { get; set; } = "";
         public string Line { get; set; } = "";
         public string Shift { get; set; } = "";
+        public int MinDowntimeEvent { get; set; } = 10;
+        public int? MaxDowntimeEvent { get; set; } = null;
     }
 }

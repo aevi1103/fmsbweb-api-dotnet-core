@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentDateTime;
+using FmsbwebCoreApi.Helpers;
 
 namespace FmsbwebCoreApi.Services.FMSB2
 {
@@ -258,6 +259,98 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
                 throw new Exception(e.Message);
             }
+        }
+
+        public async Task<dynamic> GetOvertimePercentage(string dept, DateTime start, DateTime end)
+        {
+            var hoursData = await GetLaborHoursData(start, end, dept).ConfigureAwait(false);
+
+            #region Overtime Percent Per Dept
+
+            var listOfQuarter = new List<dynamic>();
+            var startOfQuarter = start;
+
+            while (startOfQuarter <= end)
+            {
+                var endOfQuarter = startOfQuarter.EndOfQuarter();
+
+                var quarterHours = hoursData.Where(x => x.DateIn >= startOfQuarter && x.DateIn <= endOfQuarter).ToList();
+                var quarterData = GetLaborHours(quarterHours);
+
+                var listOfMonths = new List<dynamic>();
+                var monthStart = startOfQuarter;
+                while (monthStart <= endOfQuarter)
+                {
+                    var monthEnd = monthStart.EndOfMonth();
+
+                    var monthHours = hoursData.Where(x => x.DateIn >= monthStart && x.DateIn <= monthEnd).ToList();
+                    var monthData = GetLaborHours(monthHours);
+
+                    var monthRecord = new
+                    {
+                        StartDate = monthStart,
+                        EndDate = monthEnd,
+                        MonthName = monthStart.ToMonthName(),
+                        Year = startOfQuarter.Year,
+                        OverallHours = monthData.OverAll,
+                        OvertimeHours = monthData.Overtime,
+                        OvertimePercentage = monthData.OverAll == 0 ? 0 : (decimal)monthData.Overtime / (decimal)monthData.OverAll,
+                        //data = monthData
+                    };
+
+                    monthStart = monthEnd.AddDays(1);
+                    listOfMonths.Add(monthRecord);
+                }
+
+                var rec = new
+                {
+                    Dept = dept,
+                    StartDate = startOfQuarter,
+                    EndDate = endOfQuarter,
+                    Quarter = startOfQuarter.ToQuarter(),
+                    Year = startOfQuarter.Year,
+                    OverallHours = quarterData.OverAll,
+                    OvertimeHours = quarterData.Overtime,
+                    OvertimePercentage = quarterData.OverAll == 0 ? 0 : (decimal)quarterData.Overtime / (decimal)quarterData.OverAll,
+                    //data = quarterData,
+                    MonthDetails = listOfMonths
+                };
+
+                listOfQuarter.Add(rec);
+
+                startOfQuarter = endOfQuarter.AddDays(1);
+            }
+
+            #endregion
+
+            #region Overtime Percent Per Shift 
+
+            var uniqueShifts = hoursData.Select(x => x.Shift2).Distinct();
+            var shiftSummary = new List<dynamic>();
+            foreach (var shift in uniqueShifts)
+            {
+                var shiftData = GetLaborHours(hoursData.Where(x => x.Shift2 == shift).ToList());
+                var rec = new
+                {
+                    Shift = shift,
+                    OverallHours = shiftData.OverAll,
+                    OvertimeHours = shiftData.Overtime,
+                    OvertimePercentage = shiftData.OverAll == 0 ? 0 : (decimal)shiftData.Overtime / (decimal)shiftData.OverAll,
+                };
+                shiftSummary.Add(rec);
+            };
+
+
+            shiftSummary = shiftSummary.OrderByDescending(x => x.OvertimePercentage).ToList();
+
+            #endregion
+
+            return new
+            {
+                quarterSummary = listOfQuarter,
+                shiftSummary
+            };
+
         }
 
         public async Task<IEnumerable<FinanceDailyKpi>> GetFinanceDailyKpi(DateTime date)

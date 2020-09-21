@@ -27,6 +27,8 @@ namespace FmsbwebCoreApi.Services.FMSB2
         Task<List<SapProdDto>> GetProdForLaborHrs(DateTime startDate, DateTime endDate, string area);
         Task<IEnumerable<WeeklyProductionLaborHoursDto>> GetWeeklyProdScrapForLaborHrs(DateTime startDate, DateTime endDate, string area);
 
+        Task<dynamic> GetOvertimePercentage(string dept, DateTime start, DateTime end);
+
         #endregion
 
         #region Finance

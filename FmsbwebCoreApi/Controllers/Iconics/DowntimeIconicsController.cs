@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.ResourceParameters.FMSB;
 using FmsbwebCoreApi.Services.Iconics;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -22,14 +23,21 @@ namespace FmsbwebCoreApi.Controllers.Iconics
 
         [HttpGet(Name = "GetDowntimeIconics")]
         [HttpHead]
-        public async Task<IActionResult> GetDowntimeIconics(DateTime start, DateTime end, int minDowntimeEvent = 10, int? maxDowntimeEvent = null, string dept = "")
+        public async Task<IActionResult> GetDowntimeIconics([FromQuery] DowntimeResourceParameter @params)
         {
-            var initialDate = start.AddDays(-7);
-            end = end.AddDays(1);
-            dept = dept == "Plant" ? "" : dept;
+            var initialDate = @params.Start.AddDays(-7);
+            @params.End = @params.End.AddDays(1);
+            @params.Dept = @params.Dept == "Plant" ? "" : @params.Dept;
 
-            var data = await _repo.GetDowntimeIconics(initialDate, end, dept, minDowntimeEvent, maxDowntimeEvent).ConfigureAwait(false);
-            var spreadHours = _repo.SpreadHours(data.ToList()).Where(x => x.StartStamp >= start && x.StartStamp <= end);
+            var data = await _repo.GetDowntimeIconics(
+                initialDate,
+                @params.End,
+                @params.Dept,
+                @params.MinDowntimeEvent,
+                @params.MaxDowntimeEvent)
+            .ConfigureAwait(false);
+
+            var spreadHours = _repo.SpreadHours(data.ToList()).Where(x => x.StartStamp >= @params.Start && x.StartStamp <= @params.End);
 
             var result = spreadHours.GroupBy(x => new { x.Dept, x.Line })
                             .Select(x => new

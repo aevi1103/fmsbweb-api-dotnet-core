@@ -14,5 +14,6 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
         Task<List<DowntimeDto>> GetDowntime(DowntimeResourceParameter parameters);
         List<OverallCallbox> SpreadHours(List<OverallCallbox> data);
         Task<List<DowntimeOwner>> GetDowntimeOwner();
+        Task<dynamic> GetDowntimeByOwner(DowntimeResourceParameter parameters);
     }
 }

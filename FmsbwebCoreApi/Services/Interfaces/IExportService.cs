@@ -12,5 +12,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<DownloadResult> DownloadDepartmentKpi(SapResourceParameter resourceParameter);
         Task<DownloadResult> DownloadDepartmentWorkCenters(SapResourceParameter @params);
         Task<DownloadResult> DownloadPerformanceLevel0(SapResourceParameter resourceParameter);
+        Task<DownloadResult> DownloadPerformanceLevel2(SapResourceParameter resourceParameter);
     }
 }

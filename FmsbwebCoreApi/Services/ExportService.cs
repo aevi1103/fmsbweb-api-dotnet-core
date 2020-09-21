@@ -6,10 +6,13 @@ using System.Threading.Tasks;
 using ClosedXML.Excel;
 using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.Models.FMSB2;
+using FmsbwebCoreApi.Models.Iconics;
 using FmsbwebCoreApi.Models.SAP;
 using FmsbwebCoreApi.ResourceParameters.FMSB;
 using FmsbwebCoreApi.ResourceParameters.SAP;
+using FmsbwebCoreApi.Services.FMSB2;
 using FmsbwebCoreApi.Services.FmsbMvc;
+using FmsbwebCoreApi.Services.Iconics;
 using FmsbwebCoreApi.Services.Interfaces;
 using NUnit.Framework.Interfaces;
 using UtilityLibrary.Service;
@@ -25,6 +28,9 @@ namespace FmsbwebCoreApi.Services
         private readonly ISapLibraryService _sapLibService;
         private readonly IFmsbMvcLibraryRepository _downtimeRepository;
         private readonly IStringUtilityService _stringUtilityService;
+        private readonly IFmsb2LibraryRepository _fmsb2LibraryRepository;
+        private readonly IUtilityService _utilityService;
+        private readonly IIconicsLibraryRepository _iconicsLibraryRepository;
 
         private const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         private const string NumberFormat = "_(* #,##0.00000_);_(* (#,##0.00);_(* \"-\"??_);_(@_)";
@@ -34,7 +40,10 @@ namespace FmsbwebCoreApi.Services
             IProductionService productionService,
             ISapLibraryService sapLibService,
             IFmsbMvcLibraryRepository downtimeRepository,
-            IStringUtilityService stringUtilityService)
+            IStringUtilityService stringUtilityService,
+            IFmsb2LibraryRepository fmsb2LibraryRepository,
+            IUtilityService utilityService,
+            IIconicsLibraryRepository iconicsLibraryRepository)
         {
             _kpiService = kpiService ?? throw new ArgumentNullException(nameof(kpiService));
             _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
@@ -42,6 +51,9 @@ namespace FmsbwebCoreApi.Services
             _sapLibService = sapLibService ?? throw new ArgumentNullException(nameof(sapLibService));
             _downtimeRepository = downtimeRepository ?? throw new ArgumentNullException(nameof(downtimeRepository));
             _stringUtilityService = stringUtilityService ?? throw new ArgumentNullException(nameof(stringUtilityService));
+            _fmsb2LibraryRepository = fmsb2LibraryRepository ?? throw new ArgumentNullException(nameof(fmsb2LibraryRepository));
+            _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));
+            _iconicsLibraryRepository = iconicsLibraryRepository ?? throw new ArgumentNullException(nameof(iconicsLibraryRepository));
         }
 
         #region DepartmentPage
@@ -672,7 +684,7 @@ namespace FmsbwebCoreApi.Services
 
         #endregion
 
-        #region PerfomanceLevelOne
+        #region PerfomanceLevel 0
 
         private static void ScrapVarianceWorkSheet(IXLWorkbook wb, IEnumerable<dynamic> scrapTypes, SapResourceParameter @params)
         {
@@ -1144,7 +1156,7 @@ namespace FmsbwebCoreApi.Services
                 "Shift Date",
                 "Shift",
                 "Hour",
-                "Type",
+                "Owner",
                 "Line",
                 "Machine",
                 "Reason 1",
@@ -1224,9 +1236,422 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
+
         #endregion
 
+        #region PerfomanceLevel 2
 
+        private static void ScrapVarianceByDeptWorkSheet(IXLWorkbook wb, IEnumerable<dynamic> items, SapResourceParameter @params)
+        {
+            var ws = wb.Worksheets.Add($"ScrapVarianceByDept").SetTabColor(XLColor.Blue);
+            ws.Cell(1, 1).Value = "Title: ";
+            ws.Cell(1, 2).Value = $"Scrap Variance by Department ({@params.Start.ToShortDateString()} - {@params.End.ToShortDateString()})";
+
+            var columnNames = new List<string>
+            {
+                "Department",
+                "SAP Gross",
+                "SAP Net",
+                "Scrap Qty",
+                "Scrap Rate",
+                "",
+                "Department",
+                "Scrap Type",
+                "SAP Gross",
+                "Scrap Qty",
+                "Scrap Rate",
+                "",
+                "Department",
+                "Scrap Type",
+                "Line",
+                "SAP Gross",
+                "Scrap Qty",
+                "Scrap Rate",
+            };
+
+            const int firstRow = 3;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var areaRow = firstRow;
+            var scrapTypeRow = firstRow;
+            var lineRow = firstRow;
+
+            foreach (var area in items)
+            {
+                areaRow++;
+                ws.Cell(areaRow, 1).Value = area.Area;
+                ws.Cell(areaRow, 2).Value = area.SapGross;
+                ws.Cell(areaRow, 3).Value = area.SapNet;
+                ws.Cell(areaRow, 4).Value = area.Qty;
+                ws.Cell(areaRow, 5).Value = area.ScrapRate;
+
+                foreach (var scrapType in area.ScrapAreaNameDetails)
+                {
+                    scrapTypeRow++;
+                    ws.Cell(scrapTypeRow, 7).Value = area.Area;
+                    ws.Cell(scrapTypeRow, 8).Value = scrapType.ScrapAreaName;
+                    ws.Cell(scrapTypeRow, 9).Value = area.SapGross;
+                    ws.Cell(scrapTypeRow, 10).Value = scrapType.Qty;
+                    ws.Cell(scrapTypeRow, 11).Value = scrapType.ScrapRate;
+
+                    foreach (var line in scrapType.LineDetails)
+                    {
+                        lineRow++;
+                        ws.Cell(lineRow, 13).Value = area.Area;
+                        ws.Cell(lineRow, 14).Value = line.ScrapAreaName;
+                        ws.Cell(lineRow, 15).Value = line.Line;
+                        ws.Cell(lineRow, 16).Value = area.SapGross;
+                        ws.Cell(lineRow, 17).Value = line.Qty;
+                        ws.Cell(lineRow, 18).Value = line.ScrapRate;
+                    }
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void ScrapVarianceByShiftWorkSheet(IXLWorkbook wb, IEnumerable<dynamic> items, SapResourceParameter @params)
+        {
+            var ws = wb.Worksheets.Add($"ScrapVarianceByShift").SetTabColor(XLColor.Blue);
+            ws.Cell(1, 1).Value = "Title: ";
+            ws.Cell(1, 2).Value = $"Scrap Variance by Shift ({@params.Start.ToShortDateString()} - {@params.End.ToShortDateString()})";
+
+            var columnNames = new List<string>
+            {
+                "Department",
+                "Shift",
+                "SAP Gross",
+                "Scrap Qty",
+                "Scrap Rate",
+                "",
+                "Department",
+                "Shift",
+                "Scrap Type",
+                "SAP Gross",
+                "Scrap Qty",
+                "Scrap Rate",
+                "",
+                "Department",
+                "Shift",
+                "Scrap Type",
+                "Line",
+                "SAP Gross",
+                "Scrap Qty",
+                "Scrap Rate",
+            };
+
+            const int firstRow = 3;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var areaRow = firstRow;
+            var scrapTypeRow = firstRow;
+            var lineRow = firstRow;
+
+            foreach (var shift in items)
+            {
+                areaRow++;
+                ws.Cell(areaRow, 1).Value = @params.Area;
+                ws.Cell(areaRow, 2).Value = shift.Shift;
+                ws.Cell(areaRow, 3).Value = shift.SapGross;
+                ws.Cell(areaRow, 4).Value = shift.Qty;
+                ws.Cell(areaRow, 5).Value = shift.ScrapRate;
+
+                foreach (var scrapType in shift.scrapAreaNameDetails)
+                {
+                    scrapTypeRow++;
+                    ws.Cell(scrapTypeRow, 7).Value = @params.Area;
+                    ws.Cell(scrapTypeRow, 8).Value = shift.Shift;
+                    ws.Cell(scrapTypeRow, 9).Value = scrapType.ScrapAreaName;
+                    ws.Cell(scrapTypeRow, 10).Value = shift.SapGross;
+                    ws.Cell(scrapTypeRow, 11).Value = scrapType.Qty;
+                    ws.Cell(scrapTypeRow, 12).Value = scrapType.ScrapRate;
+
+                    foreach (var line in scrapType.LineDetails)
+                    {
+                        lineRow++;
+                        ws.Cell(lineRow, 14).Value = @params.Area;
+                        ws.Cell(lineRow, 15).Value = shift.Shift;
+                        ws.Cell(lineRow, 16).Value = scrapType.ScrapAreaName;
+                        ws.Cell(lineRow, 17).Value = line.Line;
+                        ws.Cell(lineRow, 18).Value = shift.SapGross;
+                        ws.Cell(lineRow, 19).Value = line.Qty;
+                        ws.Cell(lineRow, 20).Value = line.ScrapRate;
+                    }
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void OvertimeWorkSheet(IXLWorkbook wb, dynamic data, string area, string workSheetName,
+            DateTime start, DateTime end)
+        {
+            var ws = wb.Worksheets.Add(workSheetName).SetTabColor(XLColor.Blue);
+            ws.Cell(1, 1).Value = "Title: ";
+            ws.Cell(1, 2).Value = $"Overtime Percentage ({start} - {end})";
+
+            var columnNames = new List<string>
+            {
+                "Department",
+                "Start Date",
+                "End Date",
+                "Year",
+                "Quarter",
+                "Overall Hours",
+                "Overtime Hours",
+                "Overtime %",
+                "",
+                "Department",
+                "Start Date",
+                "End Date",
+                "Year",
+                "Quarter",
+                "Month",
+                "Overall Hours",
+                "Overtime Hours",
+                "Overtime %",
+                "",
+                "Department",
+                "Shift",
+                "Overall Hours",
+                "Overtime Hours",
+                "Overtime %",
+            };
+
+            const int firstRow = 3;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var quarterRow = firstRow;
+            var monthRow = firstRow;
+
+            foreach (var quarter in data.quarterSummary)
+            {
+                quarterRow++;
+                ws.Cell(quarterRow, 1).Value = quarter.Dept;
+                ws.Cell(quarterRow, 2).Value = quarter.StartDate;
+                ws.Cell(quarterRow, 3).Value = quarter.EndDate;
+                ws.Cell(quarterRow, 4).Value = quarter.Year;
+                ws.Cell(quarterRow, 5).Value = quarter.Quarter;
+                ws.Cell(quarterRow, 6).Value = quarter.OverallHours;
+                ws.Cell(quarterRow, 7).Value = quarter.OvertimeHours;
+                ws.Cell(quarterRow, 8).Value = quarter.OvertimePercentage;
+
+                foreach (var month in quarter.MonthDetails)
+                {
+                    monthRow++;
+                    ws.Cell(monthRow, 10).Value = quarter.Dept;
+                    ws.Cell(monthRow, 11).Value = quarter.StartDate;
+                    ws.Cell(monthRow, 12).Value = quarter.EndDate;
+                    ws.Cell(monthRow, 13).Value = quarter.Year;
+                    ws.Cell(monthRow, 14).Value = quarter.Quarter;
+                    ws.Cell(monthRow, 15).Value = month.MonthName;
+                    ws.Cell(monthRow, 16).Value = month.OverallHours;
+                    ws.Cell(monthRow, 17).Value = month.OvertimeHours;
+                    ws.Cell(monthRow, 18).Value = month.OvertimePercentage;
+                }
+            }
+
+            var shiftRow = firstRow;
+            foreach (var shift in data.shiftSummary)
+            {
+                shiftRow++;
+                ws.Cell(shiftRow, 20).Value = area;
+                ws.Cell(shiftRow, 21).Value = shift.Shift;
+                ws.Cell(shiftRow, 22).Value = shift.OverallHours;
+                ws.Cell(shiftRow, 23).Value = shift.OvertimeHours;
+                ws.Cell(shiftRow, 24).Value = shift.OvertimePercentage;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void DowntimeByOwnerWorkSheet(IXLWorkbook wb, dynamic items, SapResourceParameter @params)
+        {
+            var ws = wb.Worksheets.Add("DowntimeByOwner").SetTabColor(XLColor.Blue);
+            ws.Cell(1, 1).Value = "Title: ";
+            ws.Cell(1, 2).Value = $"Downtime By Owner ({@params.Start} - {@params.End})";
+
+            var columnNames = new List<string>
+            {
+                "Owner",
+                "Downtime",
+                "",
+                "Owner",
+                "Line",
+                "Downtime (Minutes)",
+                "",
+                "Owner",
+                "Line",
+                "Machine",
+                "Downtime (Minutes)",
+                "",
+                "Owner",
+                "Line",
+                "Machine",
+                "Reason2",
+                "Downtime (Minutes)"
+            };
+
+            const int firstRow = 3;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var ownerRow = firstRow;
+            var lineRow = firstRow;
+            var machineRow = firstRow;
+            var reasonRow = firstRow;
+
+            foreach (var owner in items)
+            {
+                ownerRow++;
+                ws.Cell(ownerRow, 1).Value = owner.Type;
+                ws.Cell(ownerRow, 2).Value = owner.DowntimeLoss;
+
+                foreach (var line in owner.LineDetails)
+                {
+                    lineRow++;
+                    ws.Cell(lineRow, 4).Value = line.Type;
+                    ws.Cell(lineRow, 5).Value = line.Line;
+                    ws.Cell(lineRow, 6).Value = line.DowntimeLoss;
+
+                    foreach (var machine in line.MahcineDetails)
+                    {
+                        machineRow++;
+                        ws.Cell(machineRow, 8).Value = machine.Type;
+                        ws.Cell(machineRow, 9).Value = machine.Line;
+                        ws.Cell(machineRow, 10).Value = machine.Machine;
+                        ws.Cell(machineRow, 11).Value = machine.DowntimeLoss;
+
+                        foreach (var reason in machine.ReasonDetails)
+                        {
+                            reasonRow++;
+                            ws.Cell(reasonRow, 13).Value = reason.Type;
+                            ws.Cell(reasonRow, 14).Value = reason.Line;
+                            ws.Cell(reasonRow, 15).Value = reason.Machine;
+                            ws.Cell(reasonRow, 16).Value = reason.Reason2;
+                            ws.Cell(reasonRow, 17).Value = reason.DowntimeLoss;
+
+                        }
+                    }
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void DowntimeIconicsWorkSheet(IXLWorkbook wb, IEnumerable<IconicsDowntimeDto> items, SapResourceParameter @params)
+        {
+            var ws = wb.Worksheets.Add("DowntimeIconics").SetTabColor(XLColor.Blue);
+            ws.Cell(1, 1).Value = "Title: ";
+            ws.Cell(1, 2).Value = $"Downtime Iconics ({@params.Start} - {@params.End})";
+
+            var columnNames = new List<string>
+            {
+                "Tag Name",
+                "Department",
+                "Line",
+                "Machine Name",
+                "Start Stamp",
+                "End Stamp",
+                "Start Hour",
+                "End Hour",
+                "Downtime (Minutes)"
+            };
+
+            const int firstRow = 3;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.TagName;
+                ws.Cell(row, 2).Value = item.Dept;
+                ws.Cell(row, 3).Value = item.Line;
+                ws.Cell(row, 4).Value = item.MachineName;
+                ws.Cell(row, 5).Value = item.StartStamp;
+                ws.Cell(row, 6).Value = item.EndStamp;
+                ws.Cell(row, 7).Value = item.StarHour;
+                ws.Cell(row, 8).Value = item.EndHour;
+                ws.Cell(row, 9).Value = item.Downtime;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        public async Task<DownloadResult> DownloadPerformanceLevel2(SapResourceParameter @params)
+        {
+            var dept = _utilityService.MapAreaToDepartment(@params.Area);
+
+            var monthRangeParams = FastDeepCloner.DeepCloner.Clone(@params);
+            var dateRangeParams = FastDeepCloner.DeepCloner.Clone(@params);
+            monthRangeParams.Start = @params.MonthStart;
+            monthRangeParams.End = @params.MonthEnd;
+
+            var scrapVarianceByDept = await _sapLibService.GetScrapByDept(dateRangeParams);
+            var scrapVariancePerShift = await _sapLibService.GetScrapByShift(dateRangeParams);
+            var overtimeMonthRange = await _fmsb2LibraryRepository.GetOvertimePercentage(monthRangeParams.Area, monthRangeParams.Start, monthRangeParams.End);
+            var overtimeDateRange = await _fmsb2LibraryRepository.GetOvertimePercentage(dateRangeParams.Area, dateRangeParams.Start, dateRangeParams.End);
+            var downtimeByOwner = await _downtimeRepository.GetDowntimeByOwner(new DowntimeResourceParameter
+            {
+                Start = dateRangeParams.Start,
+                End = dateRangeParams.End,
+                Dept = dept
+            });
+            var downtimeIconics = await _iconicsLibraryRepository.GetDowntimeIconics(
+                    dateRangeParams.Start,
+                    dateRangeParams.End,
+                    dept)
+                .ConfigureAwait(false);
+
+            var fileName = $"{@params.Area.ToUpper()}_PERFORMANCE_LVL1&2_DATA_EXPORT_{DateTime.Now.ToFileTime()}.xlsx";
+            using var wb = new XLWorkbook();
+
+            ScrapVarianceByDeptWorkSheet(wb, scrapVarianceByDept, @params);
+            ScrapVarianceByShiftWorkSheet(wb, scrapVariancePerShift, @params);
+            OvertimeWorkSheet(wb, overtimeMonthRange, monthRangeParams.Area, "Overtime1", monthRangeParams.Start, monthRangeParams.End);
+            OvertimeWorkSheet(wb, overtimeDateRange, dateRangeParams.Area, "Overtime2", dateRangeParams.Start, dateRangeParams.End);
+            DowntimeByOwnerWorkSheet(wb, downtimeByOwner, @params);
+            DowntimeIconicsWorkSheet(wb, downtimeIconics, @params);
+
+            await using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            var content = stream.ToArray();
+
+            return new DownloadResult
+            {
+                Content = content,
+                ContentType = ContentType,
+                FileName = fileName
+            };
+        }
+
+
+        #endregion
 
 
 

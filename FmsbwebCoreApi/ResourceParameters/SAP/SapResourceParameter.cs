@@ -28,5 +28,6 @@ namespace FmsbwebCoreApi.ResourceParameters.SAP
         public bool IsPlantTotal { get; set; } = false;
         public DateTime MonthStart { get; set; } = DateTime.Today.AddDays(-1);
         public DateTime MonthEnd { get; set; } = DateTime.Today.AddDays(-1);
+
     }
 }

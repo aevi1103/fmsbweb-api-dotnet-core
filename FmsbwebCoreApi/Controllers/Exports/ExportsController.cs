@@ -67,5 +67,20 @@ namespace FmsbwebCoreApi.Controllers.Exports
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpGet]
+        [Route("performance/level/2")]
+        public async Task<IActionResult> PerformanceLevel2([FromQuery] SapResourceParameter resourceParameter)
+        {
+            try
+            {
+                var result = await _exportService.DownloadPerformanceLevel2(resourceParameter);
+                return File(result.Content, result.ContentType, result.FileName);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }
