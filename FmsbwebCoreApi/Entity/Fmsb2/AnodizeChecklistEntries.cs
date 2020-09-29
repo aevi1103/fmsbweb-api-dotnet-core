@@ -13,8 +13,8 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public virtual AnodizeChecklist AnodizeChecklist { get; set; }
         [Required]
         public int AnodizeChecklistId { get; set; }
-        public string Value { get; set; }
-        public CreateHxH CreateHxH { get; set; }
+        public decimal Value { get; set; }
+        public virtual CreateHxH CreateHxH { get; set; }
         [Required]
         public DateTime Stamp { get; set; } = DateTime.Now;
     }
