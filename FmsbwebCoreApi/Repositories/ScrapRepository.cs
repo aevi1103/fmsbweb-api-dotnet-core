@@ -56,6 +56,12 @@ namespace FmsbwebCoreApi.Repositories
             if (resourceParameter.WorkCenters.Count > 0)
                 qry = qry.Where(x => resourceParameter.WorkCenters.Contains(x.WorkCenter));
 
+            if (resourceParameter.MachineHxHs.Count > 0)
+                qry = qry.Where(x => resourceParameter.MachineHxHs.Contains(x.MachineHxh));
+
+            if (resourceParameter.Lines.Count > 0)
+                qry = qry.Where(x => resourceParameter.Lines.Contains(x.Machine2));
+
             return qry;
         }
     }

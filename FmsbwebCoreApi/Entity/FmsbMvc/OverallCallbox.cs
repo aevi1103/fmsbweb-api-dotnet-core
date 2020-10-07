@@ -34,5 +34,8 @@ namespace FmsbwebCoreApi.Entity.FmsbMvc
         [Required]
         [StringLength(15)]
         public string Type { get; set; }
+
+        [Column("hxhLine")]
+        public string HxHLine { get; set; }
     }
 }

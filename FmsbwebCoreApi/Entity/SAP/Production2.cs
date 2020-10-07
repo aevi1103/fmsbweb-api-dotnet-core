@@ -14,6 +14,9 @@ namespace FmsbwebCoreApi.Entity.SAP
         [Column("machine_hxh")]
         [StringLength(100)]
         public string MachineHxh { get; set; }
+        [Column("line")]
+        [StringLength(100)]
+        public string Line { get; set; }
         [Required]
         [Column("side")]
         [StringLength(50)]

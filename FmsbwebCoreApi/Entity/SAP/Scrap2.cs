@@ -101,6 +101,9 @@ namespace FmsbwebCoreApi.Entity.SAP
         public int? WeekNumber { get; set; }
         public int? Year { get; set; }
 
+        [Column("colorCode")]
+        public string ColorCode { get; set; }
+
         public string CellSide => (Department == "Foundry" && Side == null) ? "n/a" : Side;
     }
 }

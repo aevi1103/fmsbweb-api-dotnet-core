@@ -114,6 +114,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.IProductionRepository, Repositories.ProductionRepository>();
             services.AddScoped<Repositories.Interfaces.IKpiTargetRepository, Repositories.KpiTargetRepository>();
             services.AddScoped<Repositories.Interfaces.IEndOfShiftReportRepository, Repositories.EndOfShiftReportRepository>();
+            services.AddScoped<Repositories.Interfaces.IMachineMappingRepository, Repositories.MachineMappingRepository>();
 
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ICharacteristicRepository, Repositories.QualityCheckSheets.CharacteristicRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IMachineRepository, Repositories.QualityCheckSheets.MachineRepository>();
@@ -131,6 +132,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.IDataAccessUtilityService, Services.DataAccessUtilityService>();
             services.AddScoped<Services.Interfaces.IEndOfShiftReportService, Services.EndOFShiftReportService>();
             services.AddScoped<Services.Interfaces.IExportService, Services.ExportService>();
+            services.AddScoped<Services.Interfaces.ISwotService, Services.SwotService>();
 
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICharacteristicService, Services.QualityCheckSheets.CharacteristicService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();
