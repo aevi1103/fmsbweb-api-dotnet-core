@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using FluentDateTime;
+using FmsbwebCoreApi.Models;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace FmsbwebCoreApi.ResourceParameters
 {
@@ -13,25 +16,38 @@ namespace FmsbwebCoreApi.ResourceParameters
         [Required]
         public DateTime EndDate { get; set; }
 
-        public int LastMonths { get; set; } = 3;
-        public int LastWeeks { get; set; } = 3;
-        public int LastDays { get; set; } = 7;
-
         [Required]
         public string Dept { get; set; }
 
-        public List<string> Lines { get; set; } = new List<string>();
-
+        public string Lines { get; set; } = "";
         public bool ShowMonthlyCharts { get; set; } = false;
         public bool ShowLastSevenDays { get; set; } = false;
+
+        public int LastMonths { get; set; } = 2;
+        public int LastWeeks { get; set; } = 2;
+        public int LastDays { get; set; } = 7;
+        public int Take { get; set; } = 10; // last x number of defects for scrap pareto
+
+        public List<string> LinesArr =>
+            string.IsNullOrEmpty(Lines)
+                ? new List<string>()
+                : Lines.Split(',').Select(x => x.Trim()).ToList();
 
         public DateTime MonthStart => EndDate.BeginningOfMonth().AddMonths(-LastMonths);
         public DateTime MonthEnd => EndDate;
 
-        public DateTime WeekEnd => EndDate.BeginningOfWeek().AddDays(-1);
-        public DateTime WeekStart => WeekEnd.AddDays((LastWeeks * 7) + 1);
+        public DateTime WeekEnd => EndDate;
+        public DateTime WeekStart => GetWeekStart();
 
         public DateTime LastDayStart => EndDate.AddDays(-LastDays);
         public DateTime LastDayEnd => EndDate;
+
+        private DateTime GetWeekStart()
+        {
+            var daysToSubtract = (LastWeeks * 7) - 1;
+            var wkEnd = EndDate.BeginningOfWeek().AddDays(-1);
+            return wkEnd.AddDays(-daysToSubtract);
+        }
+
     }
 }

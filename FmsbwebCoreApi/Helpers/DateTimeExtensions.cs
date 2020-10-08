@@ -42,7 +42,17 @@ namespace FmsbwebCoreApi.Helpers
             return Convert.ToDateTime(date).Year;
         }
 
+        public static int ToYear(this DateTime date)
+        {
+            return Convert.ToDateTime(date).Year;
+        }
+
         public static int ToMonth(this DateTime? date)
+        {
+            return Convert.ToDateTime(date).Month;
+        }
+
+        public static int ToMonth(this DateTime date)
         {
             return Convert.ToDateTime(date).Month;
         }
@@ -68,6 +78,11 @@ namespace FmsbwebCoreApi.Helpers
         public static string ToMonthName(this DateTime thisDate)
         {
             return thisDate.ToString("MMM", CultureInfo.InvariantCulture);
+        }
+
+        public static string ToMonthName(this DateTime? thisDate)
+        {
+            return thisDate.ToDateTime().ToString("MMM", CultureInfo.InvariantCulture);
         }
 
         public static string ToMonthName(this int? monthNumber)

@@ -8,6 +8,7 @@ namespace FmsbwebCoreApi.Models.Intranet
     public class HxHProductionByLineDto : HxhProductionDto
     {
         public string Line { get; set; }
+        public string MachineName { get; set; }
         public int MachineId { get; set; }
         public string HxHUrl { get; set; }
     }

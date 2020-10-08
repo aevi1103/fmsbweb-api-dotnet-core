@@ -75,7 +75,10 @@ namespace FmsbwebCoreApi.Services
 
         public async Task<Department> GetDepartment(string dept)
         {
-            return await _fmsb2Context.Department.AsNoTracking().FirstOrDefaultAsync(x => x.DeptName.ToLower() == dept.ToLower()).ConfigureAwait(false);
+            return await _fmsb2Context.Department
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.DeptName.ToLower() == dept.ToLower())
+                .ConfigureAwait(false);
         }
 
         public async Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, string shift, int deptId)

@@ -47,25 +47,37 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
 
             var machines = await _fmsbContext.MachineList.Where(x => x.MachineMapper != null).ToListAsync().ConfigureAwait(false);
             var owners = await GetDowntimeOwner().ConfigureAwait(false);
-            var machineMapper = "";
 
-            if (!string.IsNullOrEmpty(parameter.Line))
-            {
-                machineMapper = machines.FirstOrDefault(x => x.MachineName.ToLower() == parameter.Line.ToLower().Trim())?.MachineMapper;
-            }
+
+            // Get data in parallel
 
             var tasks = new List<Task>();
-            var callBoxTask = _context.OverallCallbox
-                        .Where(x => x.RequestDateTime >= start && x.RequestDateTime <= end
-                                                               && x.Line.ToLower().Contains(machineMapper.ToLower()))
-                        .ToListAsync();
 
-            var manualDowntimeEntryTask = _fmsbContext.DowntimeDataList2Copy
-                                        .Where(x => x.Shiftdate >= parameter.Start && x.Shiftdate <= parameter.End
-                                                                                   && x.DeptName.ToLower().Contains(parameter.Dept.Trim().ToLower())
-                                                                                   && x.MachineName.ToLower().Contains(parameter.Line.Trim().ToLower())
-                                                                                   && x.Shift.ToLower().Contains(parameter.Shift.Trim().ToLower()))
-                                        .ToListAsync();
+            // Get call box downtime records
+            var callBoxQry = _context.OverallCallbox.AsQueryable();
+            callBoxQry = callBoxQry.Where(x => x.RequestDateTime >= start && x.RequestDateTime <= end);
+
+            callBoxQry = parameter.Lines.Any() 
+                ? callBoxQry.Where(x => parameter.Lines.Contains(x.HxHLine)) 
+                : !string.IsNullOrEmpty(parameter.Line) 
+                    ? callBoxQry.Where(x => x.HxHLine == parameter.Line)
+                    : callBoxQry;
+
+            var callBoxTask = callBoxQry.ToListAsync();
+
+            // Get manual downtime records
+            var manualDowntimeQry = _fmsbContext.DowntimeDataList2Copy.AsQueryable();
+            manualDowntimeQry = manualDowntimeQry.Where(x => x.Shiftdate >= parameter.Start && x.Shiftdate <= parameter.End);
+            manualDowntimeQry = manualDowntimeQry.Where(x => x.DeptName.ToLower().Contains(parameter.Dept.Trim().ToLower()));
+            manualDowntimeQry = manualDowntimeQry.Where(x => x.Shift.ToLower().Contains(parameter.Shift.Trim().ToLower()));
+
+            manualDowntimeQry = parameter.Lines.Any()
+                ? manualDowntimeQry.Where(x => parameter.Lines.Contains(x.MachineName))
+                : !string.IsNullOrEmpty(parameter.Line) 
+                    ? manualDowntimeQry.Where(x => x.MachineName == parameter.Line)
+                    : manualDowntimeQry;
+
+            var manualDowntimeEntryTask = manualDowntimeQry.ToListAsync();
 
             tasks.Add(callBoxTask);
             tasks.Add(manualDowntimeEntryTask);
@@ -74,6 +86,9 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             var callBox = callBoxTask.Result;
             var manualDowntimeEntry = manualDowntimeEntryTask.Result;
 
+            //var callBox = await callBoxTask;
+            //var manualDowntimeEntry = await manualDowntimeEntryTask;
+
             var dh = new DateTimeHelpers();
             var spreadDowntimeData = SpreadHours(callBox);
 
@@ -81,13 +96,8 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
             var spreadCallBoxData = spreadDowntimeData
             .Select(x => new DowntimeDto
             {
-                Dept = machines.Any(m => m.MachineMapper.ToLower() == x.Line.ToLower())
-                        ? machines.First(m => m.MachineMapper.ToLower() == x.Line.ToLower()).DeptName
-                        : x.Department,
-
-                Line = machines.Any(m => m.MachineMapper.ToLower() == x.Line.ToLower())
-                        ? machines.First(m => m.MachineMapper.ToLower() == x.Line.ToLower()).MachineName
-                        : x.Line,
+                Dept = machines.FirstOrDefault(m => m.MachineMapper.ToLower() == x.Line.ToLower())?.DeptName ?? x.Department,
+                Line = machines.FirstOrDefault(m => m.MachineMapper.ToLower() == x.Line.ToLower())?.MachineName ?? x.Line,
 
                 Machine = x.Machine,
                 Reason1 = x.PrimaryReason,
@@ -100,7 +110,7 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
                 ModifiedDate = x.RequestDateTime,
                 Hour = dh.MapHourToHxHHoursForEightHourShift(x.RequestDateTime),
                 Type = x.Type,
-                TypeColor = owners.Any(o => o.Owner == x.Type) ? owners.FirstOrDefault(o => o.Owner == x.Type).Color : ""
+                TypeColor = owners.FirstOrDefault(o => o.Owner == x.Type)?.Color ?? ""
             })
             .Where(x => x.ShifDate >= parameter.Start && x.ShifDate <= parameter.End)
             .ToList();
@@ -119,11 +129,9 @@ namespace FmsbwebCoreApi.Services.FmsbMvc
                 ModifiedDate = x.Modifieddate,
                 Hour = x.Hour,
                 Type = "Operator (Manual)",
-                TypeColor = owners.FirstOrDefault(o => o.Owner == "Operator (Manual)").Color
+                TypeColor = owners.FirstOrDefault(o => o.Owner == "Operator (Manual)")?.Color ?? ""
             })
             .ToList();
-
-            var sumManual = manualDowntime.Sum(q => q.DowntimeLoss);
 
             spreadCallBoxData.AddRange(manualDowntime);
 

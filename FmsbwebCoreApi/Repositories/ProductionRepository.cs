@@ -101,7 +101,8 @@ namespace FmsbwebCoreApi.Repositories
                 Area = x.Area,
                 DeptName = x.DeptName,
                 MachineId = x.MachineId,
-                Line = x.Line ?? "",
+                MachineName = x.MachineName, // Assembly 2
+                Line = x.Line ?? "", // A2
                 Hour = x.Hour,
                 Program = x.Program ?? "",
                 Production = x.Production,

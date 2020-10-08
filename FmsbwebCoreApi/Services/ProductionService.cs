@@ -600,6 +600,8 @@ namespace FmsbwebCoreApi.Services
 
                         Department = x.Key.DeptName,
                         Area = x.Key.Area,
+
+                        MachineName = x.Key.MachineName,
                         Line = x.Key.DeptName == "Foundry" ? $"{x.Key.Line}{x.Key.CellSide}" : x.Key.Line,
                         CellSide = x.Key.CellSide,
                         MachineId = x.Key.MachineId,

@@ -20,7 +20,18 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<List<MachineMapping>> GetMachines(string area)
         {
-            return await _sapContext.MachineMapping.Where(x => x.Area == area).ToListAsync();
+            var excludeLines = new List<string>()
+            {
+                "A1", "A10", "Cell 3","10"
+            };
+
+            return await _sapContext
+                .MachineMapping
+                .AsNoTracking()
+                .Where(x => x.Area == area)
+                .Where(x => x.Line != null)
+                .Where(x => !excludeLines.Contains(x.Line))
+                .ToListAsync();
         }
     }
 }

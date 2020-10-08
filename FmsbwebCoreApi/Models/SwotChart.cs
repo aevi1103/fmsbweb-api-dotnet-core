@@ -8,6 +8,8 @@ namespace FmsbwebCoreApi.Models
     public class SwotChart
     {
         public string Line { get; set; }
-        public List<SwotChartType> Charts { get; set; } = new List<SwotChartType>();
+        public dynamic ScrapCharts { get; set; }
+        public dynamic ProductionCharts { get; set; }
+        public dynamic DowntimeCharts { get; set; }
     }
 }
