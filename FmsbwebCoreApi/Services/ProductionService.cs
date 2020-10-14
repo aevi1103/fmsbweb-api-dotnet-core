@@ -495,7 +495,9 @@ namespace FmsbwebCoreApi.Services
             return result;
         }
 
-        public async Task<List<HourlyProductionDto>> GetHourByHourProductionByHour(ProductionResourceParameter resourceParameter, List<Scrap2> scrap, List<SwotTargetWithDeptId> target)
+        public async Task<List<HourlyProductionDto>> GetHourByHourProductionByHour(ProductionResourceParameter resourceParameter,
+            List<Scrap2> scrap,
+            List<SwotTargetWithDeptId> target)
         {
             if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
 

@@ -22,6 +22,7 @@
     <PackageReference Include="FluentDateTime" Version="2.0.0" />
     <PackageReference Include="FluentTime" Version="0.1.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="8.6.2" />
+    <PackageReference Include="FusionExport" Version="1.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="3.1.6" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Cors" Version="2.2.0" />

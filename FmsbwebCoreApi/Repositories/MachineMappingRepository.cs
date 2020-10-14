@@ -22,7 +22,7 @@ namespace FmsbwebCoreApi.Repositories
         {
             var excludeLines = new List<string>()
             {
-                "A1", "A10", "Cell 3","10"
+                "A1", "A10", "Cell 3","10", "Line 10", "Assembly 10"
             };
 
             return await _sapContext

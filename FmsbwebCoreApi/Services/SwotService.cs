@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Models;
@@ -74,16 +75,17 @@ namespace FmsbwebCoreApi.Services
                     x.Key.ScrapCode,
                     Qty = x.Sum(q => q.Qty)
                 })
-                .OrderByDescending(x => x.Qty)
-                .Take(parameter.Take)
-                .ToList();
+                .AsQueryable();
+
+            if (parameter.Take > 0)
+                data = data.Take(Convert.ToInt32(parameter.Take));
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
-                Data = data
+                Data = data.OrderByDescending(x => x.Qty).ToList()
             };
         }
 
@@ -100,12 +102,9 @@ namespace FmsbwebCoreApi.Services
                     x.ScrapAreaName,
                     x.ColorCode
                 })
-                .Select(x => new
+                .Select(x => 
                 {
-                    x.Key.ScrapAreaName,
-                    x.Key.ColorCode,
-                    Qty = x.Sum(q => q.Qty),
-                    Details = x.GroupBy(d => new { d.ScrapDesc, d.ScrapCode, d.ColorCode })
+                    var details = x.GroupBy(d => new { d.ScrapDesc, d.ScrapCode, d.ColorCode })
                         .Select(d => new
                         {
                             d.Key.ScrapDesc,
@@ -113,22 +112,33 @@ namespace FmsbwebCoreApi.Services
                             d.Key.ColorCode,
                             Qty = d.Sum(q => q.Qty)
                         })
-                        .OrderByDescending(d => d.Qty)
-                        .Take(parameter.Take)
+                        .AsQueryable();
+
+                    if (parameter.Take > 0)
+                        details = details.Take(Convert.ToInt32(parameter.Take));
+
+                    return new
+                    {
+                        x.Key.ScrapAreaName,
+                        x.Key.ColorCode,
+                        Qty = x.Sum(q => q.Qty),
+                        Details = details.OrderByDescending(t => t.Qty).ToList()
+                    };
+
                 })
-                .OrderByDescending(x => x.Qty)
+                .OrderBy(x => x.ScrapAreaName)
                 .ToList();
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
                 Data = data
             };
         }
 
-        private static dynamic GetMonthlyScrapRates(IEnumerable<Scrap2> scrap, IEnumerable<Production2> prod, SwotResourceParameter parameter, string line)
+        private static dynamic GetMonthlyScrapRates(List<Scrap2> scrap, List<Production2> prod, SwotResourceParameter parameter, string line)
         {
             var start = parameter.MonthStart;
             var end = parameter.MonthEnd;
@@ -153,9 +163,12 @@ namespace FmsbwebCoreApi.Services
                 })
                 .ToList();
 
-            var monthlyScrap = scrap
+            var filteredScrapByLine = scrap
                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                 .Where(x => x.Machine2 == line)
+                .ToList();
+
+            var monthlyScrap = filteredScrapByLine
                 .GroupBy(x => new
                 {
                     Line = x.Machine2,
@@ -169,15 +182,25 @@ namespace FmsbwebCoreApi.Services
                     x.Key.Year,
                     x.Key.MonthNumber,
                     x.Key.MonthName,
-                    Qty = x.Sum(q => q.Qty)
+                    Qty = x.Sum(q => q.Qty),
+                    SbScrapAreaDetails = x
+                        .Where(s => s.IsPurchashed == false)
+                        .GroupBy(s => new { s.ScrapAreaName })
+                        .Select(s => new
+                        {
+                            s.Key.ScrapAreaName,
+                            Qty = s.Sum(q => q.Qty)
+                        })
                 })
                 .ToList();
 
-            var result = monthlyScrap.Select(x =>
+
+            var monthlyGross = monthlyScrap.Select(x =>
             {
-                var net = monthlyNet.Where(n => n.Year == x.Year && n.MonthNumber == x.MonthNumber).Sum(n => n.Qty) ?? 0;
+                var net = monthlyNet.Where(n => n.Year == x.Year && n.MonthNumber == x.MonthNumber).Sum(n => n.Qty) ??
+                          0;
                 var gross = (net + x.Qty) ?? 0;
-                var scrapRate = gross == 0 ? 0 : (decimal)(x.Qty ?? 0) / gross;
+                var scrapRate = gross == 0 ? 0 : (decimal) (x.Qty ?? 0) / gross;
 
                 return new
                 {
@@ -191,14 +214,42 @@ namespace FmsbwebCoreApi.Services
                     ScrapRate = scrapRate
                 };
 
-            })
-            .OrderBy(x => x.Year)
-            .ThenBy(x => x.MonthNumber);
+            }).ToList();
+
+            var result = filteredScrapByLine
+                .Where(x => x.IsPurchashed == false)
+                .GroupBy(x => new {x.ScrapAreaName, x.ColorCode })
+                .Select(x => new
+                {
+                    x.Key.ScrapAreaName,
+                    x.Key.ColorCode,
+                    MonthlyScrapDetails = monthlyGross
+                        .Select(m =>
+                        {
+                            var scrapByMonth = x.Where(s => s.ShiftDate.ToYear() == m.Year && s.ShiftDate.ToMonth() == m.MonthNumber).Sum(s => s.Qty) ?? 0;
+                            var scrapRate = m.Gross == 0 ? 0 : (decimal) scrapByMonth / m.Gross;
+
+                            return new
+                            {
+                                x.Key.ScrapAreaName,
+                                x.Key.ColorCode,
+                                m.Line,
+                                m.Year,
+                                m.MonthNumber,
+                                m.MonthName,
+                                m.Gross,
+                                Qty = scrapByMonth,
+                                ScrapRate = scrapRate
+                            };
+                        })
+                        .OrderBy(m => m.Year)
+                        .ThenBy(m => m.MonthNumber)
+                }).OrderBy(x => x.ScrapAreaName);
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
                 Data = result
             };
@@ -228,9 +279,12 @@ namespace FmsbwebCoreApi.Services
                 })
                 .ToList();
 
-            var weeklyScrap = scrap
+            var filteredScrapByLine = scrap
                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                 .Where(x => x.Machine2 == line)
+                .ToList();
+
+            var weeklyScrap = filteredScrapByLine
                 .GroupBy(x => new
                 {
                     Line = x.Machine2,
@@ -246,9 +300,10 @@ namespace FmsbwebCoreApi.Services
                 })
                 .ToList();
 
-            var result = weeklyScrap.Select(x =>
+            var weeklyGross = weeklyScrap.Select(x =>
             {
-                var net = weeklyNet.Where(n => n.Year == x.Year && n.WeekNumber == x.WeekNumber).Sum(n => n.Qty) ?? 0;
+                var net = weeklyNet.Where(n => n.Year == x.Year && n.WeekNumber == x.WeekNumber).Sum(n => n.Qty) ??
+                          0;
                 var gross = (net + x.Qty) ?? 0;
                 var scrapRate = gross == 0 ? 0 : (decimal)(x.Qty ?? 0) / gross;
 
@@ -263,14 +318,41 @@ namespace FmsbwebCoreApi.Services
                     ScrapRate = scrapRate
                 };
 
-            })
-            .OrderBy(x => x.Year)
-            .ThenBy(x => x.WeekNumber);
+            }).ToList();
+
+            var result = filteredScrapByLine
+                .Where(x => x.IsPurchashed == false)
+                .GroupBy(x => new { x.ScrapAreaName, x.ColorCode })
+                .Select(x => new
+                {
+                    x.Key.ScrapAreaName,
+                    x.Key.ColorCode,
+                    WeeklyScrapDetails = weeklyGross
+                        .Select(m =>
+                        {
+                            var scrapByWeek = x.Where(s => s.ShiftDate.ToYear() == m.Year && s.ShiftDate.ToWeekNumber() == m.WeekNumber).Sum(s => s.Qty) ?? 0;
+                            var scrapRate = m.Gross == 0 ? 0 : (decimal)scrapByWeek / m.Gross;
+
+                            return new
+                            {
+                                x.Key.ScrapAreaName,
+                                x.Key.ColorCode,
+                                m.Line,
+                                m.Year,
+                                m.WeekNumber,
+                                m.Gross,
+                                Qty = scrapByWeek,
+                                ScrapRate = scrapRate
+                            };
+                        })
+                        .OrderBy(m => m.Year)
+                        .ThenBy(m => m.WeekNumber)
+                }).OrderBy(x => x.ScrapAreaName);
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
                 Data = result
             };
@@ -281,66 +363,57 @@ namespace FmsbwebCoreApi.Services
 
         #region Production
 
-        private static dynamic GetHourlyProduction(IEnumerable<HourlyProductionDto> hxhProd, SwotResourceParameter parameter, string line)
+        private static dynamic GetHourlyProduction(IEnumerable<HourlyProductionDto> hxhProd, SwotResourceParameter parameter, string line, SwotTargetDto lineSwotTarget)
         {
             var start = parameter.StartDate;
             var end = parameter.EndDate;
 
             var data = hxhProd
-                .Where(x => x.MachineName.Contains(line))
+                .Where(x => x.MachineName == line)
                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
-                .GroupBy(x => new
-                {
-                    x.ShiftDate,
-                    x.Shift,
-                    x.ShiftOrder,
-                    x.Line,
-                    LineNoCellSide = x.MachineName,
-                    x.Hour,
-                    x.CellSide
-                })
                 .Select(x =>
                 {
 
-                    var target = x.Sum(q => q.Target);
-                    var net = x.Sum(q => q.Net);
-                    var oae = target == 0 ? 0 : net / target;
+                    var oae = x.Target == 0 ? 0 : x.Net / x.Target;
 
                     return new
                     {
-                        x.Key.ShiftDate,
-                        x.Key.Shift,
-                        x.Key.ShiftOrder,
-                        x.Key.Line,
-                        x.Key.LineNoCellSide,
-                        x.Key.Hour,
-                        x.Key.CellSide,
+                        x.ShiftDate,
+                        x.Shift,
+                        x.ShiftOrder,
+                        x.Line,
+                        x.MachineName,
+                        x.Hour,
+                        x.CellSide,
 
-                        NetRateTarget = x.Sum(q => q.SwotTarget.NetRate),
-                        OaeTarget = x.Sum(q => q.SwotTarget.OaeTarget),
+                        NetRateTarget = x.SwotTarget.NetRate,
+                        x.SwotTarget.OaeTarget,
 
-                        Target = x.Sum(q => q.Target),
-                        Gross = x.Sum(q => q.Gross),
-                        Net = net,
+                        x.Target,
+                        x.Gross,
+                        x.Net,
                         Oae = oae,
 
-                        Warmers = x.Sum(q => q.Warmers),
-                        TotalScrap = x.Sum(q => q.TotalScrap)
+                        x.Warmers,
+                        x.TotalScrap,
+
+                        x.HxHUrl
+
                     };
 
                 })
-                .OrderBy(x => x.ShiftDate)
+                .OrderBy(x => x.CellSide)
+                .ThenBy(x => x.ShiftDate)
                 .ThenBy(x => x.ShiftOrder)
-                .ThenBy(x => x.LineNoCellSide)
-                .ThenBy(x => x.CellSide)
                 .ThenBy(x => x.Hour)
                 .ToList();
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
+                NetRateTarget = lineSwotTarget?.NetRate ?? 0,
                 Data = data
             };
         }
@@ -364,8 +437,8 @@ namespace FmsbwebCoreApi.Services
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
                 Data = dailyProduction
             };
@@ -397,11 +470,11 @@ namespace FmsbwebCoreApi.Services
                 .ToList();
 
             var monthlyTarget = targets
-                .Where(x => x.Line.Contains(line))
+                .Where(x => x.MachineName == line)
                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                 .GroupBy(x => new
                 {
-                    x.Line,
+                    Line = x.MachineName,
                     Year = x.ShiftDate.ToYear(),
                     MonthName = x.ShiftDate.ToMonthName(),
                     MonthNumber = x.ShiftDate.ToMonth()
@@ -438,8 +511,8 @@ namespace FmsbwebCoreApi.Services
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
                 Data = result
             };
@@ -469,11 +542,11 @@ namespace FmsbwebCoreApi.Services
                 .ToList();
 
             var monthlyTarget = targets
-                .Where(x => x.Line.Contains(line))
+                .Where(x => x.MachineName == line)
                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
                 .GroupBy(x => new
                 {
-                    x.Line,
+                    Line = x.MachineName,
                     Year = x.ShiftDate.ToYear(),
                     WeekNumber = x.ShiftDate.ToWeekNumber()
                 })
@@ -507,8 +580,8 @@ namespace FmsbwebCoreApi.Services
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
                 Data = result
             };
@@ -518,7 +591,7 @@ namespace FmsbwebCoreApi.Services
 
         #region Downtime
 
-        private static dynamic DowntimeParetoByReason(IEnumerable<DowntimeDto> downtime, DateTime start, DateTime end, string line)
+        private static dynamic DowntimeParetoByReason(IEnumerable<DowntimeDto> downtime, DateTime start, DateTime end, string line, int take)
         {
             var data = downtime
                 .Where(x => x.ShifDate >= start && x.ShifDate <= end)
@@ -530,21 +603,65 @@ namespace FmsbwebCoreApi.Services
                 .Select(x => new
                 {
                     x.Key.Reason2,
-                    Downtime = x.Sum(q => q.DowntimeLoss)
+                    Downtime = x.Sum(q => q.DowntimeLoss),
+                    MachineDetails = x.GroupBy(m => new { m.Machine })
+                        .Select(m => new
+                        {
+                            m.Key.Machine,
+                            Downtime = m.Sum(q => q.DowntimeLoss)
+                        })
+                        .OrderByDescending(m => m.Downtime)
                 })
-                .OrderByDescending(x => x.Downtime)
-                .ToList();
+                .AsQueryable();
+
+            if (take > 0)
+                data = data.Take(take);
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
-                Data = data
+                Data = data.OrderByDescending(x => x.Downtime).ToList()
             };
         }
 
-        private static dynamic DailyDowntime(IEnumerable<DowntimeDto> downtime, SwotResourceParameter parameter, string line)
+        private static dynamic DowntimeParetoByMachine(IEnumerable<DowntimeDto> downtime, DateTime start, DateTime end, string line, int take)
+        {
+            var data = downtime
+                .Where(x => x.ShifDate >= start && x.ShifDate <= end)
+                .Where(x => x.Line == line)
+                .GroupBy(x => new
+                {
+                    x.Machine
+                })
+                .Select(x => new
+                {
+                    x.Key.Machine,
+                    Downtime = x.Sum(q => q.DowntimeLoss),
+                    ReasonDetails = x.GroupBy(r => new { r.Reason2 })
+                        .Select(r => new
+                        {
+                            r.Key.Reason2,
+                            Downtime = r.Sum(q => q.DowntimeLoss)
+                        })
+                        .OrderByDescending(r => r.Downtime)
+                })
+                .AsQueryable();
+
+            if (take > 0)
+                data = data.Take(take);
+
+            return new
+            {
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
+                Line = line,
+                Data = data.OrderByDescending(x => x.Downtime).ToList()
+            };
+        }
+
+        private static dynamic DailyDowntimeByReason(IEnumerable<DowntimeDto> downtime, SwotResourceParameter parameter, string line)
         {
             var start = parameter.LastDayStart;
             var end = parameter.LastDayEnd;
@@ -560,11 +677,18 @@ namespace FmsbwebCoreApi.Services
                 {
                     x.Key.ShifDate,
                     Downtime = x.Sum(q => q.DowntimeLoss),
-                    Details = x.GroupBy(d => new { d.Reason2 })
+                    ReasonDetails = x.GroupBy(d => new { d.Reason2 })
                                 .Select(d => new
                                 {
                                     d.Key.Reason2,
-                                    Downtime = d.Sum(q => q.DowntimeLoss)
+                                    Downtime = d.Sum(q => q.DowntimeLoss),
+                                    MachineDetails = d.GroupBy(m => new { m.Machine })
+                                        .Select(m => new
+                                        {
+                                            m.Key.Machine,
+                                            Downtime = m.Sum(q => q.DowntimeLoss)
+                                        })
+                                        .OrderByDescending(m => m.Downtime)
                                 })
                                 .OrderByDescending(d => d.Downtime)
                 })
@@ -573,8 +697,51 @@ namespace FmsbwebCoreApi.Services
 
             return new
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
+                Line = line,
+                Data = data
+            };
+        }
+
+        private static dynamic DailyDowntimeByMachine(IEnumerable<DowntimeDto> downtime, SwotResourceParameter parameter, string line)
+        {
+            var start = parameter.LastDayStart;
+            var end = parameter.LastDayEnd;
+
+            var data = downtime
+                .Where(x => x.ShifDate >= start && x.ShifDate <= end)
+                .Where(x => x.Line == line)
+                .GroupBy(x => new
+                {
+                    x.ShifDate
+                })
+                .Select(x => new
+                {
+                    x.Key.ShifDate,
+                    Downtime = x.Sum(q => q.DowntimeLoss),
+                    MachineDetails = x.GroupBy(d => new { d.Machine })
+                        .Select(d => new
+                        {
+                            d.Key.Machine,
+                            Downtime = d.Sum(q => q.DowntimeLoss),
+                            ReasonDetails = d.GroupBy(r => new { r.Reason2 })
+                                .Select(r => new
+                                {
+                                    r.Key.Reason2,
+                                    Downtime = r.Sum(q => q.DowntimeLoss)
+                                })
+                                .OrderByDescending(r => r.Downtime)
+                        })
+                        .OrderByDescending(d => d.Downtime)
+                })
+                .OrderBy(x => x.ShifDate)
+                .ToList();
+
+            return new
+            {
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
                 Line = line,
                 Data = data
             };
@@ -645,7 +812,7 @@ namespace FmsbwebCoreApi.Services
             #region Data
 
             var prod = await _productionService.GetProductionQueryable(productionParams).ToListAsync();
-            var scrap = await _scrapService.GetScrap2Queryable(scrapParams).ToListAsync(); 
+            var scrap = await _scrapService.GetScrap2Queryable(scrapParams, false).ToListAsync(); 
             var scrapHxh = scrap.Where(x => x.ShiftDate >= hxhStart && x.ShiftDate <= hxhEnd).ToList();
 
             List<HxHProdDto> hxhTarget;
@@ -667,30 +834,58 @@ namespace FmsbwebCoreApi.Services
             #endregion
 
             // Get Lines
-            var lineData = selectedLines.Select(line => new SwotChart
-            {
-                Line = line,
-                ScrapCharts = new
+            var lineData = selectedLines
+                .Select(line =>
                 {
-                    ScrapPareto = GetScrapPareto(scrap, parameter, line),
-                    ScrapParetoByArea = GetScrapParetoByArea(scrap, parameter, line),
-                    MonthlyScrapRates = parameter.ShowMonthlyCharts ? GetMonthlyScrapRates(scrap, prod, parameter, line) : null,
-                    WeeklyScrapRates = parameter.ShowMonthlyCharts ? GetWeeklyScrapRates(scrap, prod, parameter, line) : null
-                },
-                ProductionCharts = new
-                {
-                    HourlyProduction = GetHourlyProduction(hxh, parameter, line),
-                    DailyProduction = parameter.ShowLastSevenDays ? DailyProduction(prod, parameter, line) : null,
-                    MonthlyOae = parameter.ShowMonthlyCharts ? MonthlyOae(prod, hxhTarget, parameter, line) : null,
-                    WeeklyOae = parameter.ShowMonthlyCharts ? WeeklyOae(prod, hxhTarget, parameter, line) : null
-                },
-                DowntimeCharts = new
-                {
-                    LastSevenDaysDowntimeByReason = parameter.ShowLastSevenDays ? DowntimeParetoByReason(downtime, parameter.LastDayStart, parameter.LastDayEnd, line) : null,
-                    DowntimeByReason = DowntimeParetoByReason(downtime, parameter.StartDate, parameter.EndDate, line),
-                    DailyDowntime = parameter.ShowLastSevenDays ? DailyDowntime(downtime, parameter, line) : null
-                }
-            }).ToList();
+                    var lineSwotTarget = swotTarget
+                        .Where(t => t.MachineName == line)
+                        .Select(x => new SwotTargetDto
+                    {
+                        OaeTarget = x.OaeTarget,
+                        TargetPartsPerHour = x.TargetPartsPerHour,
+                        FoundryScrapTarget = x.FoundryScrapTarget,
+                        MachineScrapTarget = x.MachineScrapTarget,
+                        AfScrapTarget = x.AfScrapTarget
+                    }).FirstOrDefault();
+                    
+
+                    var chart = new SwotChart
+                    {
+                        Line = line,
+                        Filters = parameter,
+                        SwotTarget = lineSwotTarget,
+
+                        ScrapCharts = new
+                        {
+                            ScrapPareto = GetScrapPareto(scrap, parameter, line),
+                            ScrapParetoByArea = GetScrapParetoByArea(scrap, parameter, line),
+                            MonthlyScrapRates = parameter.ShowMonthlyCharts ? GetMonthlyScrapRates(scrap, prod, parameter, line) : null,
+                            WeeklyScrapRates = parameter.ShowMonthlyCharts ? GetWeeklyScrapRates(scrap, prod, parameter, line) : null
+                        },
+
+                        ProductionCharts = new
+                        {
+                            HourlyProduction = GetHourlyProduction(hxh, parameter, line, lineSwotTarget),
+                            DailyProduction = parameter.ShowLastSevenDays ? DailyProduction(prod, parameter, line) : null,
+                            MonthlyOae = parameter.ShowMonthlyCharts ? MonthlyOae(prod, hxhTarget, parameter, line) : null,
+                            WeeklyOae = parameter.ShowMonthlyCharts ? WeeklyOae(prod, hxhTarget, parameter, line) : null
+                        },
+
+                        DowntimeCharts = new
+                        {
+                            LastDowntimeByReason = parameter.ShowLastSevenDays ? DowntimeParetoByReason(downtime, parameter.LastDayStart, parameter.LastDayEnd, line, parameter.Take) : null,
+                            LastDowntimeByMachine = parameter.ShowLastSevenDays ? DowntimeParetoByMachine(downtime, parameter.LastDayStart, parameter.LastDayEnd, line, parameter.Take) : null,
+
+                            DailyDowntimeByReason = parameter.ShowLastSevenDays ? DailyDowntimeByReason(downtime, parameter, line) : null,
+                            DailyDowntimeByMachine = parameter.ShowLastSevenDays ? DailyDowntimeByMachine(downtime, parameter, line) : null,
+
+                            DowntimeByReason = DowntimeParetoByReason(downtime, parameter.StartDate, parameter.EndDate, line, parameter.Take),
+                            DowntimeByMachine = DowntimeParetoByMachine(downtime, parameter.StartDate, parameter.EndDate, line, parameter.Take),
+                            
+                        }
+                    };
+                    return chart;
+                }).ToList();
 
             return lineData;
 
