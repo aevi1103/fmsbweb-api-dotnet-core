@@ -81,6 +81,17 @@ namespace FmsbwebCoreApi.Repositories
             };
         }
 
+        public async Task<List<KpiTarget>> GetDepartmentTargets(string dept, DateTime startDateTime, DateTime endDateTime)
+        {
+            var data = await _fmsb2Context.KpiTarget.AsNoTracking()
+                .Where(x => x.Department.ToLower() == dept.ToLower()
+                            && x.Year >= startDateTime.Year && x.Year == endDateTime.Year
+                            && x.MonthNumber >= startDateTime.Month
+                            && x.MonthNumber <= endDateTime.Month)
+                .ToListAsync()
+                .ConfigureAwait(false);
 
+            return data;
+        }
     }
 }

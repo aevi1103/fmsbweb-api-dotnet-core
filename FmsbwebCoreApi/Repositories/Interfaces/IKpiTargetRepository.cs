@@ -15,5 +15,6 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
         Task<List<SwotTargetWithDeptId>> GetSwotTargets(List<string> machines);
         decimal GetScrapTarget(SwotTargetWithDeptId data, string line);
         Task<KpiTarget> GetDepartmentTargets(string dept, string area, DateTime startDateTime, DateTime endDateTime);
+        Task<List<KpiTarget>> GetDepartmentTargets(string dept, DateTime startDateTime, DateTime endDateTime);
     }
 }

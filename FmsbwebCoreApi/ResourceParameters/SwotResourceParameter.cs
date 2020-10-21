@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 using System.Linq;
 using FluentDateTime;
 using FmsbwebCoreApi.Models;
+using FmsbwebCoreApi.Services;
 using Microsoft.EntityFrameworkCore.Internal;
 
 namespace FmsbwebCoreApi.ResourceParameters
@@ -42,9 +44,11 @@ namespace FmsbwebCoreApi.ResourceParameters
         public DateTime LastDayStart => EndDate.AddDays(-LastDays + 1);
         public DateTime LastDayEnd => EndDate;
 
+        public string Area => new UtilityService().MapDepartmentToArea(Dept);
+
         private DateTime GetWeekStart()
         {
-            var daysToSubtract = (LastWeeks * 7);
+            var daysToSubtract = ((LastWeeks - 1) * 7) - 1;
             var wkEnd = EndDate.BeginningOfWeek().AddDays(-1);
             return wkEnd.AddDays(-daysToSubtract);
         }

@@ -508,7 +508,8 @@ namespace FmsbwebCoreApi.Services
             var dept = await _dataAccessUtilityService.GetDepartment(resourceParameter.Department).ConfigureAwait(false);
             var machines = await _dataAccessUtilityService.GetMachines(dept.DeptId).ConfigureAwait(false);
             var machineIds = machines.Select(x => x.MachineId).ToList();
-            var creteHxhs = await _dataAccessUtilityService.GetHxHs(resourceParameter.EndDate, machineIds).ConfigureAwait(false);
+            var creteHxhs = await _dataAccessUtilityService.GetHxHs(resourceParameter.StartDate, resourceParameter.EndDate, machineIds)
+                .ConfigureAwait(false);
              
             var result = data
                 .GroupBy(x => new

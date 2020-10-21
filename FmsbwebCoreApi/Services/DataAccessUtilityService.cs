@@ -102,16 +102,15 @@ namespace FmsbwebCoreApi.Services
             return await qry.ToListAsync().ConfigureAwait(false);
         }
 
-        public async Task<List<CreateHxHview>> GetHxHs(DateTime shiftDate, List<int> machineIds)
+        public async Task<List<CreateHxHview>> GetHxHs(DateTime startShiftDate, DateTime endShiftDate, List<int> machineIds)
         {
             var machineIdsStr = machineIds.Select(x => x.ToString()).ToList();
-
             var qry = _fmsb2Context.CreateHxHview.AsNoTracking()
-                .Where(x => x.Shiftdate == shiftDate
-                            && machineIdsStr.Contains(x.Machineid.ToString()))
+                .Where(x => x.Shiftdate >= startShiftDate && x.Shiftdate <= endShiftDate && machineIdsStr.Contains(x.Machineid.ToString()))
                 .AsQueryable();
 
             return await qry.ToListAsync().ConfigureAwait(false);
         }
+
     }
 }
