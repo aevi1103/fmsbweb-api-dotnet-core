@@ -46,6 +46,8 @@ namespace FmsbwebCoreApi.ResourceParameters
 
         public string Area => new UtilityService().MapDepartmentToArea(Dept);
 
+        public bool IsFinishing => Dept.ToLower() == "anodize" || Dept.ToLower() == "skirt coat";
+
         private DateTime GetWeekStart()
         {
             var daysToSubtract = ((LastWeeks - 1) * 7) - 1;

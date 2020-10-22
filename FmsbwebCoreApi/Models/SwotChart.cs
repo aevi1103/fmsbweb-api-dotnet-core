@@ -11,8 +11,10 @@ namespace FmsbwebCoreApi.Models
         public string Line { get; set; }
         public decimal Target { get; set; }
         public int Gross { get; set; }
+
         public int Net { get; set; }
         public decimal Oae { get; set; }
+
         public int SbScrap { get; set; }
         public int PurchasedScrap { get; set; }
         public int Warmers { get; set; }

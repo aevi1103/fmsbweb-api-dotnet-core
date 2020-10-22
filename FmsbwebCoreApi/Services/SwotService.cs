@@ -764,7 +764,7 @@ namespace FmsbwebCoreApi.Services
             if (!string.IsNullOrEmpty(line))
                 targetQry = targetQry.Where(x => x.MachineName == line);
 
-            var monthlyTarget = targetQry
+            var dailyTarget = targetQry
                 .GroupBy(x => new
                 {
                     x.ShiftDate
@@ -790,7 +790,50 @@ namespace FmsbwebCoreApi.Services
                 {
 
                     var net = x.Sum(q => q.QtyProd) ?? 0;
-                    var target = monthlyTarget.Where(t => t.ShiftDate == x.Key.ShiftDate).Sum(t => t.Target);
+                    var target = dailyTarget.Where(t => t.ShiftDate == x.Key.ShiftDate).Sum(t => t.Target);
+                    var oae = target == 0 ? 0 : net / target;
+
+                    return new
+                    {
+                        x.Key.ShiftDate,
+                        Target = target,
+                        Qty = net,
+                        Oae = oae
+                    };
+
+                })
+                .OrderBy(x => x.ShiftDate)
+                .ToList();
+
+            return new
+            {
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
+                Line = line,
+                Data = dailyProduction
+            };
+        }
+
+        private static dynamic DailyProductionFinishing(IEnumerable<HourlyProductionDto> prod, SwotResourceParameter parameter, string line = "")
+        {
+            var start = parameter.LastDayStart;
+            var end = parameter.LastDayEnd;
+
+            var netQry = prod
+                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(line))
+                netQry = netQry.Where(x => x.MachineName == line);
+
+            var dailyProduction = netQry
+                .ToList()
+                .GroupBy(x => new { x.ShiftDate })
+                .Select(x =>
+                {
+
+                    var net = x.Sum(q => q.Net);
+                    var target = x.Sum(q => q.Target);
                     var oae = target == 0 ? 0 : net / target;
 
                     return new
@@ -826,7 +869,7 @@ namespace FmsbwebCoreApi.Services
             if (!string.IsNullOrEmpty(line))
                 targetQry = targetQry.Where(x => x.MachineName == line);
 
-            var monthlyTarget = targetQry
+            var shiftTarget = targetQry
                 .GroupBy(x => new
                 {
                     x.Shift
@@ -851,7 +894,58 @@ namespace FmsbwebCoreApi.Services
                 .Select(x =>
                 {
                     var net = x.Sum(q => q.QtyProd) ?? 0;
-                    var target = monthlyTarget.Where(t => t.Shift == x.Key.Shift).Sum(t => t.Target);
+                    var target = shiftTarget.Where(t => t.Shift == x.Key.Shift).Sum(t => t.Target);
+                    var oae = target == 0 ? 0 : net / target;
+
+                    var shiftOrder = x.Key.Shift switch
+                    {
+                        "3" => 1,
+                        "1" => 2,
+                        "2" => 3,
+                        _ => 0
+                    };
+
+                    return new
+                    {
+                        x.Key.Shift,
+                        ShiftOrder = shiftOrder,
+                        Target = target,
+                        Qty = net,
+                        Oae = oae
+                    };
+
+                })
+                .OrderBy(x => x.ShiftOrder)
+                .ToList();
+
+            return new
+            {
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
+                Line = line,
+                Data = dailyProduction
+            };
+        }
+
+        private static dynamic GetProductionByShiftFinishing(IEnumerable<HourlyProductionDto> prod, SwotResourceParameter parameter, string line = "")
+        {
+            var start = parameter.StartDate;
+            var end = parameter.EndDate;
+
+            var netQry = prod
+                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(line))
+                netQry = netQry.Where(x => x.MachineName == line);
+
+            var dailyProduction = netQry
+                .ToList()
+                .GroupBy(x => new { x.Shift })
+                .Select(x =>
+                {
+                    var net = x.Sum(q => q.Net);
+                    var target = x.Sum(q => q.Target);
                     var oae = target == 0 ? 0 : net / target;
 
                     var shiftOrder = x.Key.Shift switch
@@ -1005,6 +1099,66 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
+        private static dynamic MonthlyOaeFinishing(IEnumerable<HourlyProductionDto> prod, SwotResourceParameter parameter, string line = "")
+        {
+            var start = parameter.MonthStart;
+            var end = parameter.MonthEnd;
+
+            #region Net
+
+            var netQry = prod
+                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(line))
+                netQry = netQry.Where(x => x.MachineName == line);
+
+            var monthlyProd = netQry
+                .GroupBy(x => new
+                {
+                    Year = x.ShiftDate.ToYear(),
+                    MonthName = x.ShiftDate.ToMonthName(),
+                    MonthNumber = x.ShiftDate.ToMonth()
+                })
+                .Select(x => new
+                {
+                    x.Key.Year,
+                    x.Key.MonthName,
+                    x.Key.MonthNumber,
+                    Target = x.Sum(q => q.Target),
+                    QtyProd = x.Sum(q => q.Net)
+                })
+                .ToList();
+
+            #endregion
+
+            var result = monthlyProd.Select(x =>
+            {
+                var oae = x.Target == 0 ? 0 : (decimal)x.QtyProd / x.Target;
+
+                return new
+                {
+                    x.Year,
+                    x.MonthName,
+                    x.MonthNumber,
+                    Target = x.Target,
+                    Net = x.QtyProd,
+                    Oae = oae
+                };
+            })
+                .OrderBy(x => x.Year)
+                .ThenBy(x => x.MonthNumber)
+                .ToList();
+
+            return new
+            {
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
+                Line = line,
+                Data = result
+            };
+        }
+
         private static dynamic WeeklyOae(IEnumerable<Production2> prod, IEnumerable<HxHProdDto> targets, SwotResourceParameter parameter, string line = "")
         {
             var start = parameter.WeekStart;
@@ -1073,6 +1227,63 @@ namespace FmsbwebCoreApi.Services
                     x.Year,
                     x.WeekNumber,
                     Target = target,
+                    Net = x.QtyProd,
+                    Oae = oae
+                };
+            })
+                .OrderBy(x => x.Year)
+                .ThenBy(x => x.WeekNumber)
+                .ToList();
+
+            return new
+            {
+                StartDate = start.ToShortDateString(),
+                EndDate = end.ToShortDateString(),
+                Line = line,
+                Data = result
+            };
+        }
+
+        private static dynamic WeeklyOaeFinishing(IEnumerable<HourlyProductionDto> prod, SwotResourceParameter parameter, string line = "")
+        {
+            var start = parameter.WeekStart;
+            var end = parameter.WeekEnd;
+
+            #region Net
+
+            var netQry = prod
+                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(line))
+                netQry = netQry.Where(x => x.MachineName == line);
+
+            var weeklyProd = netQry
+                .GroupBy(x => new
+                {
+                    Year = x.ShiftDate.ToYear(),
+                    WeekNumber = x.ShiftDate.ToWeekNumber()
+                })
+                .Select(x => new
+                {
+                    x.Key.Year,
+                    x.Key.WeekNumber,
+                    QtyProd = x.Sum(q => q.Net),
+                    Target = x.Sum(q => q.Target),
+                })
+                .ToList();
+
+            #endregion
+
+            var result = weeklyProd.Select(x =>
+            {
+                var oae = x.Target == 0 ? 0 : (decimal)(x.QtyProd) / x.Target;
+
+                return new
+                {
+                    x.Year,
+                    x.WeekNumber,
+                    Target = x.Target,
                     Net = x.QtyProd,
                     Oae = oae
                 };
@@ -1280,7 +1491,8 @@ namespace FmsbwebCoreApi.Services
             List<Production2> prod,
             List<HxHProdDto> hxhProduction,
             List<DowntimeDto> downtime,
-            List<KpiTarget> departmentTargets)
+            List<KpiTarget> departmentTargets,
+            List<HourlyProductionDto> hxh)
         {
             var target = departmentTargets
                 .Where(x => x.Year == parameter.EndDate.Year && x.MonthNumber == parameter.EndDate.Month)
@@ -1298,6 +1510,10 @@ namespace FmsbwebCoreApi.Services
             var hxhTarget = hxhProduction.Where(t => t.ShiftDate >= start && t.ShiftDate <= end).Sum(t => t.Target);
             var net = prod.Where(n => n.ShiftDate >= start && n.ShiftDate <= end).Sum(n => n.QtyProd) ?? 0;
             var oae = hxhTarget == 0 ? 0 : net / hxhTarget;
+
+            //hxh production
+            var hxhNet = hxh.Where(t => t.ShiftDate >= start && t.ShiftDate <= end).Sum(t => t.Net);
+            var hxhOae = hxhTarget == 0 ? 0 : (decimal)hxhNet / hxhTarget;
 
             //scrap
             var filteredScrap = scrap.Where(s => s.ShiftDate >= start && s.ShiftDate <= end).ToList();
@@ -1334,8 +1550,10 @@ namespace FmsbwebCoreApi.Services
 
                 Target = hxhTarget,
                 Gross = gross,
-                Net = net,
-                Oae = oae,
+
+                Net = !parameter.IsFinishing ? net : hxhNet,
+                Oae = !parameter.IsFinishing ? oae : hxhOae,
+
                 SbScrap = sbScrap,
                 PurchasedScrap = purchaseScrap,
                 Warmers = warmers,
@@ -1355,11 +1573,29 @@ namespace FmsbwebCoreApi.Services
 
                 ProductionCharts = new
                 {
-                    ProductionByShift = GetProductionByShift(prod, hxhProduction, parameter),
+                    ProductionByShift = !parameter.IsFinishing
+                        ? GetProductionByShift(prod, hxhProduction, parameter)
+                        : GetProductionByShiftFinishing(hxh, parameter),
+
                     ProductionByProgram = GetProductionByProgram(prod, parameter),
-                    DailyProduction = parameter.ShowLastSevenDays ? DailyProduction(prod, hxhProduction, parameter) : null,
-                    MonthlyOae = parameter.ShowMonthlyCharts ? MonthlyOae(prod, hxhProduction, parameter) : null,
-                    WeeklyOae = parameter.ShowMonthlyCharts ? WeeklyOae(prod, hxhProduction, parameter) : null
+
+                    DailyProduction = parameter.ShowLastSevenDays
+                        ? !parameter.IsFinishing
+                            ? DailyProduction(prod, hxhProduction, parameter)
+                            : DailyProductionFinishing(hxh, parameter)
+                        : null,
+
+                    MonthlyOae = parameter.ShowMonthlyCharts
+                        ? !parameter.IsFinishing
+                            ? MonthlyOae(prod, hxhProduction, parameter)
+                            : MonthlyOaeFinishing(hxh, parameter)
+                        : null,
+
+                    WeeklyOae = parameter.ShowMonthlyCharts
+                        ? !parameter.IsFinishing
+                            ? WeeklyOae(prod, hxhProduction, parameter)
+                            : WeeklyOaeFinishing(hxh, parameter)
+                        : null
                 },
 
                 DowntimeCharts = new
@@ -1427,8 +1663,8 @@ namespace FmsbwebCoreApi.Services
             var hxhEnd = parameter.EndDate;
             var hxhParams = new ProductionResourceParameter
             {
-                StartDate = hxhStart,
-                EndDate = hxhEnd,
+                StartDate = start,
+                EndDate = end,
                 Lines = selectedLines,
                 Department = parameter.Dept,
                 Area = parameter.Area
@@ -1440,8 +1676,6 @@ namespace FmsbwebCoreApi.Services
                 End = parameter.LastDayEnd,
                 Lines = selectedLines
             };
-
-
 
             #endregion
 
@@ -1492,8 +1726,14 @@ namespace FmsbwebCoreApi.Services
 
                     //production
                     var target = hxhProduction.Where(t => t.MachineName == line && t.ShiftDate >= lineStartDate && t.ShiftDate <= lineEndDate).Sum(t => t.Target);
+
+                    //sap production
                     var net = prod.Where(n => n.Line == line && n.ShiftDate >= lineStartDate && n.ShiftDate <= lineEndDate).Sum(n => n.QtyProd) ?? 0;
                     var oae = target == 0 ? 0 : net / target;
+
+                    //hxh production
+                    var hxhNet = hxh.Where(t => t.MachineName == line && t.ShiftDate >= lineStartDate && t.ShiftDate <= lineEndDate).Sum(t => t.Net);
+                    var hxhOae = target == 0 ? 0 : hxhNet / target;
 
                     //scrap
                     var filteredScrap = scrap.Where(s => s.Machine2 == line && s.ShiftDate >= lineStartDate && s.ShiftDate <= lineEndDate).ToList();
@@ -1529,8 +1769,10 @@ namespace FmsbwebCoreApi.Services
 
                         Target = target,
                         Gross = gross,
-                        Net = net,
-                        Oae = oae,
+
+                        Net = !parameter.IsFinishing ? net : hxhNet,
+                        Oae = !parameter.IsFinishing ? oae : hxhOae,
+
                         SbScrap = sbScrap,
                         PurchasedScrap = purchaseScrap,
                         Warmers = warmers,
@@ -1553,11 +1795,30 @@ namespace FmsbwebCoreApi.Services
                         ProductionCharts = new
                         {
                             HourlyProduction = GetHourlyProduction(hxh, parameter, line, lineSwotTarget),
-                            ProductionByShift = GetProductionByShift(prod, hxhProduction, parameter, line),
+
+                            ProductionByShift = !parameter.IsFinishing 
+                                                    ? GetProductionByShift(prod, hxhProduction, parameter, line)
+                                                    : GetProductionByShiftFinishing(hxh, parameter, line),
+
                             ProductionByProgram = GetProductionByProgram(prod, parameter, line),
-                            DailyProduction = parameter.ShowLastSevenDays ? DailyProduction(prod, hxhProduction, parameter, line) : null,
-                            MonthlyOae = parameter.ShowMonthlyCharts ? MonthlyOae(prod, hxhProduction, parameter, line) : null,
-                            WeeklyOae = parameter.ShowMonthlyCharts ? WeeklyOae(prod, hxhProduction, parameter, line) : null
+
+                            DailyProduction = parameter.ShowLastSevenDays 
+                                                ? !parameter.IsFinishing 
+                                                    ? DailyProduction(prod, hxhProduction, parameter, line) 
+                                                    : DailyProductionFinishing(hxh, parameter, line)
+                                                : null,
+
+                            MonthlyOae = parameter.ShowMonthlyCharts 
+                                            ? !parameter.IsFinishing 
+                                                ? MonthlyOae(prod, hxhProduction, parameter, line) 
+                                                : MonthlyOaeFinishing(hxh, parameter, line)
+                                            : null,
+
+                            WeeklyOae = parameter.ShowMonthlyCharts 
+                                            ? !parameter.IsFinishing 
+                                                ? WeeklyOae(prod, hxhProduction, parameter, line) 
+                                                : WeeklyOaeFinishing(hxh, parameter, line)
+                                            : null
                         },
 
                         DowntimeCharts = new
@@ -1579,7 +1840,7 @@ namespace FmsbwebCoreApi.Services
             return new
             {
                 DepartmentData = parameter.LinesArr.Count == 0
-                                    ? GetDepartmentKpi(parameter, scrap, prod, hxhProduction, downtime, departmentTargets)
+                                    ? GetDepartmentKpi(parameter, scrap, prod, hxhProduction, downtime, departmentTargets, hxh)
                                     : null,
                 Filters = parameter,
                 LineData = lineData
