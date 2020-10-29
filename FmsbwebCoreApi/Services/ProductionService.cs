@@ -571,6 +571,13 @@ namespace FmsbwebCoreApi.Services
                     var eol = eolDefects.Sum(s => s.Qty) ?? 0;
                     var totalScrap = totalScrapDefects.Sum(s => s.Qty) ?? 0;
 
+                    //scrap total by type
+                    var fs = totalScrapDefects.Where(s => s.ScrapAreaName == "Foundry").Sum(s => s.Qty) ?? 0;
+                    var ms = totalScrapDefects.Where(s => s.ScrapAreaName == "Machining").Sum(s => s.Qty) ?? 0;
+                    var anod = totalScrapDefects.Where(s => s.ScrapAreaName == "Anodize").Sum(s => s.Qty) ?? 0;
+                    var sc = totalScrapDefects.Where(s => s.ScrapAreaName == "Skirt Coat").Sum(s => s.Qty) ?? 0;
+                    var assy = totalScrapDefects.Where(s => s.ScrapAreaName == "Assembly").Sum(s => s.Qty) ?? 0;
+
                     var isCurrentHour = _hour.IsCurrentHour(x.Key.ShiftDate, x.Key.Shift, x.Key.DeptName, x.Key.Hour);
 
                     var hxh = creteHxhs.FirstOrDefault(h => h.Machineid == x.Key.MachineId 
@@ -622,6 +629,12 @@ namespace FmsbwebCoreApi.Services
                         VisualScrap = visualScrap,
                         Eol = eol,
                         TotalScrap = totalScrap,
+
+                        Fs = fs,
+                        Ms = ms,
+                        Anod = anod,
+                        Sc = sc,
+                        Assy = assy,
 
                         WarmersDefects = warmersDefects,
                         SolDefects = solDefects,

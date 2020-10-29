@@ -42,7 +42,7 @@ namespace FmsbwebCoreApi.Repositories
                 qry = qry.Where(x => x.ScrapCode == resourceParameter.ScrapCode);
 
             if (!string.IsNullOrEmpty(resourceParameter.Department))
-                qry = qry.Where(x => x.Department == resourceParameter.Department);
+                qry = qry.Where(x => x.Department.ToLower() == resourceParameter.Department.ToLower());
 
             if (!string.IsNullOrEmpty(resourceParameter.Line)) 
                 qry = qry.Where(x => x.MachineHxh.ToLower().Trim() == resourceParameter.Line.ToLower().Trim());
@@ -62,7 +62,15 @@ namespace FmsbwebCoreApi.Repositories
             if (resourceParameter.Lines.Count > 0)
                 qry = qry.Where(x => resourceParameter.Lines.Contains(x.Machine2));
 
+            if (!string.IsNullOrEmpty(resourceParameter.ScrapAreaName))
+                qry = qry.Where(x => x.ScrapAreaName == resourceParameter.ScrapAreaName);
+
             return qry;
+        }
+
+        public async Task<List<ScrapAreaCode>> GetScrapAreaCodes()
+        {
+            return await _context.ScrapAreaCode.ToListAsync();
         }
     }
 }

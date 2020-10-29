@@ -12,6 +12,8 @@ namespace FmsbwebCoreApi.Models
         public decimal FoundryScrapTarget { get; set; }
         public decimal MachineScrapTarget { get; set; }
         public decimal AfScrapTarget { get; set; }
+        public int PartsPerHour { get; set; }
+        public decimal PartPerMinute => PartsPerHour == 0 ? 0 : PartsPerHour / 60;
 
         public int NetRate => (int)Math.Round((TargetPartsPerHour * OaeTarget), 0);
         public decimal OverallScrapTarget => FoundryScrapTarget + MachineScrapTarget + AfScrapTarget;

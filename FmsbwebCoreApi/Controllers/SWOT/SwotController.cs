@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DateShiftMethods.Helpers;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -27,6 +28,14 @@ namespace FmsbwebCoreApi.Controllers.SWOT
             return Ok(result);
         }
 
+        [Route("hxh")]
+        [HttpGet]
+        public async Task<IActionResult> GetHxHData([FromQuery] SwotResourceParameter parameter)
+        {
+            var result = await _swotService.GetProductionDashboardCharts(parameter);
+            return Ok(result);
+        }
+
         [Route("lines/{dept}")]
         [HttpGet]
         public async Task<IActionResult> GetLine(string dept)
@@ -36,5 +45,6 @@ namespace FmsbwebCoreApi.Controllers.SWOT
             var result = await _swotService.GetLines(dept);
             return Ok(result);
         }
+
     }
 }

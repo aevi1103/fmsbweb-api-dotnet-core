@@ -10,6 +10,7 @@ namespace FmsbwebCoreApi.Services.Interfaces
     public interface ISwotService
     {
         Task<dynamic> GetCharts(SwotResourceParameter parameter);
+        Task<dynamic> GetProductionDashboardCharts(SwotResourceParameter parameter);
         Task<List<SwotLineDto>> GetLines(string department);
     }
 }

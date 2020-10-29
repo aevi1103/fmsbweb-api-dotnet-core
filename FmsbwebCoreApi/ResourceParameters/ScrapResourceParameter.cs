@@ -19,5 +19,6 @@ namespace FmsbwebCoreApi.ResourceParameters
         public List<string> WorkCenters { get; set; } = new List<string>(); // ASBY0002
         public List<string> MachineHxHs { get; set; } = new List<string>(); // A2
         public List<string> Lines { get; set; } = new List<string>(); // Assembly 2
+        public string ScrapAreaName { get; set; } = "";
     }
 }

@@ -25,6 +25,8 @@ namespace FmsbwebCoreApi.ResourceParameters
         public bool ShowMonthlyCharts { get; set; } = false;
         public bool ShowLastSevenDays { get; set; } = false;
 
+        public string Shift { get; set; } = "";
+
         public int LastMonths { get; set; } = 3;
         public int LastWeeks { get; set; } = 3;
         public int LastDays { get; set; } = 7;

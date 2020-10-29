@@ -7,11 +7,11 @@ using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Helpers;
 using FmsbwebCoreApi.Models.SAP;
 using FmsbwebCoreApi.Repositories;
-using FmsbwebCoreApi.Repositories.Interfaces;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using DateShiftLib.Extensions;
 using Scrap = FmsbwebCoreApi.Models.SAP.Scrap;
 
 namespace FmsbwebCoreApi.Services

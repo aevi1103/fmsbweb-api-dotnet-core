@@ -1,15 +1,16 @@
-﻿using FmsbwebCoreApi.Helpers;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
+using DateShiftMethods.Helpers;
+using DateShiftLib.Extensions;
 
 namespace FmsbwebCoreApi.Entity.Fmsb2
 {
     public partial class FinanceLaborHoursView
     {
         public static readonly CultureInfo cultureInfo = new CultureInfo("en-US");
+        
 
         [StringLength(100)]
         public string Name { get; set; }
@@ -62,8 +63,8 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
                                             : (DateTime?)Convert.ToDateTime(DateIn).Add((TimeSpan)TimeIn);
 
         public string Shift2 => DateIn == null
-                                    ? null
-                                    : new DateTimeHelpers().GetDateShiftEightHours((DateTime)DateInTimeIn).Shift;
+            ? null
+            : new DateShift().GetDateShift(Convert.ToDateTime(DateInTimeIn), DeptName).Shift;
 
     }
 }

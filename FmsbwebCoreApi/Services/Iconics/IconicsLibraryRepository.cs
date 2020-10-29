@@ -6,17 +6,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DateShiftMethods.Helpers;
 
 namespace FmsbwebCoreApi.Services.Iconics
 {
     public class IconicsLibraryRepository : IIconicsLibraryRepository, IDisposable
     {
         private readonly IconicsContext _context;
+        private readonly DateShift _dateShift;
 
-        public IconicsLibraryRepository(IconicsContext context)
+        public IconicsLibraryRepository(IconicsContext context, DateShift dateShift)
         {
-            _context = context ??
-                throw new ArgumentNullException(nameof(context));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _dateShift = dateShift ?? throw new ArgumentNullException(nameof(dateShift));
         }
 
         public async Task<IEnumerable<IconicsDowntimeDto>> GetDowntimeIconics(DateTime startDate, DateTime endDate, string dept = "",
@@ -66,6 +68,59 @@ namespace FmsbwebCoreApi.Services.Iconics
 
         }
 
+        public List<IconicsDowntimeDto> SpreadHours(List<IconicsDowntimeDto> data)
+        {
+            data = data ?? throw new ArgumentNullException(nameof(data));
+
+            var list = new List<IconicsDowntimeDto>();
+            if (!data.Any()) return list;
+
+            var dataToSpreadDowntime = data.Where(x => x.StarHour != x.EndHour).ToList();
+            var others = data.Where(x => x.StarHour == x.EndHour).ToList();
+
+            foreach (var item in dataToSpreadDowntime)
+            {
+                var start = item.StartStamp;
+                var endStamp = item.EndStamp;
+                while (start <= endStamp)
+                {
+                    var endTime = _dateShift.EndOfHour(start);
+                    var itemCopy = FastDeepCloner.DeepCloner.Clone(item);
+
+                    itemCopy.StartStamp = start;
+                    itemCopy.EndStamp = endTime;
+
+                    itemCopy.StarHour = start.Hour;
+                    itemCopy.EndHour = endTime.Hour;
+
+                    if (start.Date != endStamp.Date)
+                    {
+                        list.Add(itemCopy);
+                        start = endTime.AddMinutes(1);
+                        continue;
+                    }
+
+                    if (start.Hour != endStamp.Hour)
+                    {
+                        list.Add(itemCopy);
+                        start = endTime.AddMinutes(1);
+                    }
+                    else
+                    {
+                        itemCopy.EndStamp = endStamp;
+                        itemCopy.EndHour = endStamp.Hour;
+                        list.Add(itemCopy);
+                        break;
+                    }
+
+                }
+            }
+
+            list.AddRange(others); //add the rest of the data
+
+            return list;
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -78,89 +133,6 @@ namespace FmsbwebCoreApi.Services.Iconics
             {
                 // dispose resources when needed
             }
-        }
-
-        public List<IconicsDowntimeDto> SpreadHours(List<IconicsDowntimeDto> data)
-        {
-            data = data ?? throw new ArgumentNullException(nameof(data));
-            var dh = new DateTimeHelpers();
-
-            var list = new List<IconicsDowntimeDto>();
-            if (!data.Any()) return list;
-
-            var dataToSpreadDowntime = data.Where(x => x.StarHour != x.EndHour).ToList();
-            var others = data.Where(x => x.StarHour == x.EndHour).ToList();
-
-            foreach (var item in dataToSpreadDowntime)
-            {
-
-                var endTime = DateTime.Now;
-                if (item.EndStamp == null)
-                {
-                    item.EndStamp = endTime; //if null get current date time
-                }
-
-                var completedDateTime = Convert.ToDateTime(item.EndStamp);
-                var tempStart = Convert.ToDateTime(item.StartStamp).Date + new TimeSpan(Convert.ToDateTime(item.StartStamp).Hour, 0, 0);
-                var tempEnd = completedDateTime.Date + new TimeSpan(completedDateTime.Hour, 0, 0);
-
-                var tempEndHour = tempEnd.Hour;
-                var tempEndDate = tempEnd.Date;
-
-                //defaults
-                var timeOfCall = Convert.ToDateTime(item.StartStamp);
-                var timeOfCompletion = dh.EndOfHour(timeOfCall);
-
-                while (tempStart <= tempEnd)
-                {
-                    var hour = tempStart.Hour;
-                    var date = tempStart.Date;
-
-                    //create a copy of the original object
-                    var itemCopy = FastDeepCloner.DeepCloner.Clone(item);
-
-                    //assign new datetime values
-                    itemCopy.StartStamp = timeOfCall;
-                    itemCopy.EndStamp = timeOfCompletion;
-
-                    itemCopy.StarHour = timeOfCall.Hour;
-                    itemCopy.EndHour = timeOfCompletion.Hour;
-
-                    if (timeOfCall > timeOfCompletion)
-                    {
-                        itemCopy.Downtime = 0;
-                    }
-
-                    itemCopy.Downtime = (decimal)dh.ElapsedTime(timeOfCall, timeOfCompletion);
-
-                    if (hour == tempEndHour && date == tempEndDate)
-                    {
-                        //if last hour get the original time of completion
-                        timeOfCompletion = Convert.ToDateTime(item.EndStamp);
-
-                        //override time of completion.
-                        itemCopy.EndHour = timeOfCompletion.Hour;
-                        itemCopy.EndStamp = timeOfCompletion;
-                        itemCopy.Downtime = (decimal)dh.ElapsedTime(timeOfCall, timeOfCompletion);
-                    }
-                    else
-                    {
-                        //for the next iteration we want to change the time of call to the next hour so add 1 seconds from the time of completion
-                        timeOfCall = timeOfCompletion.AddSeconds(1);
-
-                        //get the last hour of time of call
-                        timeOfCompletion = dh.EndOfHour(timeOfCall);
-                    }
-
-                    list.Add(itemCopy);
-                    tempStart = dh.EndOfHour(tempStart).AddSeconds(1);
-
-                }
-            }
-
-            list.AddRange(others); //add the rest of the data
-
-            return list;
         }
     }
 }

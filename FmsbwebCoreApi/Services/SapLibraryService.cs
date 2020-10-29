@@ -9,16 +9,15 @@ using FmsbwebCoreApi.ResourceParameters.FMSB;
 using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.FMSB2;
 using FmsbwebCoreApi.Services.FmsbMvc;
-using FmsbwebCoreApi.Services.Intranet;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using FmsbwebCoreApi.Repositories.Interfaces;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
+using DateShiftLib.Extensions;
 using Scrap = FmsbwebCoreApi.Models.SAP.Scrap;
 
 namespace FmsbwebCoreApi.Services

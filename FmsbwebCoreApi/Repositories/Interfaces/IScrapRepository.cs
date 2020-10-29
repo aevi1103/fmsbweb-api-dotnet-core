@@ -11,5 +11,6 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
     public interface IScrapRepository
     {
         IQueryable<Scrap2> GetScrap2Queryable(ScrapResourceParameter resourceParameter, bool excludeWarmers = true);
+        Task<List<ScrapAreaCode>> GetScrapAreaCodes();
     }
 }

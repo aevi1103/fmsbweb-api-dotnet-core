@@ -15,6 +15,7 @@ using FmsbwebCoreApi.ResourceParameters.FMSB;
 using FmsbwebCoreApi.Services.FmsbMvc;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using DateShiftLib.Extensions;
 
 namespace FmsbwebCoreApi.Services
 {
@@ -94,6 +95,88 @@ namespace FmsbwebCoreApi.Services
                 Line = line,
                 Data = data.ToList()
             };
+        }
+
+        private static dynamic GetScrapPareto(IEnumerable<Scrap2> departmentScrap, string line = "", string shift = "")
+        {
+            var qry = departmentScrap.Where(x => x.ScrapCode != "8888").AsQueryable();
+
+            if (!string.IsNullOrEmpty(line))
+            {
+                qry = qry.Where(x => x.Machine2 == line);
+            }
+
+            if (!string.IsNullOrEmpty(shift))
+            {
+                qry = qry.Where(x => x.Shift == shift);
+            }
+
+            var result = qry.GroupBy(s => new
+            {
+                s.ScrapDesc,
+                s.ColorCode
+            })
+                .Select(s => new
+                {
+                    s.Key.ScrapDesc,
+                    s.Key.ColorCode,
+                    Qty = s.Sum(q => q.Qty),
+                    LineDetails = s.GroupBy(l => new { l.Machine2 })
+                        .Select(l => new
+                        {
+                            Line = l.Key.Machine2,
+                            Qty = l.Sum(q => q.Qty),
+                            UserDetails = l.GroupBy(u => new { u.EnteredUser })
+                                .Select(u => new
+                                {
+                                    User = u.Key.EnteredUser,
+                                    Qty = u.Sum(q => q.Qty),
+                                })
+                                .OrderByDescending(u => u.Qty)
+                        })
+                        .OrderByDescending(l => l.Qty)
+                })
+                .OrderByDescending(s => s.Qty);
+
+            return result;
+        }
+
+        private static dynamic GetScrapParetoByArea(IEnumerable<Scrap2> departmentScrap, string line = "", string shift = "")
+        {
+            var qry = departmentScrap.Where(x => x.ScrapCode != "8888").AsQueryable();
+
+            if (!string.IsNullOrEmpty(line))
+            {
+                qry = qry.Where(x => x.Machine2 == line);
+            }
+
+            if (!string.IsNullOrEmpty(shift))
+            {
+                qry = qry.Where(x => x.Shift == shift);
+            }
+
+            var result = qry
+                .GroupBy(s => new
+                {
+                    s.ScrapAreaName,
+                    s.ColorCode
+                })
+            .Select(s => new
+            {
+                s.Key.ScrapAreaName,
+                s.Key.ColorCode,
+                Qty = s.Sum(q => q.Qty),
+                DefectDetails = s.GroupBy(d => new { d.ScrapDesc })
+                    .Select(d => new
+                    {
+                        d.Key.ScrapDesc,
+                        Qty = d.Sum(q => q.Qty),
+                    })
+                    .OrderByDescending(d => d.Qty)
+            })
+            .OrderByDescending(s => s.Qty);
+
+            return result;
         }
 
         private static dynamic GetScrapParetoByArea(IEnumerable<Scrap2> scrap, SwotResourceParameter parameter, string line = "")
@@ -386,7 +469,7 @@ namespace FmsbwebCoreApi.Services
                     MonthlyScrapDetails = monthlyGross
                         .Select(m =>
                         {
-                            var scrapByMonth = x.Where(s => s.ShiftDate.ToYear() == m.Year 
+                            var scrapByMonth = x.Where(s => s.ShiftDate.ToYear() == m.Year
                                                             && s.ShiftDate.ToMonth() == m.MonthNumber
                                                             && s.IsPurchashedExclude == false) //exclude purchased scrap
                                                     .Sum(s => s.Qty) ?? 0;
@@ -510,7 +593,7 @@ namespace FmsbwebCoreApi.Services
                     WeeklyScrapDetails = weeklyGross
                         .Select(m =>
                         {
-                            var scrapByWeek = x.Where(s => s.ShiftDate.ToYear() == m.Year 
+                            var scrapByWeek = x.Where(s => s.ShiftDate.ToYear() == m.Year
                                                            && s.ShiftDate.ToWeekNumber() == m.WeekNumber
                                                            && s.IsPurchashedExclude == false) //exclude purchased scrap
                                                     .Sum(s => s.Qty) ?? 0;
@@ -589,15 +672,15 @@ namespace FmsbwebCoreApi.Services
                 scrapQry = scrapQry.Where(x => x.Machine2 == line);
 
             var scrapData = scrapQry.GroupBy(x => new
-                {
-                    x.ShiftDate,
-                    x.Shift,
-                    x.ScrapAreaName,
-                    x.ColorCode,
-                    x.IsPurchashedExclude,
-                    x.ScrapDesc,
-                    x.ScrapCode
-                })
+            {
+                x.ShiftDate,
+                x.Shift,
+                x.ScrapAreaName,
+                x.ColorCode,
+                x.IsPurchashedExclude,
+                x.ScrapDesc,
+                x.ScrapCode
+            })
                 .Select(x => new
                 {
                     x.Key.ShiftDate,
@@ -625,11 +708,11 @@ namespace FmsbwebCoreApi.Services
             {
                 var details = shiftDates.Select(shiftDate =>
                 {
-                    var scrapByDate = shift == "All" 
+                    var scrapByDate = shift == "All"
                         ? scrapData.Where(s => s.ShiftDate == shiftDate)
                         : scrapData.Where(s => s.Shift == shift && s.ShiftDate == shiftDate);
 
-                    var netByDate = shift == "All"  
+                    var netByDate = shift == "All"
                         ? prodData.Where(s => s.ShiftDate == shiftDate)
                         : prodData.Where(s => s.Shift == shift && s.ShiftDate == shiftDate);
 
@@ -642,7 +725,7 @@ namespace FmsbwebCoreApi.Services
 
                     var scrapAreaDetails = scrapByDate
                         .Where(a => a.IsPurchashedExclude == false)
-                        .GroupBy(a => new {a.ScrapAreaName, a.ColorCode })
+                        .GroupBy(a => new { a.ScrapAreaName, a.ColorCode })
                         .Select(a => new
                         {
                             a.Key.ScrapAreaName,
@@ -692,6 +775,8 @@ namespace FmsbwebCoreApi.Services
                 Data = result
             };
         }
+
+
 
         #endregion
 
@@ -1301,6 +1386,58 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
+        private static dynamic GetHourlyDetails(List<HourlyProductionDto> data)
+        {
+            return data
+                .Select(h => new
+                {
+                    h.ShiftDate,
+                    h.Shift,
+                    h.ShiftOrder,
+                    h.MachineName,
+                    h.Line,
+                    h.CellSide,
+                    h.Hour,
+                    h.SwotTarget,
+                    h.Target,
+                    h.Gross,
+                    h.Net,
+                    h.TotalScrap,
+                    DefectTypeDetails = h.TotalScrapDefects
+                        .GroupBy(d => new { d.ScrapAreaName })
+                        .Select(d => new
+                        {
+                            d.Key.ScrapAreaName,
+                            Qty = d.Sum(q => q.Qty)
+                        })
+                        .OrderByDescending(d => d.Qty),
+                    h.HxHUrl,
+                    h.IsCurrentHour
+                })
+                .OrderBy(h => h.ShiftDate)
+                .ThenBy(h => h.Line)
+                .ThenBy(h => h.ShiftOrder)
+                .ThenBy(h => h.Hour);
+        }
+
+        private static dynamic GetHxhUrls(List<HourlyProductionDto> data)
+        {
+            return data
+                .Select(h => new
+                {
+                    ShiftDate = h.ShiftDate.ToShortDateString(),
+                    h.Shift,
+                    h.ShiftOrder,
+                    Line = h.MachineName.Contains("Cell") ? h.Line : h.MachineName,
+                    h.CellSide,
+                    h.HxHUrl
+                })
+                .Distinct()
+                .OrderBy(x => x.ShiftDate)
+                .ThenBy(x => x.ShiftOrder)
+                .ThenBy(x => x.Line);
+        }
+
         #endregion
 
         #region Downtime
@@ -1481,6 +1618,78 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
+        private static dynamic GetDowntimeDetailsByLine(IQueryable<DowntimeDto> downtimeQry, string dept, int take = 0)
+        {
+            dynamic downtimeDetails;
+            if (dept.ToLower() == "machining")
+            {
+                downtimeDetails = downtimeQry
+                    .GroupBy(d => new { d.Machine })
+                    .Select(d => new
+                    {
+                        Label = d.Key.Machine,
+                        DowntimeLoss = d.Sum(q => q.DowntimeLoss)
+                    })
+                    .OrderByDescending(d => d.DowntimeLoss);
+            }
+            else
+            {
+                downtimeDetails = downtimeQry
+                    .GroupBy(d => new { d.Reason2 })
+                    .Select(d => new
+                    {
+                        Label = d.Key.Reason2,
+                        DowntimeLoss = d.Sum(q => q.DowntimeLoss)
+                    })
+                    .OrderByDescending(d => d.DowntimeLoss);
+            }
+
+            return take > 0
+                ? downtimeDetails.take(take)
+                : downtimeDetails;
+        }
+
+        private static dynamic GetDowntimeDetailsHxH(IQueryable<DowntimeDto> downtimeQry)
+        {
+            var detailsByMachine = downtimeQry
+                .GroupBy(d => new { d.Machine })
+                .Select(d => new
+                {
+                    Label = d.Key.Machine,
+                    DowntimeLoss = d.Sum(q => q.DowntimeLoss),
+                    Details = d.GroupBy(x => new { x.Reason2 })
+                        .Select(x => new
+                        {
+                            Reason = x.Key.Reason2,
+                            DowntimeLoss = x.Sum(q => q.DowntimeLoss),
+                        })
+                        .OrderByDescending(x => x.DowntimeLoss)
+                })
+                .OrderByDescending(d => d.DowntimeLoss);
+
+            var detailsByReason = downtimeQry
+                .GroupBy(d => new { d.Reason2 })
+                .Select(d => new
+                {
+                    Label = d.Key.Reason2,
+                    DowntimeLoss = d.Sum(q => q.DowntimeLoss),
+                    Details = d.GroupBy(x => new { x.Machine })
+                        .Select(x => new
+                        {
+                            x.Key.Machine,
+                            DowntimeLoss = x.Sum(q => q.DowntimeLoss),
+                        })
+                        .OrderByDescending(x => x.DowntimeLoss)
+                })
+                .OrderByDescending(d => d.DowntimeLoss);
+
+            return new
+            {
+                DetailsByMachine = detailsByMachine,
+                DetailsByReason = detailsByReason
+            };
+        }
+
         #endregion
 
         #region Deparment
@@ -1618,6 +1827,116 @@ namespace FmsbwebCoreApi.Services
             return deptData;
         }
 
+        private static dynamic GetDepartmentKpiHxh(
+            List<HourlyProductionDto> data,
+            List<Scrap2> departmentScrap,
+            List<DowntimeDto> downtime,
+            List<SwotTargetWithDeptId> targets,
+            List<KpiTarget> departmentTargets,
+            List<ScrapAreaCode> scrapAreaCodes,
+            SwotResourceParameter parameter)
+        {
+            var hxh = data.Where(x => x.IsCurrentHour == false).ToList();
+            var uniqueLines = hxh.Where(x => x.Target > 0).Select(x => x.MachineName).Distinct();
+            var ppm = targets.Where(x => uniqueLines.Contains(x.MachineName)).Sum(x => x.TargetPartsPerHour) / 60;
+
+            //targets
+            var target = departmentTargets
+                .Where(x => x.Year == parameter.EndDate.Year && x.MonthNumber == parameter.EndDate.Month)
+                .Select(x => new
+                {
+                    OaeTarget = x.OaeTarget / 100,
+                    OverallScrapTarget = x.ScrapRateTarget / 100
+                })
+                .FirstOrDefault();
+
+            //production
+            var totalTarget = hxh.Sum(q => q.Target);
+            var totalGross = hxh.Sum(q => q.Gross);
+            var totalNet = hxh.Sum(q => q.Net);
+            var oae = totalTarget == 0 ? 0 : (decimal)totalNet / totalTarget;
+
+            // scrap
+            var totalWarmers = hxh.Sum(q => q.Warmers);
+            var totalSol = hxh.Sum(q => q.Sol);
+            var totalGageScrap = hxh.Sum(q => q.GageScrap);
+            var totalVisualScrap = hxh.Sum(q => q.VisualScrap);
+            var totalEol = hxh.Sum(q => q.Eol);
+            var totalScrap = hxh.Sum(q => q.TotalScrap);
+
+            var fs = hxh.Sum(q => q.Fs);
+            var ms = hxh.Sum(q => q.Ms);
+            var anod = hxh.Sum(q => q.Anod);
+            var sc = hxh.Sum(q => q.Sc);
+            var assy = hxh.Sum(q => q.Assy);
+
+            var overallScrapRate = totalGross == 0 ? 0 : (decimal)totalScrap / totalGross;
+            var fsp = totalGross == 0 ? 0 : (decimal)fs / totalGross;
+            var msp = totalGross == 0 ? 0 : (decimal)ms / totalGross;
+            var anodp = totalGross == 0 ? 0 : (decimal)anod / totalGross;
+            var scp = totalGross == 0 ? 0 : (decimal)sc / totalGross;
+            var assyp = totalGross == 0 ? 0 : (decimal)assy / totalGross;
+
+            //downtime
+            var downtimeQry = downtime
+                .Where(d => d.Shift.Contains(parameter.Shift))
+                .AsQueryable();
+
+            var totalDowntimeMinutes = downtimeQry.Sum(q => q.DowntimeLoss ?? 0);
+            var totalDowntimeParts = totalDowntimeMinutes * ppm;
+            var downtimePercent = totalTarget == 0 ? 0 : totalDowntimeParts / totalTarget;
+
+            var totalKpi = oae + overallScrapRate + downtimePercent;
+            var unknown = 1 - totalKpi;
+            if (totalKpi > 1)
+            {
+                downtimePercent = 1 - oae - overallScrapRate;
+                unknown = 0;
+            }
+
+            return new
+            {
+                Department = parameter.Dept,
+                Shift = parameter.Shift == "" ? "All" : parameter.Shift,
+
+                SwotTarget = target,
+
+                Target = totalTarget,
+                Gross = totalGross,
+                Net = totalNet,
+                Oae = oae < 0 ? 0 : oae,
+
+                Warmers = totalWarmers,
+                Sol = totalSol,
+                GageScrap = totalGageScrap,
+                VisualScrap = totalVisualScrap,
+                Eol = totalEol,
+                TotalScrap = totalScrap,
+
+                OverallScrapRate = overallScrapRate,
+
+                Kpi = new
+                {
+                    Oae = oae,
+                    ScrapRates = new List<dynamic>()
+                    {
+                        new { Scrap = "Foundry", Qty = fs, ScrapRate = fsp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Foundry")?.ColorCode },
+                        new { Scrap = "Machining", Qty = ms, ScrapRate = msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Machining")?.ColorCode },
+                        new { Scrap = "Anodize", Qty = anod, ScrapRate = anodp, msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Anodize")?.ColorCode },
+                        new { Scrap = "Skirt Coat", Qty = sc, ScrapRate = scp, msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Skirt Coat")?.ColorCode },
+                        new { Scrap = "Assembly", Qty = assy, ScrapRate = assyp, msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Assembly")?.ColorCode }
+                    },
+                    DowntimeRate = downtimePercent,
+                    UnknownRate = unknown
+                },
+
+                ScrapDefectDetails = GetScrapPareto(departmentScrap, "", parameter.Shift),
+                ScrapByTypeDetails = GetScrapParetoByArea(departmentScrap, "", parameter.Shift),
+                HxHUrls = GetHxhUrls(data),
+                DowntimeDetails = GetDowntimeDetailsHxH(downtimeQry)
+            };
+        }
+
         #endregion
 
         public async Task<dynamic> GetCharts(SwotResourceParameter parameter)
@@ -1633,7 +1952,6 @@ namespace FmsbwebCoreApi.Services
                         ? parameter.LastDayStart
                         : parameter.StartDate;
             }
-
 
             var selectedLines = parameter.LinesArr;
             if (!parameter.LinesArr.Any())
@@ -1659,12 +1977,10 @@ namespace FmsbwebCoreApi.Services
             };
 
             // Only use this params for hourly production which only use the users selected start and end date
-            var hxhStart = parameter.StartDate;
-            var hxhEnd = parameter.EndDate;
             var hxhParams = new ProductionResourceParameter
             {
-                StartDate = start,
-                EndDate = end,
+                StartDate = parameter.IsFinishing ? start : parameter.StartDate,
+                EndDate = parameter.IsFinishing ? end : parameter.EndDate,
                 Lines = selectedLines,
                 Department = parameter.Dept,
                 Area = parameter.Area
@@ -1683,7 +1999,10 @@ namespace FmsbwebCoreApi.Services
 
             var prod = await _productionService.GetProductionQueryable(productionParams).ToListAsync();
             var scrap = await _scrapService.GetScrap2Queryable(scrapParams, false).ToListAsync();
-            var scrapHxh = scrap.Where(x => x.ShiftDate >= hxhStart && x.ShiftDate <= hxhEnd).ToList();
+            var hxhScrap = parameter.IsFinishing
+                ? scrap
+                : scrap.Where(x => x.ShiftDate >= parameter.StartDate && x.ShiftDate <= parameter.EndDate).ToList();
+
 
             List<HxHProdDto> hxhProduction;
             if (parameter.Dept.ToLower() == "machining")
@@ -1695,13 +2014,10 @@ namespace FmsbwebCoreApi.Services
                 hxhProduction = await _productionService.GetHxHProduction(productionParams);
             }
 
-            // Only use for hourly production
             var swotTarget = await _kpiTargetService.GetSwotTargets(parameter.Dept).ConfigureAwait(false);
-            var hxh = await _productionService.GetHourByHourProductionByHour(hxhParams, scrapHxh, swotTarget);
-
-            var downtime = await _downtimeRepository.GetDowntime(downtimeParameter);
-
             var departmentTargets = await _kpiTargetService.GetDepartmentTargets(parameter.Dept, parameter.MonthStart, parameter.MonthEnd);
+            var hxh = await _productionService.GetHourByHourProductionByHour(hxhParams, hxhScrap, swotTarget);
+            var downtime = await _downtimeRepository.GetDowntime(downtimeParameter);
 
             #endregion
 
@@ -1796,27 +2112,27 @@ namespace FmsbwebCoreApi.Services
                         {
                             HourlyProduction = GetHourlyProduction(hxh, parameter, line, lineSwotTarget),
 
-                            ProductionByShift = !parameter.IsFinishing 
+                            ProductionByShift = !parameter.IsFinishing
                                                     ? GetProductionByShift(prod, hxhProduction, parameter, line)
                                                     : GetProductionByShiftFinishing(hxh, parameter, line),
 
                             ProductionByProgram = GetProductionByProgram(prod, parameter, line),
 
-                            DailyProduction = parameter.ShowLastSevenDays 
-                                                ? !parameter.IsFinishing 
-                                                    ? DailyProduction(prod, hxhProduction, parameter, line) 
+                            DailyProduction = parameter.ShowLastSevenDays
+                                                ? !parameter.IsFinishing
+                                                    ? DailyProduction(prod, hxhProduction, parameter, line)
                                                     : DailyProductionFinishing(hxh, parameter, line)
                                                 : null,
 
-                            MonthlyOae = parameter.ShowMonthlyCharts 
-                                            ? !parameter.IsFinishing 
-                                                ? MonthlyOae(prod, hxhProduction, parameter, line) 
+                            MonthlyOae = parameter.ShowMonthlyCharts
+                                            ? !parameter.IsFinishing
+                                                ? MonthlyOae(prod, hxhProduction, parameter, line)
                                                 : MonthlyOaeFinishing(hxh, parameter, line)
                                             : null,
 
-                            WeeklyOae = parameter.ShowMonthlyCharts 
-                                            ? !parameter.IsFinishing 
-                                                ? WeeklyOae(prod, hxhProduction, parameter, line) 
+                            WeeklyOae = parameter.ShowMonthlyCharts
+                                            ? !parameter.IsFinishing
+                                                ? WeeklyOae(prod, hxhProduction, parameter, line)
                                                 : WeeklyOaeFinishing(hxh, parameter, line)
                                             : null
                         },
@@ -1848,6 +2164,252 @@ namespace FmsbwebCoreApi.Services
 
         }
 
+        public async Task<dynamic> GetProductionDashboardCharts(SwotResourceParameter parameter)
+        {
+            var start = parameter.StartDate;
+            var end = parameter.EndDate;
+
+            #region Parameters
+
+            var scrapByTypeParams = new ScrapResourceParameter
+            {
+                StartDate = start,
+                EndDate = end,
+                ScrapAreaName = parameter.Dept,
+                Shift = parameter.Shift ?? ""
+            };
+
+            var scrapByDepartmentParams = new ScrapResourceParameter
+            {
+                StartDate = start,
+                EndDate = end,
+                Area = _utilityService.MapDepartmentToArea(parameter.Dept),
+                Shift = parameter.Shift ?? ""
+            };
+
+            var hxhParams = new ProductionResourceParameter
+            {
+                StartDate = start,
+                EndDate = end,
+                Department = parameter.Dept,
+                Area = parameter.Area,
+                Shift = parameter.Shift ?? ""
+            };
+
+            var downtimeParameter = new DowntimeResourceParameter
+            {
+                Start = start,
+                End = end,
+                Dept = parameter.Dept,
+                Shift = parameter.Shift ?? ""
+            };
+
+            #endregion
+
+            #region Data
+
+            var swotTarget = await _kpiTargetService.GetSwotTargets(parameter.Dept).ConfigureAwait(false);
+            var departmentTargets = await _kpiTargetService.GetDepartmentTargets(parameter.Dept, parameter.MonthStart, parameter.MonthEnd);
+
+            var scrapByType = await _scrapService.GetScrap2Queryable(scrapByTypeParams, false).ToListAsync();
+            var departmentScrap = await _scrapService.GetScrap2Queryable(scrapByDepartmentParams, false).ToListAsync();
+
+            var hxh = await _productionService.GetHourByHourProductionByHour(hxhParams, departmentScrap, swotTarget);
+            var downtime = await _downtimeRepository.GetDowntime(downtimeParameter);
+
+            var scrapAreaCodes = await _scrapService.GetScrapAreaCodes();
+
+            #endregion
+
+            var lineData = hxh
+                .Where(x => x.IsCurrentHour == false)
+                .GroupBy(x => new
+                {
+                    x.MachineName
+                })
+                .Select(x =>
+                {
+                    //target
+                    var lineSwotTarget = swotTarget
+                        .Where(t => t.MachineName == x.Key.MachineName)
+                        .Select(t => new SwotTargetDto
+                        {
+                            OaeTarget = t.OaeTarget,
+                            TargetPartsPerHour = t.TargetPartsPerHour,
+                            FoundryScrapTarget = t.FoundryScrapTarget,
+                            MachineScrapTarget = t.MachineScrapTarget,
+                            AfScrapTarget = t.AfScrapTarget,
+                            PartsPerHour = t.TargetPartsPerHour,
+                        }).FirstOrDefault();
+
+                    // production
+                    var totalTarget = x.Sum(q => q.Target);
+                    var totalGross = x.Sum(q => q.Gross);
+                    var totalNet = x.Sum(q => q.Net);
+                    var oae = totalTarget == 0 ? 0 : (decimal)totalNet / totalTarget;
+
+                    // scrap
+                    var totalWarmers = x.Sum(q => q.Warmers);
+                    var totalSol = x.Sum(q => q.Sol);
+                    var totalGageScrap = x.Sum(q => q.GageScrap);
+                    var totalVisualScrap = x.Sum(q => q.VisualScrap);
+                    var totalEol = x.Sum(q => q.Eol);
+                    var totalScrap = x.Sum(q => q.TotalScrap);
+
+                    var fs = x.Sum(q => q.Fs);
+                    var ms = x.Sum(q => q.Ms);
+                    var anod = x.Sum(q => q.Anod);
+                    var sc = x.Sum(q => q.Sc);
+                    var assy = x.Sum(q => q.Assy);
+
+                    var overallScrapRate = totalGross == 0 ? 0 : (decimal)totalScrap / totalGross;
+                    var fsp = totalGross == 0 ? 0 : (decimal)fs / totalGross;
+                    var msp = totalGross == 0 ? 0 : (decimal)ms / totalGross;
+                    var anodp = totalGross == 0 ? 0 : (decimal)anod / totalGross;
+                    var scp = totalGross == 0 ? 0 : (decimal)sc / totalGross;
+                    var assyp = totalGross == 0 ? 0 : (decimal)assy / totalGross;
+
+                    //downtime
+                    var downtimeQry = downtime
+                        .Where(d => d.Line == x.Key.MachineName && d.Shift.Contains(parameter.Shift))
+                        .AsQueryable();
+
+                    var totalDowntimeMinutes = downtimeQry.Sum(q => q.DowntimeLoss ?? 0);
+                    var totalDowntimeParts = totalDowntimeMinutes * (lineSwotTarget?.PartPerMinute ?? 0);
+                    var downtimePercent = totalTarget == 0 ? 0 : totalDowntimeParts / totalTarget;
+
+                    var totalKpi = oae + overallScrapRate + downtimePercent;
+                    var unknown = 1 - totalKpi;
+                    if (totalKpi > 1)
+                    {
+                        downtimePercent = 1 - oae - overallScrapRate;
+                        unknown = 0;
+                    }
+
+                    return new
+                    {
+                        Department = parameter.Dept,
+                        Shift = parameter.Shift == "" ? "All" : parameter.Shift,
+                        x.Key.MachineName,
+
+                        SwotTarget = lineSwotTarget,
+                        Target = totalTarget,
+                        Gross = totalGross,
+                        Net = totalNet,
+                        Oae = oae < 0 ? 0 : oae,
+
+                        Warmers = totalWarmers,
+                        Sol = totalSol,
+                        GageScrap = totalGageScrap,
+                        VisualScrap = totalVisualScrap,
+                        Eol = totalEol,
+                        TotalScrap = totalScrap,
+
+                        OverallScrapRate = overallScrapRate,
+                        Kpi = new
+                        {
+                            Oae = oae,
+                            ScrapRates = new List<dynamic>()
+                            {
+                                new { Scrap = "Foundry", Qty = fs, ScrapRate = fsp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Foundry")?.ColorCode },
+                                new { Scrap = "Machining", Qty = ms, ScrapRate = msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Machining")?.ColorCode },
+                                new { Scrap = "Anodize", Qty = anod, ScrapRate = anodp, msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Anodize")?.ColorCode },
+                                new { Scrap = "Skirt Coat", Qty = sc, ScrapRate = scp, msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Skirt Coat")?.ColorCode },
+                                new { Scrap = "Assembly", Qty = assy, ScrapRate = assyp, msp, colorCode = scrapAreaCodes.FirstOrDefault(a => a.ScrapAreaName == "Assembly")?.ColorCode }
+                            },
+                            DowntimeRate = downtimePercent,
+                            UnknownRate = unknown
+                        },
+
+                        ScrapDefectDetails = GetScrapPareto(departmentScrap, x.Key.MachineName, parameter.Shift),
+                        ScrapByTypeDetails = GetScrapParetoByArea(departmentScrap, x.Key.MachineName, parameter.Shift),
+
+                        HourlyDetails = GetHourlyDetails(x.ToList()),
+                        HxHUrls = GetHxhUrls(x.ToList()),
+
+                        TotalDowntimeLossMinutes = totalDowntimeMinutes,
+                        TotalDowntimeLossParts = totalDowntimeParts,
+                        DowntimeDetails = GetDowntimeDetailsHxH(downtimeQry)
+
+                    };
+                })
+                .Where(x => x.Target > 0)
+                .OrderBy(x => x.Oae);
+
+
+            return new
+            {
+                Department = GetDepartmentKpiHxh(hxh, departmentScrap, downtime, swotTarget, departmentTargets, scrapAreaCodes, parameter),
+                Lines = lineData,
+
+                ScrapDetails = scrapByType
+                    .Where(x => x.ScrapCode != "8888") //exclude warmers
+                    .GroupBy(x => new { x.Area })
+                    .Select(x => new
+                    {
+                        x.Key.Area,
+                        Qty = x.Sum(q => q.Qty),
+                        Defects = x.GroupBy(d => new { d.ScrapDesc, d.ColorCode, d.ScrapCode })
+                            .Select(d => new
+                            {
+                                d.Key.ScrapDesc,
+                                d.Key.ScrapCode,
+                                d.Key.ColorCode,
+                                Qty = d.Sum(q => q.Qty),
+                                LineDetails = d.GroupBy(l => new { l.Machine2 })
+                                    .Select(l => new
+                                    {
+                                        Line = l.Key.Machine2 ?? x.Key.Area,
+                                        Qty = l.Sum(q => q.Qty),
+                                        UserDetails = l.GroupBy(u => new { u.EnteredUser })
+                                                .Select(u => new
+                                                {
+                                                    User = u.Key.EnteredUser,
+                                                    Qty = u.Sum(q => q.Qty),
+                                                })
+                                                .OrderByDescending(u => u.Qty)
+                                    })
+                                    .OrderByDescending(l => l.Qty)
+                            })
+                            .OrderByDescending(d => d.Qty)
+                            .Take(5)
+                    }).OrderByDescending(x => x.Qty),
+
+                ScrapDetailsByDepartment = departmentScrap
+                    .Where(x => x.ScrapCode != "8888") //exclude warmers
+                    .GroupBy(x => new { x.ScrapAreaName, x.ColorCode })
+                    .Select(x => new
+                    {
+                        x.Key.ScrapAreaName,
+                        x.Key.ColorCode,
+                        Qty = x.Sum(q => q.Qty),
+                        Defects = x.GroupBy(d => new { d.ScrapDesc, d.ColorCode, d.ScrapCode })
+                            .Select(d => new
+                            {
+                                d.Key.ScrapDesc,
+                                d.Key.ScrapCode,
+                                d.Key.ColorCode,
+                                Qty = d.Sum(q => q.Qty),
+                                LineDetails = d.GroupBy(l => new { l.Machine2 })
+                                    .Select(l => new
+                                    {
+                                        Line = l.Key.Machine2,
+                                        Qty = l.Sum(q => q.Qty),
+                                        UserDetails = l.GroupBy(u => new { u.EnteredUser })
+                                            .Select(u => new
+                                            {
+                                                User = u.Key.EnteredUser,
+                                                Qty = u.Sum(q => q.Qty),
+                                            })
+                                            .OrderByDescending(u => u.Qty)
+                                    })
+                                    .OrderByDescending(l => l.Qty)
+                            })
+                            .OrderByDescending(d => d.Qty)
+                            .Take(5)
+                    }).OrderByDescending(x => x.Qty)
+            };
+        }
 
     }
 }
