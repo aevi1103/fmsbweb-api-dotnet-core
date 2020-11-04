@@ -16,6 +16,7 @@ using FmsbwebCoreApi.Services.FmsbMvc;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using DateShiftLib.Extensions;
+using FmsbwebCoreApi.Entity.AutoGage;
 
 namespace FmsbwebCoreApi.Services
 {
@@ -27,6 +28,7 @@ namespace FmsbwebCoreApi.Services
         private readonly IUtilityService _utilityService;
         private readonly IKpiTargetService _kpiTargetService;
         private readonly IFmsbMvcLibraryRepository _downtimeRepository;
+        private readonly IAutoGageRepository _autoGageRepository;
 
         public SwotService(
             IScrapService scrapService,
@@ -34,7 +36,8 @@ namespace FmsbwebCoreApi.Services
             IMachineMappingRepository machineMappingRepository,
             IUtilityService utilityService,
             IKpiTargetService kpiTargetService,
-            IFmsbMvcLibraryRepository downtimeRepository)
+            IFmsbMvcLibraryRepository downtimeRepository,
+            IAutoGageRepository autoGageRepository)
         {
             _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
             _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
@@ -42,6 +45,7 @@ namespace FmsbwebCoreApi.Services
             _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));
             _kpiTargetService = kpiTargetService ?? throw new ArgumentNullException(nameof(kpiTargetService));
             _downtimeRepository = downtimeRepository ?? throw new ArgumentNullException(nameof(downtimeRepository));
+            _autoGageRepository = autoGageRepository ?? throw new ArgumentNullException(nameof(autoGageRepository));
         }
 
         public async Task<List<SwotLineDto>> GetLines(string department)
@@ -776,7 +780,104 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
+        private static dynamic GetScrapByArea(List<Scrap2> scrap)
+        {
+            return scrap
+                .Where(x => x.ScrapCode != "8888") //exclude warmers
+                .GroupBy(x => new {x.Area})
+                .Select(x => new
+                {
+                    x.Key.Area,
+                    Qty = x.Sum(q => q.Qty),
 
+                    Defects = x.GroupBy(d => new {d.ScrapDesc, d.ColorCode, d.ScrapCode})
+                        .Select(d => new
+                        {
+                            d.Key.ScrapDesc,
+                            d.Key.ScrapCode,
+                            d.Key.ColorCode,
+                            Qty = d.Sum(q => q.Qty),
+
+                            LineDetails = d.GroupBy(l => new {l.Machine2})
+                                .Select(l => new
+                                {
+                                    Line = l.Key.Machine2 ?? x.Key.Area,
+                                    Qty = l.Sum(q => q.Qty),
+
+                                    UserDetails = l.GroupBy(u => new {u.EnteredUser})
+                                        .Select(u => new
+                                        {
+                                            User = u.Key.EnteredUser,
+                                            Qty = u.Sum(q => q.Qty),
+                                        })
+                                        .OrderByDescending(u => u.Qty)
+
+                                })
+                                .OrderByDescending(l => l.Qty)
+
+                        })
+                        .OrderByDescending(d => d.Qty)
+
+                        .Take(5)
+                }).OrderByDescending(x => x.Qty);
+        }
+
+        private static dynamic GetDepartmentScrap(List<Scrap2> scrap)
+        {
+            return scrap
+                .Where(x => x.ScrapCode != "8888") //exclude warmers
+                .GroupBy(x => new {x.ScrapAreaName, x.ColorCode})
+                .Select(x => new
+                {
+                    x.Key.ScrapAreaName,
+                    x.Key.ColorCode,
+                    Qty = x.Sum(q => q.Qty),
+
+                    Defects = x.GroupBy(d => new {d.ScrapDesc, d.ColorCode, d.ScrapCode})
+                        .Select(d => new
+                        {
+                            d.Key.ScrapDesc,
+                            d.Key.ScrapCode,
+                            d.Key.ColorCode,
+                            Qty = d.Sum(q => q.Qty),
+
+                            LineDetails = d.GroupBy(l => new {l.Machine2})
+                                .Select(l => new
+                                {
+                                    Line = l.Key.Machine2,
+                                    Qty = l.Sum(q => q.Qty),
+
+                                    UserDetails = l.GroupBy(u => new {u.EnteredUser})
+                                        .Select(u => new
+                                        {
+                                            User = u.Key.EnteredUser,
+                                            Qty = u.Sum(q => q.Qty),
+                                        })
+                                        .OrderByDescending(u => u.Qty)
+
+                                })
+                                .OrderByDescending(l => l.Qty)
+
+                        })
+                        .OrderByDescending(d => d.Qty)
+
+                        .Take(5)
+                }).OrderByDescending(x => x.Qty);
+        }
+
+        private static dynamic GetAutoGageScrap(List<AutoGageScrapDto> autoGageScrap, string line = "")
+        {
+            var data = autoGageScrap.Where(a => a.Machine.Contains(line))
+                .GroupBy(a => new { a.Defect })
+                .Select(a => new
+                {
+                    a.Key.Defect,
+                    Qty = a.Count()
+                })
+                .OrderByDescending(a => a.Qty);
+
+            return data;
+        }
 
         #endregion
 
@@ -1834,6 +1935,7 @@ namespace FmsbwebCoreApi.Services
             List<SwotTargetWithDeptId> targets,
             List<KpiTarget> departmentTargets,
             List<ScrapAreaCode> scrapAreaCodes,
+            List<AutoGageScrapDto> autoGageScrap,
             SwotResourceParameter parameter)
         {
             var hxh = data.Where(x => x.IsCurrentHour == false).ToList();
@@ -1933,7 +2035,9 @@ namespace FmsbwebCoreApi.Services
                 ScrapDefectDetails = GetScrapPareto(departmentScrap, "", parameter.Shift),
                 ScrapByTypeDetails = GetScrapParetoByArea(departmentScrap, "", parameter.Shift),
                 HxHUrls = GetHxhUrls(data),
-                DowntimeDetails = GetDowntimeDetailsHxH(downtimeQry)
+                DowntimeDetails = GetDowntimeDetailsHxH(downtimeQry),
+
+                AutoGageScrap = GetAutoGageScrap(autoGageScrap)
             };
         }
 
@@ -2204,20 +2308,27 @@ namespace FmsbwebCoreApi.Services
                 Shift = parameter.Shift ?? ""
             };
 
+            var autoGageParameter = new AutoGageResourceParameters
+            {
+                StartDate = start,
+                EndDate = end,
+                Shift = parameter.Shift ?? ""
+            };
+
             #endregion
 
             #region Data
 
             var swotTarget = await _kpiTargetService.GetSwotTargets(parameter.Dept).ConfigureAwait(false);
             var departmentTargets = await _kpiTargetService.GetDepartmentTargets(parameter.Dept, parameter.MonthStart, parameter.MonthEnd);
-
             var scrapByType = await _scrapService.GetScrap2Queryable(scrapByTypeParams, false).ToListAsync();
             var departmentScrap = await _scrapService.GetScrap2Queryable(scrapByDepartmentParams, false).ToListAsync();
-
             var hxh = await _productionService.GetHourByHourProductionByHour(hxhParams, departmentScrap, swotTarget);
             var downtime = await _downtimeRepository.GetDowntime(downtimeParameter);
-
             var scrapAreaCodes = await _scrapService.GetScrapAreaCodes();
+            var autoGageScrap = parameter.Dept == "Machining"
+                ? await _autoGageRepository.GetAutoGageScrapData(autoGageParameter)
+                : new List<AutoGageScrapDto>();
 
             #endregion
 
@@ -2329,7 +2440,9 @@ namespace FmsbwebCoreApi.Services
 
                         TotalDowntimeLossMinutes = totalDowntimeMinutes,
                         TotalDowntimeLossParts = totalDowntimeParts,
-                        DowntimeDetails = GetDowntimeDetailsHxH(downtimeQry)
+                        DowntimeDetails = GetDowntimeDetailsHxH(downtimeQry),
+
+                        AutoGageScrap = GetAutoGageScrap(autoGageScrap, x.Key.MachineName)
 
                     };
                 })
@@ -2339,75 +2452,10 @@ namespace FmsbwebCoreApi.Services
 
             return new
             {
-                Department = GetDepartmentKpiHxh(hxh, departmentScrap, downtime, swotTarget, departmentTargets, scrapAreaCodes, parameter),
+                Department = GetDepartmentKpiHxh(hxh, departmentScrap, downtime, swotTarget, departmentTargets, scrapAreaCodes, autoGageScrap, parameter),
                 Lines = lineData,
-
-                ScrapDetails = scrapByType
-                    .Where(x => x.ScrapCode != "8888") //exclude warmers
-                    .GroupBy(x => new { x.Area })
-                    .Select(x => new
-                    {
-                        x.Key.Area,
-                        Qty = x.Sum(q => q.Qty),
-                        Defects = x.GroupBy(d => new { d.ScrapDesc, d.ColorCode, d.ScrapCode })
-                            .Select(d => new
-                            {
-                                d.Key.ScrapDesc,
-                                d.Key.ScrapCode,
-                                d.Key.ColorCode,
-                                Qty = d.Sum(q => q.Qty),
-                                LineDetails = d.GroupBy(l => new { l.Machine2 })
-                                    .Select(l => new
-                                    {
-                                        Line = l.Key.Machine2 ?? x.Key.Area,
-                                        Qty = l.Sum(q => q.Qty),
-                                        UserDetails = l.GroupBy(u => new { u.EnteredUser })
-                                                .Select(u => new
-                                                {
-                                                    User = u.Key.EnteredUser,
-                                                    Qty = u.Sum(q => q.Qty),
-                                                })
-                                                .OrderByDescending(u => u.Qty)
-                                    })
-                                    .OrderByDescending(l => l.Qty)
-                            })
-                            .OrderByDescending(d => d.Qty)
-                            .Take(5)
-                    }).OrderByDescending(x => x.Qty),
-
-                ScrapDetailsByDepartment = departmentScrap
-                    .Where(x => x.ScrapCode != "8888") //exclude warmers
-                    .GroupBy(x => new { x.ScrapAreaName, x.ColorCode })
-                    .Select(x => new
-                    {
-                        x.Key.ScrapAreaName,
-                        x.Key.ColorCode,
-                        Qty = x.Sum(q => q.Qty),
-                        Defects = x.GroupBy(d => new { d.ScrapDesc, d.ColorCode, d.ScrapCode })
-                            .Select(d => new
-                            {
-                                d.Key.ScrapDesc,
-                                d.Key.ScrapCode,
-                                d.Key.ColorCode,
-                                Qty = d.Sum(q => q.Qty),
-                                LineDetails = d.GroupBy(l => new { l.Machine2 })
-                                    .Select(l => new
-                                    {
-                                        Line = l.Key.Machine2,
-                                        Qty = l.Sum(q => q.Qty),
-                                        UserDetails = l.GroupBy(u => new { u.EnteredUser })
-                                            .Select(u => new
-                                            {
-                                                User = u.Key.EnteredUser,
-                                                Qty = u.Sum(q => q.Qty),
-                                            })
-                                            .OrderByDescending(u => u.Qty)
-                                    })
-                                    .OrderByDescending(l => l.Qty)
-                            })
-                            .OrderByDescending(d => d.Qty)
-                            .Take(5)
-                    }).OrderByDescending(x => x.Qty)
+                ScrapDetails = GetScrapByArea(scrapByType),
+                ScrapDetailsByDepartment = GetDepartmentScrap(departmentScrap)
             };
         }
 

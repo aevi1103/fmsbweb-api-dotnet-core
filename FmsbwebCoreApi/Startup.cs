@@ -16,6 +16,7 @@ using FmsbwebCoreApi.Context.SAP;
 using System.Linq;
 using DateShiftLib.Helpers;
 using DateShiftMethods.Helpers;
+using FmsbwebCoreApi.Context.AutoGage;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.FmsbQuality;
@@ -115,12 +116,14 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.IKpiTargetRepository, Repositories.KpiTargetRepository>();
             services.AddScoped<Repositories.Interfaces.IEndOfShiftReportRepository, Repositories.EndOfShiftReportRepository>();
             services.AddScoped<Repositories.Interfaces.IMachineMappingRepository, Repositories.MachineMappingRepository>();
+            services.AddScoped<Repositories.Interfaces.IAutoGageRepository, Repositories.AutoGageRepository>();
 
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ICharacteristicRepository, Repositories.QualityCheckSheets.CharacteristicRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IMachineRepository, Repositories.QualityCheckSheets.MachineRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IOrganizationPartRepository, Repositories.QualityCheckSheets.OrganizationPartRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ISubMachineRepository, Repositories.QualityCheckSheets.SubMachineRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IReCheckRepository, Repositories.QualityCheckSheets.ReCheckRepository>();
+
 
             //inject services
             services.AddScoped<Services.Interfaces.ISapLibraryService, Services.SapLibraryService>();
@@ -171,7 +174,7 @@ namespace FmsbwebCoreApi
             services.AddDbContext<fmsbQualityContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality")));
             services.AddDbContext<masterContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmoMaster")));
             services.AddDbContext<QualityCheckSheetsContext>(options => options.UseSqlServer(Configuration.GetConnectionString("qualityCheckSheetsConn")));
-
+            services.AddDbContext<AutoGageContext>(options => options.UseSqlServer(Configuration.GetConnectionString("autoGageConn")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
