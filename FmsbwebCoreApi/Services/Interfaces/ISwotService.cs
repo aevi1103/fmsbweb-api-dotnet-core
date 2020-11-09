@@ -9,7 +9,7 @@ namespace FmsbwebCoreApi.Services.Interfaces
 {
     public interface ISwotService
     {
-        Task<dynamic> GetCharts(SwotResourceParameter parameter);
+        Task<dynamic> GetCharts(SwotResourceParameter parameter, bool rawData = false);
         Task<dynamic> GetProductionDashboardCharts(SwotResourceParameter parameter);
         Task<List<SwotLineDto>> GetLines(string department);
     }

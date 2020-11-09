@@ -37,7 +37,8 @@ namespace FmsbwebCoreApi.Repositories
                 .Where(x => x.Area == area)
                 .Where(x => x.Line != null)
                 .Where(x => !excludeLines.Contains(x.Line))
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
     }
 }

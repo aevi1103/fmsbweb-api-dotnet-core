@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using DateShiftMethods.Helpers;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FmsbwebCoreApi.Controllers.SWOT
@@ -24,7 +20,7 @@ namespace FmsbwebCoreApi.Controllers.SWOT
         [HttpGet]
         public async Task<IActionResult> GetData([FromQuery] SwotResourceParameter parameter)
         {
-            var result = await _swotService.GetCharts(parameter);
+            var result = await _swotService.GetCharts(parameter).ConfigureAwait(false);
             return Ok(result);
         }
 
@@ -32,7 +28,7 @@ namespace FmsbwebCoreApi.Controllers.SWOT
         [HttpGet]
         public async Task<IActionResult> GetHxHData([FromQuery] SwotResourceParameter parameter)
         {
-            var result = await _swotService.GetProductionDashboardCharts(parameter);
+            var result = await _swotService.GetProductionDashboardCharts(parameter).ConfigureAwait(false);
             return Ok(result);
         }
 
@@ -42,7 +38,7 @@ namespace FmsbwebCoreApi.Controllers.SWOT
         {
             if (dept == null) return BadRequest("Department parameter is missing.");
 
-            var result = await _swotService.GetLines(dept);
+            var result = await _swotService.GetLines(dept).ConfigureAwait(false);
             return Ok(result);
         }
 

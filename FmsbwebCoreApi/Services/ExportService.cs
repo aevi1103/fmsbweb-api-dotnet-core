@@ -4,19 +4,22 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Wordprocessing;
+using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.Models.FMSB2;
 using FmsbwebCoreApi.Models.Iconics;
+using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Models.SAP;
+using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.ResourceParameters.FMSB;
 using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.FMSB2;
 using FmsbwebCoreApi.Services.FmsbMvc;
 using FmsbwebCoreApi.Services.Iconics;
 using FmsbwebCoreApi.Services.Interfaces;
-using NUnit.Framework.Interfaces;
-using UtilityLibrary.Service;
 using UtilityLibrary.Service.Interface;
+using Scrap = FmsbwebCoreApi.Models.SAP.Scrap;
 
 namespace FmsbwebCoreApi.Services
 {
@@ -31,6 +34,7 @@ namespace FmsbwebCoreApi.Services
         private readonly IFmsb2LibraryRepository _fmsb2LibraryRepository;
         private readonly IUtilityService _utilityService;
         private readonly IIconicsLibraryRepository _iconicsLibraryRepository;
+        private readonly ISwotService _swotService;
 
         private const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         private const string NumberFormat = "_(* #,##0.00000_);_(* (#,##0.00);_(* \"-\"??_);_(@_)";
@@ -43,7 +47,8 @@ namespace FmsbwebCoreApi.Services
             IStringUtilityService stringUtilityService,
             IFmsb2LibraryRepository fmsb2LibraryRepository,
             IUtilityService utilityService,
-            IIconicsLibraryRepository iconicsLibraryRepository)
+            IIconicsLibraryRepository iconicsLibraryRepository,
+            ISwotService swotService)
         {
             _kpiService = kpiService ?? throw new ArgumentNullException(nameof(kpiService));
             _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
@@ -54,6 +59,7 @@ namespace FmsbwebCoreApi.Services
             _fmsb2LibraryRepository = fmsb2LibraryRepository ?? throw new ArgumentNullException(nameof(fmsb2LibraryRepository));
             _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));
             _iconicsLibraryRepository = iconicsLibraryRepository ?? throw new ArgumentNullException(nameof(iconicsLibraryRepository));
+            _swotService = swotService ?? throw new ArgumentNullException(nameof(swotService));
         }
 
         #region DepartmentPage
@@ -615,15 +621,17 @@ namespace FmsbwebCoreApi.Services
             ws.Columns().AdjustToContents();
         }
 
-        public async Task<DownloadResult> DownloadDepartmentWorkCenters(SapResourceParameter @params)
+        public async Task<DownloadResult> DownloadDepartmentWorkCenters(SapResourceParameter resourceParameter)
         {
-            var data = await _kpiService.GetDepartmentDetails(@params);
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
+            var data = await _kpiService.GetDepartmentDetails(resourceParameter).ConfigureAwait(false);
             var lines = data.DetailsByLine.ToList();
             var program = data.DetailsByProgram.ToList();
             var sbScrap = data.SbScrapDetails;
             var purchasedScrap = data.PurchaseScrapDetails;
 
-            var fileName = $"{@params.Area.ToUpper()}_DataExport_{@params.Start.ToShortDateString()}_to_{@params.End.ToShortDateString()}_{@params.Shift}_shift.xlsx";
+            var fileName = $"{resourceParameter.Area.ToUpper()}_DataExport_{resourceParameter.Start.ToShortDateString()}_to_{resourceParameter.End.ToShortDateString()}_{resourceParameter.Shift}_shift.xlsx";
 
             using var wb = new XLWorkbook();
             SummaryWorkSheet(wb, data);
@@ -1603,40 +1611,43 @@ namespace FmsbwebCoreApi.Services
 
         }
 
-        public async Task<DownloadResult> DownloadPerformanceLevel2(SapResourceParameter @params)
+        public async Task<DownloadResult> DownloadPerformanceLevel2(SapResourceParameter resourceParameter)
         {
-            var dept = _utilityService.MapAreaToDepartment(@params.Area);
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
 
-            var monthRangeParams = FastDeepCloner.DeepCloner.Clone(@params);
-            var dateRangeParams = FastDeepCloner.DeepCloner.Clone(@params);
-            monthRangeParams.Start = @params.MonthStart;
-            monthRangeParams.End = @params.MonthEnd;
+            var dept = _utilityService.MapAreaToDepartment(area: resourceParameter.Area);
 
-            var scrapVarianceByDept = await _sapLibService.GetScrapByDept(dateRangeParams);
-            var scrapVariancePerShift = await _sapLibService.GetScrapByShift(dateRangeParams);
-            var overtimeMonthRange = await _fmsb2LibraryRepository.GetOvertimePercentage(monthRangeParams.Area, monthRangeParams.Start, monthRangeParams.End);
-            var overtimeDateRange = await _fmsb2LibraryRepository.GetOvertimePercentage(dateRangeParams.Area, dateRangeParams.Start, dateRangeParams.End);
+            var monthRangeParams = FastDeepCloner.DeepCloner.Clone(resourceParameter);
+            var dateRangeParams = FastDeepCloner.DeepCloner.Clone(resourceParameter);
+            monthRangeParams.Start = resourceParameter.MonthStart;
+            monthRangeParams.End = resourceParameter.MonthEnd;
+
+            var scrapVarianceByDept = await _sapLibService.GetScrapByDept(dateRangeParams).ConfigureAwait(false);
+            var scrapVariancePerShift = await _sapLibService.GetScrapByShift(dateRangeParams).ConfigureAwait(false);
+            var overtimeMonthRange = await _fmsb2LibraryRepository.GetOvertimePercentage(monthRangeParams.Area, monthRangeParams.Start, monthRangeParams.End).ConfigureAwait(false);
+            var overtimeDateRange = await _fmsb2LibraryRepository.GetOvertimePercentage(dateRangeParams.Area, dateRangeParams.Start, dateRangeParams.End).ConfigureAwait(false);
             var downtimeByOwner = await _downtimeRepository.GetDowntimeByOwner(new DowntimeResourceParameter
             {
                 Start = dateRangeParams.Start,
                 End = dateRangeParams.End,
                 Dept = dept
-            });
+            }).ConfigureAwait(false);
+
             var downtimeIconics = await _iconicsLibraryRepository.GetDowntimeIconics(
                     dateRangeParams.Start,
                     dateRangeParams.End,
                     dept)
                 .ConfigureAwait(false);
 
-            var fileName = $"{@params.Area.ToUpper()}_PERFORMANCE_LVL1&2_DATA_EXPORT_{DateTime.Now.ToFileTime()}.xlsx";
+            var fileName = $"{resourceParameter.Area.ToUpper()}_PERFORMANCE_LVL1&2_DATA_EXPORT_{DateTime.Now.ToFileTime()}.xlsx";
             using var wb = new XLWorkbook();
 
-            ScrapVarianceByDeptWorkSheet(wb, scrapVarianceByDept, @params);
-            ScrapVarianceByShiftWorkSheet(wb, scrapVariancePerShift, @params);
+            ScrapVarianceByDeptWorkSheet(wb, scrapVarianceByDept, resourceParameter);
+            ScrapVarianceByShiftWorkSheet(wb, scrapVariancePerShift, resourceParameter);
             OvertimeWorkSheet(wb, overtimeMonthRange, monthRangeParams.Area, "Overtime1", monthRangeParams.Start, monthRangeParams.End);
             OvertimeWorkSheet(wb, overtimeDateRange, dateRangeParams.Area, "Overtime2", dateRangeParams.Start, dateRangeParams.End);
-            DowntimeByOwnerWorkSheet(wb, downtimeByOwner, @params);
-            DowntimeIconicsWorkSheet(wb, downtimeIconics, @params);
+            DowntimeByOwnerWorkSheet(wb, downtimeByOwner, resourceParameter);
+            DowntimeIconicsWorkSheet(wb, downtimeIconics, resourceParameter);
 
             await using var stream = new MemoryStream();
             wb.SaveAs(stream);
@@ -1650,10 +1661,871 @@ namespace FmsbwebCoreApi.Services
             };
         }
 
+        #endregion
+
+        #region SWOT
+
+        #region Scrap
+
+        private static void SwotScrapRateByArea(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("ScrapRateByType").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Scrap Type",
+                "Gross",
+                "Qty",
+                "Scrap Rate"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var area in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = area.ScrapAreaName;
+                ws.Cell(row, 2).Value = area.Gross;
+                ws.Cell(row, 3).Value = area.Qty;
+
+                ws.Cell(row, 4).Value = area.ScrapRate;
+                ws.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotScrapByDefect(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("ScrapByDefect").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Scrap Type",
+                "Scrap Description",
+                "Scrap Code",
+                "Qty"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var area in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = area.ScrapAreaName;
+                ws.Cell(row, 2).Value = area.ScrapDesc;
+                ws.Cell(row, 3).Value = area.ScrapCode;
+                ws.Cell(row, 4).Value = area.Qty;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotScrapByShift(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("ScrapByShift").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Shift",
+                "Scrap Type",
+                "Scrap Desc",
+                "Qty"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                foreach (var type in item.ScrapAreaNameDetails)
+                {
+                    foreach (var defect in type.DefectDetails)
+                    {
+                        row++;
+                        ws.Cell(row, 1).Value = item.Shift;
+                        ws.Cell(row, 2).Value = type.ScrapAreaName;
+                        ws.Cell(row, 3).Value = defect.ScrapDesc;
+                        ws.Cell(row, 4).Value = defect.Qty;
+                    }
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotScrapByProgram(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("ScrapByProgram").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Program",
+                "Scrap Type",
+                "Scrap Desc",
+                "Qty"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                foreach (var type in item.ScrapAreaNameDetails)
+                {
+                    foreach (var defect in type.DefectDetails)
+                    {
+                        row++;
+                        ws.Cell(row, 1).Value = item.Program;
+                        ws.Cell(row, 2).Value = type.ScrapAreaName;
+                        ws.Cell(row, 3).Value = defect.ScrapDesc;
+                        ws.Cell(row, 4).Value = defect.Qty;
+                    }
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotScrapByArea(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("ScrapByType").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Scrap Type",
+                "Scrap Desc",
+                "Scrap Code",
+                "Qty"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                foreach (var defect in item.Details)
+                {
+                    row++;
+                    ws.Cell(row, 1).Value = item.ScrapAreaName;
+                    ws.Cell(row, 2).Value = defect.ScrapDesc;
+                    ws.Cell(row, 3).Value = defect.ScrapCode;
+                    ws.Cell(row, 4).Value = defect.Qty;
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void MonthlyScrapRates(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("MonthlyScrapRates").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Scrap Type",
+                "Year",
+                "Month Number",
+                "Month",
+                "Gross",
+                "Qty",
+                "Scrap Rate"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                foreach (var defect in item.MonthlyScrapDetails)
+                {
+                    row++;
+                    ws.Cell(row, 1).Value = defect.ScrapAreaName;
+                    ws.Cell(row, 2).Value = defect.Year;
+                    ws.Cell(row, 3).Value = defect.MonthNumber;
+                    ws.Cell(row, 4).Value = defect.MonthName;
+                    ws.Cell(row, 5).Value = defect.Gross;
+                    ws.Cell(row, 6).Value = defect.Qty;
+                    ws.Cell(row, 7).Value = defect.ScrapRate;
+                    ws.Cell(row, 7).Style.NumberFormat.Format = "0.00%";
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void WeeklyScrapRates(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("WeeklyScrapRates").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Scrap Type",
+                "Year",
+                "Week Number",
+                "Gross",
+                "Qty",
+                "Scrap Rate"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                foreach (var defect in item.WeeklyScrapDetails)
+                {
+                    row++;
+                    ws.Cell(row, 1).Value = defect.ScrapAreaName;
+                    ws.Cell(row, 2).Value = defect.Year;
+                    ws.Cell(row, 3).Value = defect.WeekNumber;
+                    ws.Cell(row, 4).Value = defect.Gross;
+                    ws.Cell(row, 5).Value = defect.Qty;
+                    ws.Cell(row, 6).Value = defect.ScrapRate;
+                    ws.Cell(row, 6).Style.NumberFormat.Format = "0.00%";
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void DailyScrapRateByShift(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("DailyScrapRateByShift").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Shift",
+                "Shift Date",
+                "Net",
+                "Gross",
+
+                "Scrap Type",
+
+                "Scrap Description",
+                "Qty",
+                "Scrap Rate"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                foreach (var shift in item.Details)
+                {
+                    foreach (var type in shift.ScrapAreaDetails)
+                    {
+                        foreach (var defect in type.DefectDetails)
+                        {
+                            row++;
+                            ws.Cell(row, 1).Value = shift.Shift;
+                            ws.Cell(row, 2).Value = shift.ShiftDate;
+                            ws.Cell(row, 3).Value = shift.Net;
+                            ws.Cell(row, 4).Value = shift.Gross;
+
+                            ws.Cell(row, 5).Value = type.ScrapAreaName;
+
+                            ws.Cell(row, 6).Value = defect.ScrapDesc;
+                            ws.Cell(row, 7).Value = defect.Qty;
+                            ws.Cell(row, 8).Value = defect.ScrapRate;
+                            ws.Cell(row, 8).Style.NumberFormat.Format = "0.00%";
+                        }
+                    }
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotScrapRaw(IXLWorkbook wb, List<Scrap2> items)
+        {
+            var ws = wb.Worksheets.Add("Raw_ScrapData").SetTabColor(XLColor.Red);
+
+            var columnNames = new List<string>
+            {
+                "Work Center",
+                "Line",
+                "Side",
+                "Department",
+                "Order Number",
+                "UK Date Time",
+                "Local Date Time",
+                "Time Offset",
+                "Shift Date",
+                "Shift",
+                "Material",
+                "Input Material",
+                "Entered By",
+                "Scrap Type",
+                "Scrap Code",
+                "Scrap Description",
+                "Program",
+                "Hour",
+                "Operation #",
+                "Operation # Name",
+                "Qty",
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.WorkCenter;
+                ws.Cell(row, 2).Value = item.Machine2;
+                ws.Cell(row, 3).Value = item.Side;
+                ws.Cell(row, 4).Value = item.Area;
+                ws.Cell(row, 5).Value = item.ProdOrderNumber;
+                ws.Cell(row, 6).Value = item.UkDateTime;
+                ws.Cell(row, 7).Value = item.LocalDateTime;
+                ws.Cell(row, 8).Value = item.OffsetHr;
+                ws.Cell(row, 9).Value = item.ShiftDate;
+                ws.Cell(row, 10).Value = item.Shift;
+                ws.Cell(row, 11).Value = item.MaterialNumber;
+                ws.Cell(row, 12).Value = item.InputMaterialNumber;
+                ws.Cell(row, 13).Value = item.EnteredUser;
+                ws.Cell(row, 14).Value = item.ScrapAreaName;
+                ws.Cell(row, 15).Value = item.ScrapCode;
+                ws.Cell(row, 16).Value = item.ScrapDesc;
+                ws.Cell(row, 17).Value = item.Program;
+                ws.Cell(row, 18).Value = item.HourHxh;
+                ws.Cell(row, 19).Value = item.OperationNumber;
+                ws.Cell(row, 20).Value = item.OperationNumberLoc;
+                ws.Cell(row, 21).Value = item.Qty;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
 
         #endregion
 
+        #region Production
 
+        private static void SwotHourlyProduction(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("HourlyProduction").SetTabColor(XLColor.Green);
+
+            var columnNames = new List<string>
+            {
+                "Shift Date",
+                "Shift",
+                "Line",
+                "Hour",
+                "Cell Side",
+                "Net Rate Target",
+                "OAE Target",
+                "Target",
+                "Gross",
+                "Net",
+                "OAE",
+                "Warmers",
+                "Total Scrap"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.ShiftDate;
+                ws.Cell(row, 2).Value = item.Shift;
+
+                ws.Cell(row, 3).Value = item.MachineName;
+                ws.Cell(row, 3).Hyperlink = new XLHyperlink(item.HxHUrl);
+
+                ws.Cell(row, 4).Value = item.Hour;
+                ws.Cell(row, 5).Value = item.CellSide;
+                ws.Cell(row, 6).Value = item.NetRateTarget;
+
+                ws.Cell(row, 7).Value = item.OaeTarget;
+                ws.Cell(row, 7).Style.NumberFormat.Format = "0.00%";
+
+                ws.Cell(row, 8).Value = item.Target;
+                ws.Cell(row, 9).Value = item.Gross;
+                ws.Cell(row, 10).Value = item.Net;
+
+                ws.Cell(row, 11).Value = item.Oae;
+                ws.Cell(row, 11).Style.Font.FontColor = XLColor.White;
+                ws.Cell(row, 11).Style.NumberFormat.Format = "0.00%";
+                ws.Cell(row, 11).Style.Fill.BackgroundColor = item.Oae < item.OaeTarget ? XLColor.Red : XLColor.Green;
+
+                ws.Cell(row, 12).Value = item.Warmers;
+                ws.Cell(row, 13).Value = item.TotalScrap;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotProductionByShift(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("ProductionByShift").SetTabColor(XLColor.Green);
+
+            var columnNames = new List<string>
+            {
+                "Shift",
+                "Target",
+                "Qty",
+                "OAE"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.Shift;
+                ws.Cell(row, 2).Value = item.Target;
+                ws.Cell(row, 3).Value = item.Qty;
+                ws.Cell(row, 4).Value = item.Oae;
+                ws.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotProductionByProgram(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("ProductionByProgram").SetTabColor(XLColor.Green);
+
+            var columnNames = new List<string>
+            {
+                "Program",
+                "Qty"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.Program;
+                ws.Cell(row, 2).Value = item.Qty;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotDailyProduction(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("DailyProduction").SetTabColor(XLColor.Green);
+
+            var columnNames = new List<string>
+            {
+                "Shift Date",
+                "Target",
+                "Qty",
+                "OAE"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.ShiftDate;
+                ws.Cell(row, 2).Value = item.Target;
+                ws.Cell(row, 3).Value = item.Qty;
+                ws.Cell(row, 4).Value = item.Oae;
+                ws.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotMonthlyOae(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("MonthlyOae").SetTabColor(XLColor.Green);
+
+            var columnNames = new List<string>
+            {
+                "Year",
+                "Month",
+                "Month Number",
+                "Target",
+                "Net",
+                "OAE"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.Year;
+                ws.Cell(row, 2).Value = item.MonthName;
+                ws.Cell(row, 3).Value = item.MonthNumber;
+                ws.Cell(row, 4).Value = item.Target;
+                ws.Cell(row, 5).Value = item.Net;
+                ws.Cell(row, 6).Value = item.Oae;
+                ws.Cell(row, 6).Style.NumberFormat.Format = "0.00%";
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotWeeklyOae(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("WeeklyOae").SetTabColor(XLColor.Green);
+
+            var columnNames = new List<string>
+            {
+                "Year",
+                "Week Number",
+                "Target",
+                "Net",
+                "OAE"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.Year;
+                ws.Cell(row, 2).Value = item.WeekNumber;
+                ws.Cell(row, 3).Value = item.Target;
+                ws.Cell(row, 4).Value = item.Net;
+                ws.Cell(row, 5).Value = item.Oae;
+                ws.Cell(row, 5).Style.NumberFormat.Format = "0.00%";
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotProductionRaw(IXLWorkbook wb, List<Production2> items)
+        {
+            var ws = wb.Worksheets.Add("Raw_ProductionData").SetTabColor(XLColor.Green);
+
+            var columnNames = new List<string>
+            {
+                "Work Center",
+                "Line",
+                "Side",
+                "Department",
+                "Order Number",
+                "UK Date Time",
+                "Local Date Time",
+                "Time Offset",
+                "Shift Date",
+                "Shift",
+                "Material",
+                "Entered By",
+                "Qty",
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.WorkCenter;
+                ws.Cell(row, 2).Value = item.Line;
+                ws.Cell(row, 3).Value = item.Side;
+                ws.Cell(row, 4).Value = item.Area;
+                ws.Cell(row, 5).Value = item.OrderNumber;
+                ws.Cell(row, 6).Value = item.UkDateTime;
+                ws.Cell(row, 7).Value = item.LocalDateTime;
+                ws.Cell(row, 8).Value = item.HourOffset;
+                ws.Cell(row, 9).Value = item.ShiftDate;
+                ws.Cell(row, 10).Value = item.Shift;
+                ws.Cell(row, 11).Value = item.Material;
+                ws.Cell(row, 12).Value = item.EnteredUser;
+                ws.Cell(row, 13).Value = item.QtyProd;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        #endregion
+
+        #region Downtime
+
+        private static void SwotDowntimePareto(IXLWorkbook wb, IEnumerable<dynamic> items)
+        {
+            var ws = wb.Worksheets.Add("DowntimePareto").SetTabColor(XLColor.Yellow);
+
+            var columnNames = new List<string>
+            {
+                "Reason",
+                "Machine",
+                "Downtime"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items.OrderByDescending(x => x.Downtime))
+            {
+                foreach (var machine in item.MachineDetails)
+                {
+                    row++;
+                    ws.Cell(row, 1).Value = item.Reason2;
+                    ws.Cell(row, 2).Value = machine.Machine;
+                    ws.Cell(row, 3).Value = machine.Downtime;
+                }
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        private static void SwotDowntimeRaw(IXLWorkbook wb, List<DowntimeDto> items)
+        {
+            var ws = wb.Worksheets.Add("Raw_DowntimeData").SetTabColor(XLColor.Yellow);
+
+            var columnNames = new List<string>
+            {
+                "Owner",
+                "Department",
+                "Line",
+                "Shift Date",
+                "Shift",
+                "Hour",
+                "Machine",
+                "Reason 1",
+                "Reason 2",
+                "Comments",
+                "Downtime Loss"
+            };
+
+            const int firstRow = 1;
+
+            for (var i = 0; i < columnNames.Count; i++)
+            {
+                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+            }
+
+            var row = firstRow;
+
+            foreach (var item in items)
+            {
+                row++;
+                ws.Cell(row, 1).Value = item.Type;
+                ws.Cell(row, 2).Value = item.Dept;
+                ws.Cell(row, 3).Value = item.Line;
+                ws.Cell(row, 4).Value = item.ShifDate;
+                ws.Cell(row, 5).Value = item.Shift;
+                ws.Cell(row, 6).Value = item.Hour;
+                ws.Cell(row, 7).Value = item.Machine;
+                ws.Cell(row, 8).Value = item.Reason1;
+                ws.Cell(row, 9).Value = item.Reason2;
+                ws.Cell(row, 10).Value = item.Comments;
+                ws.Cell(row, 11).Value = item.DowntimeLoss;
+            }
+
+            ws.Columns().AdjustToContents();
+
+        }
+
+        #endregion
+
+        public async Task<DownloadResult> DownloadSwot(SwotResourceParameter resourceParameter)
+        {
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
+            var data = await _swotService.GetCharts(resourceParameter, true).ConfigureAwait(false);
+
+            var department = data.DepartmentData;
+            var lineData = data.LineData[0];
+            var lineRawData = data.RawData;
+
+            //raw data 
+            var scrapRaw = lineRawData.Scrap as List<Scrap2>;
+            var productionRaw = lineRawData.Production as List<Production2>;
+            //var hxhRaw = lineRawData.HxH as List<HourlyProductionDto>;
+            var downtimeRaw = lineRawData.Downtime as List<DowntimeDto>;
+
+            var startStr = resourceParameter.StartDate.ToShortDateString().Replace("/", ".");
+            var endStr = resourceParameter.EndDate.ToShortDateString().Replace("/", ".");
+
+            var fileName = $"{resourceParameter.Lines} SWOT EXPORT ({startStr}-{endStr}).xlsx";
+            using var wb = new XLWorkbook();
+
+            //Scrap
+            var scrapRateByArea = lineData?.ScrapRateByArea ?? new List<dynamic>();
+            var scrapByDefect = lineData?.ScrapCharts?.ScrapPareto?.Data ?? new List<dynamic>();
+            var scrapByShift = lineData?.ScrapCharts?.ScrapParetoByShift?.Data ?? new List<dynamic>();
+            var scrapByProgram = lineData?.ScrapCharts?.ScrapParetoByProgram?.Data ?? new List<dynamic>();
+            var scrapByArea = lineData?.ScrapCharts?.ScrapParetoByArea?.Data ?? new List<dynamic>();
+            var monthlyScrapRate = lineData?.ScrapCharts?.MonthlyScrapRates?.Data ?? new List<dynamic>();
+            var weeklyScrapRate = lineData?.ScrapCharts?.WeeklyScrapRates?.Data ?? new List<dynamic>();
+            var dailyScrapRateByShift = lineData?.ScrapCharts?.DailyScrapRateByShift?.Data ?? new List<dynamic>();
+
+            SwotScrapRateByArea(wb, scrapRateByArea);
+            SwotScrapByDefect(wb, scrapByDefect);
+            SwotScrapByShift(wb, scrapByShift);
+            SwotScrapByProgram(wb, scrapByProgram);
+            SwotScrapByArea(wb, scrapByArea);
+            MonthlyScrapRates(wb, monthlyScrapRate);
+            WeeklyScrapRates(wb, weeklyScrapRate);
+            DailyScrapRateByShift(wb, dailyScrapRateByShift);
+            SwotScrapRaw(wb, scrapRaw);
+
+            //prod
+            var hourlyProduction = lineData?.ProductionCharts?.HourlyProduction?.Data ?? new List<dynamic>();
+            var productionByShift = lineData?.ProductionCharts?.ProductionByShift?.Data ?? new List<dynamic>();
+            var productionByProgram = lineData?.ProductionCharts?.ProductionByProgram?.Data ?? new List<dynamic>();
+            var dailyProduction = lineData?.ProductionCharts?.DailyProduction?.Data ?? new List<dynamic>();
+            var monthlyOae = lineData?.ProductionCharts?.MonthlyOae?.Data ?? new List<dynamic>();
+            var weeklyOae = lineData?.ProductionCharts?.WeeklyOae?.Data ?? new List<dynamic>();
+
+            SwotHourlyProduction(wb, hourlyProduction);
+            SwotProductionByShift(wb, productionByShift);
+            SwotProductionByProgram(wb, productionByProgram);
+            SwotDailyProduction(wb, dailyProduction);
+            SwotMonthlyOae(wb, monthlyOae);
+            SwotWeeklyOae(wb, weeklyOae);
+            SwotProductionRaw(wb, productionRaw);
+
+            //downtime
+            var downtimeByReason = lineData?.DowntimeCharts?.DowntimeByReason?.Data ?? new List<dynamic>();
+
+            SwotDowntimePareto(wb, downtimeByReason);
+            SwotDowntimeRaw(wb, downtimeRaw);
+
+
+            await using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            var content = stream.ToArray();
+
+            return new DownloadResult
+            {
+                Content = content,
+                ContentType = ContentType,
+                FileName = fileName
+            };
+        }
+
+        #endregion
 
     }
 }

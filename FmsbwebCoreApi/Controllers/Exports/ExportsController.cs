@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using FmsbwebCoreApi.Models.SAP;
+using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.ResourceParameters.SAP;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -29,7 +30,7 @@ namespace FmsbwebCoreApi.Controllers.Exports
         {
             try
             {
-                var result = await _exportService.DownloadDepartmentWorkCenters(resourceParameter);
+                var result = await _exportService.DownloadDepartmentWorkCenters(resourceParameter).ConfigureAwait(false);
                 return File(result.Content, result.ContentType, result.FileName);
             }
             catch (Exception e)
@@ -44,7 +45,7 @@ namespace FmsbwebCoreApi.Controllers.Exports
         {
             try
             {
-                var result = await _exportService.DownloadDepartmentKpi(resourceParameter);
+                var result = await _exportService.DownloadDepartmentKpi(resourceParameter).ConfigureAwait(false);
                 return File(result.Content, result.ContentType, result.FileName);
             }
             catch (Exception e)
@@ -59,7 +60,7 @@ namespace FmsbwebCoreApi.Controllers.Exports
         {
             try
             {
-                var result = await _exportService.DownloadPerformanceLevel0(resourceParameter);
+                var result = await _exportService.DownloadPerformanceLevel0(resourceParameter).ConfigureAwait(false);
                 return File(result.Content, result.ContentType, result.FileName);
             }
             catch (Exception e)
@@ -74,7 +75,22 @@ namespace FmsbwebCoreApi.Controllers.Exports
         {
             try
             {
-                var result = await _exportService.DownloadPerformanceLevel2(resourceParameter);
+                var result = await _exportService.DownloadPerformanceLevel2(resourceParameter).ConfigureAwait(false);
+                return File(result.Content, result.ContentType, result.FileName);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("swot")]
+        public async Task<IActionResult> DownloadSwot([FromQuery] SwotResourceParameter resourceParameter)
+        {
+            try
+            {
+                var result = await _exportService.DownloadSwot(resourceParameter).ConfigureAwait(false);
                 return File(result.Content, result.ContentType, result.FileName);
             }
             catch (Exception e)

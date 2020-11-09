@@ -34,8 +34,9 @@ namespace FmsbwebCoreApi.Entity.SAP
         [Column("MachineMapping")]
         [StringLength(20)]
         public string MachineMapping1 { get; set; }
-        [Column("machineNumber")]
-        [StringLength(10)]
-        public int? MachineNumber { get; set; }
+
+        //[Column("machineNumber")]
+        ////[StringLength(10)]
+        //public int? MachineNumber { get; set; }
     }
 }

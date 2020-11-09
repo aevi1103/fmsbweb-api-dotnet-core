@@ -51,7 +51,7 @@ namespace FmsbwebCoreApi.Services
         public async Task<List<SwotLineDto>> GetLines(string department)
         {
             var area = _utilityService.MapDepartmentToArea(department);
-            var data = await _machineMappingRepository.GetMachines(area);
+            var data = await _machineMappingRepository.GetMachines(area).ConfigureAwait(false);
             var distinctLines = data.Select(x => x.Line).Distinct();
             return distinctLines.Select(x => new SwotLineDto { Line = x }).ToList();
         }
@@ -1999,7 +1999,7 @@ namespace FmsbwebCoreApi.Services
             return new
             {
                 Department = parameter.Dept,
-                Shift = parameter.Shift == "" ? "All" : parameter.Shift,
+                Shift = string.IsNullOrEmpty(parameter.Shift) ? "All" : parameter.Shift,
 
                 SwotTarget = target,
 
@@ -2043,8 +2043,10 @@ namespace FmsbwebCoreApi.Services
 
         #endregion
 
-        public async Task<dynamic> GetCharts(SwotResourceParameter parameter)
+        public async Task<dynamic> GetCharts(SwotResourceParameter parameter, bool rawData = false)
         {
+            if (parameter == null) throw new ArgumentNullException(nameof(parameter));
+
             var start = parameter.StartDate;
             var end = parameter.EndDate;
 
@@ -2061,7 +2063,7 @@ namespace FmsbwebCoreApi.Services
             if (!parameter.LinesArr.Any())
             {
                 // Get all lines 
-                selectedLines = (await GetLines(parameter.Dept)).Select(x => x.Line).ToList();
+                selectedLines = (await GetLines(parameter.Dept).ConfigureAwait(false)).Select(x => x.Line).ToList();
             }
 
             #region Parameters
@@ -2101,8 +2103,8 @@ namespace FmsbwebCoreApi.Services
 
             #region Data
 
-            var prod = await _productionService.GetProductionQueryable(productionParams).ToListAsync();
-            var scrap = await _scrapService.GetScrap2Queryable(scrapParams, false).ToListAsync();
+            var prod = await _productionService.GetProductionQueryable(productionParams).ToListAsync().ConfigureAwait(false);
+            var scrap = await _scrapService.GetScrap2Queryable(scrapParams, false).ToListAsync().ConfigureAwait(false);
             var hxhScrap = parameter.IsFinishing
                 ? scrap
                 : scrap.Where(x => x.ShiftDate >= parameter.StartDate && x.ShiftDate <= parameter.EndDate).ToList();
@@ -2111,17 +2113,17 @@ namespace FmsbwebCoreApi.Services
             List<HxHProdDto> hxhProduction;
             if (parameter.Dept.ToLower() == "machining")
             {
-                hxhProduction = await _productionService.GetMachiningEosProduction(start, end);
+                hxhProduction = await _productionService.GetMachiningEosProduction(start, end).ConfigureAwait(false);
             }
             else
             {
-                hxhProduction = await _productionService.GetHxHProduction(productionParams);
+                hxhProduction = await _productionService.GetHxHProduction(productionParams).ConfigureAwait(false);
             }
 
             var swotTarget = await _kpiTargetService.GetSwotTargets(parameter.Dept).ConfigureAwait(false);
-            var departmentTargets = await _kpiTargetService.GetDepartmentTargets(parameter.Dept, parameter.MonthStart, parameter.MonthEnd);
-            var hxh = await _productionService.GetHourByHourProductionByHour(hxhParams, hxhScrap, swotTarget);
-            var downtime = await _downtimeRepository.GetDowntime(downtimeParameter);
+            var departmentTargets = await _kpiTargetService.GetDepartmentTargets(parameter.Dept, parameter.MonthStart, parameter.MonthEnd).ConfigureAwait(false);
+            var hxh = await _productionService.GetHourByHourProductionByHour(hxhParams, hxhScrap, swotTarget).ConfigureAwait(false);
+            var downtime = await _downtimeRepository.GetDowntime(downtimeParameter).ConfigureAwait(false);
 
             #endregion
 
@@ -2263,7 +2265,15 @@ namespace FmsbwebCoreApi.Services
                                     ? GetDepartmentKpi(parameter, scrap, prod, hxhProduction, downtime, departmentTargets, hxh)
                                     : null,
                 Filters = parameter,
-                LineData = lineData
+                LineData = lineData,
+                RawData = !rawData 
+                        ? null 
+                        : new {
+                            Production = prod,
+                            Scrap = scrap,
+                            HxH = hxh,
+                            Downtime = downtime
+                        }
             };
 
         }
