@@ -1,5 +1,3 @@
-﻿Add-Migration -Name initialCreate -OutputDir "Migrations/Gage" -Context GageContext 
-
-
-Update-Database -Context "GageContext"
+﻿Add-Migration -Name AddOee -OutputDir "Migrations/Fmsb2" -Context Fmsb2Context 
+Update-Database -Context "Fmsb2Context"
 

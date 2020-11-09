@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿using Microsoft.EntityFrameworkCore;
 using FmsbwebCoreApi.Entity.AutoGage;
 
 namespace FmsbwebCoreApi.Context.AutoGage

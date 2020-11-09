@@ -4,20 +4,45 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20201106203811_AddOee2")]
+    partial class AddOee2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "3.1.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.ActionImprovementList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("ActionImprovements")
+                        .IsRequired()
+                        .HasColumnName("actionImprovements")
+                        .HasColumnType("nvarchar(500)")
+                        .HasMaxLength(500);
+
+                    b.Property<DateTime>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ActionImprovementList");
+                });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.ActualCycles", b =>
                 {
@@ -265,6 +290,32 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.ToTable("CellCavities");
                 });
 
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.CheckSheet", b =>
+                {
+                    b.Property<int>("ChecksheetId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("checksheetId")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Checksheet1")
+                        .IsRequired()
+                        .HasColumnName("checksheet")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DeptId")
+                        .HasColumnName("deptId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("ChecksheetId");
+
+                    b.ToTable("CheckSheet");
+                });
+
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.ChecksExist", b =>
                 {
                     b.Property<int>("Id")
@@ -301,6 +352,39 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.HasKey("Id");
 
                     b.ToTable("ChecksExist");
+                });
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.ChecksheetResult", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("CheckId")
+                        .HasColumnName("checkId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChecksheetId")
+                        .HasColumnName("checksheetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("HourId")
+                        .HasColumnName("hourId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("Status")
+                        .HasColumnName("status")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ChecksheetResult");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.ComponentGroup", b =>
@@ -604,6 +688,31 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.ToTable("CycleTime");
                 });
 
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.DashBoardPlannedDown", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("Datemodified")
+                        .HasColumnName("datemodified")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("MachineId")
+                        .HasColumnName("machineId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("PlanedDown")
+                        .HasColumnName("planedDown")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DashBoardPlannedDown");
+                });
+
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.DefectArea", b =>
                 {
                     b.Property<int>("DefectAreaId")
@@ -629,6 +738,64 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                         .HasName("NonClusteredIndex-20171108-154151");
 
                     b.ToTable("DefectArea");
+                });
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.DefectEscalation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("AlarmLevel")
+                        .HasColumnName("alarmLevel")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DefectId")
+                        .HasColumnName("defectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DeptId")
+                        .HasColumnName("deptId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EscalationMsgId")
+                        .HasColumnName("escalationMsgId")
+                        .HasColumnType("nvarchar(500)")
+                        .HasMaxLength(500);
+
+                    b.Property<int>("MachineId")
+                        .HasColumnName("machineId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("TriggerQty")
+                        .HasColumnName("triggerQty")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DefectEscalation");
+                });
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.DefectGroup", b =>
+                {
+                    b.Property<string>("DefectGroupId")
+                        .HasColumnName("defectGroupId")
+                        .HasColumnType("nvarchar(50)")
+                        .HasMaxLength(50);
+
+                    b.Property<DateTime>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("DefectGroupId");
+
+                    b.ToTable("DefectGroup");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.Defects", b =>
@@ -1108,6 +1275,31 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.HasKey("Id");
 
                     b.ToTable("EmailNotification");
+                });
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.EnableDisableEscalation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<bool>("Enable")
+                        .HasColumnName("enable")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MachineId")
+                        .HasColumnName("machineId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EnableDisableEscalation");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.EndOfShiftReport", b =>
@@ -1848,6 +2040,35 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.ToTable("FoundryCastingParamAccess");
                 });
 
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.FoundryCellCounter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<long>("EndCount")
+                        .HasColumnName("endCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("HourId")
+                        .HasColumnName("hourId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Stamp")
+                        .HasColumnName("stamp")
+                        .HasColumnType("datetime");
+
+                    b.Property<long>("StartCount")
+                        .HasColumnName("startCount")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FoundryCellCounter");
+                });
+
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.FoundryParamAttachments", b =>
                 {
                     b.Property<int>("Id")
@@ -2368,6 +2589,43 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.ToTable("HeatMapLoginRec");
                 });
 
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.HeatMapValues", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("HeatMapLoginId")
+                        .HasColumnName("heatMapLoginId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnName("modifiedDate")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("Radius")
+                        .HasColumnName("radius")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Value")
+                        .HasColumnName("value")
+                        .HasColumnType("int");
+
+                    b.Property<int>("XValue")
+                        .HasColumnName("x_value")
+                        .HasColumnType("int");
+
+                    b.Property<int>("YValue")
+                        .HasColumnName("y_value")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HeatMapValues");
+                });
+
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.HourByHour", b =>
                 {
                     b.Property<int>("Id")
@@ -2505,6 +2763,31 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.HasIndex("Hxhid");
 
                     b.ToTable("HxhOpsClockNum");
+                });
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.Inspectors", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Clock")
+                        .HasColumnName("clock")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("Prodid")
+                        .HasColumnName("prodid")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Inspectors");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.KpiTarget", b =>
@@ -3165,6 +3448,35 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                     b.HasKey("Id");
 
                     b.ToTable("MM_Comments");
+                });
+
+            modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.MonitorScale", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("id")
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Height")
+                        .HasColumnName("height")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MachId")
+                        .HasColumnName("machId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Modifieddate")
+                        .HasColumnName("modifieddate")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("Width")
+                        .HasColumnName("width")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MonitorScale");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Fmsb2.MorningMeetingCom", b =>

@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Serialization;
 using System;
-
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
@@ -25,6 +24,10 @@ using FmsbwebCoreApi.Context.FmsbMvc;
 using FmsbwebCoreApi.Context.Iconics;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
+using FmsbwebCoreApi.Hubs;
+using FmsbwebCoreApi.Hubs.Counter;
+using FmsbwebCoreApi.Hubs.Downtime;
+using FmsbwebCoreApi.Hubs.Scrap;
 using Microsoft.AspNet.OData.Builder;
 using Microsoft.AspNet.OData.Extensions;
 using Microsoft.OData.Edm;
@@ -43,7 +46,7 @@ namespace FmsbwebCoreApi
 
         public IConfiguration Configuration { get; }
 
-        readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+        private const string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -165,16 +168,20 @@ namespace FmsbwebCoreApi
             services.AddDbContext<IconicsContext>(options =>  options.UseSqlServer(Configuration.GetConnectionString("iconicsConn")));
             services.AddDbContext<FmsbMvcContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbMvc")));
             services.AddDbContext<SafetyContext>(options => options.UseSqlServer(Configuration.GetConnectionString("safetyConn")));
-
-            services.AddDbContext<SapContext>(options => 
-                options.UseSqlServer(Configuration.GetConnectionString("sapConn"),
-                    sqlServerOptions => sqlServerOptions.CommandTimeout(60)));
-
+            services.AddDbContext<SapContext>(options => options.UseSqlServer(Configuration.GetConnectionString("sapConn"), sqlServerOptions => sqlServerOptions.CommandTimeout(60)));
             services.AddDbContext<IntranetContext>(options => options.UseSqlServer(Configuration.GetConnectionString("intranet")));
             services.AddDbContext<fmsbQualityContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality")));
             services.AddDbContext<masterContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmoMaster")));
             services.AddDbContext<QualityCheckSheetsContext>(options => options.UseSqlServer(Configuration.GetConnectionString("qualityCheckSheetsConn")));
             services.AddDbContext<AutoGageContext>(options => options.UseSqlServer(Configuration.GetConnectionString("autoGageConn")));
+
+            //signal r
+            services.AddSignalR();
+
+            // inject singleton instance for hub tickers
+            services.AddSingleton<CounterTicker>();
+            services.AddSingleton<DowntimeTicker>();
+            services.AddSingleton<ScrapTicker>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -220,6 +227,11 @@ namespace FmsbwebCoreApi
                 //endpoints.MapODataRoute("odata", "odata", GetEdmModel()); //uncomment this if you want to use odata models instead, the comment endpoints.EnableDependencyInjection();
                 endpoints.EnableDependencyInjection();
                 endpoints.Select().Filter().OrderBy().Count().MaxTop(null).Expand();
+
+                endpoints.MapHub<ChatHub>("/chathub");
+                endpoints.MapHub<CounterHub>("/counterhub");
+                endpoints.MapHub<DowntimeHub>("/downtimehub");
+                endpoints.MapHub<DowntimeHub>("/scraphub");
             });
 
         }

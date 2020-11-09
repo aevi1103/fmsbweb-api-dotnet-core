@@ -16,24 +16,81 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         {
         }
 
-        public virtual DbSet<ActionImprovementList> ActionImprovementList { get; set; }
+        #region refs
+        public virtual DbSet<CreateHxHview> CreateHxHview { get; set; }
+        public virtual DbSet<Department> Department { get; set; }
+        public virtual DbSet<DowntimeDataList2> DowntimeDataList2 { get; set; }
+        public virtual DbSet<EmailNotification> EmailNotification { get; set; }
+        public virtual DbSet<FinanceDailyKpi> FinanceDailyKpi { get; set; }
+        public virtual DbSet<FinanceDeptFcst> FinanceDeptFcst { get; set; }
+        public virtual DbSet<FinanceFlashProjections> FinanceFlashProjections { get; set; }
+        public virtual DbSet<FinanceLaborHoursView> FinanceLaborHoursView { get; set; }
+        public virtual DbSet<LogisticsCustomer> LogisticsCustomer { get; set; }
+        public virtual DbSet<LogisticsDollars> LogisticsDollars { get; set; }
+        public virtual DbSet<LogisticsInventory> LogisticsInventory { get; set; }
+        public virtual DbSet<LogisticsParts> LogisticsParts { get; set; }
+        public virtual DbSet<MachineList> MachineList { get; set; }
+        public virtual DbSet<Machines> Machines { get; set; }
+        public virtual DbSet<DowntimeOwner> DowntimeOwner { get; set; }
+        public virtual DbSet<EndOfShiftReport> EndOfShiftReports { get; set; }
+        public virtual DbSet<HxHProd> HxHProd { get; set; }
+        public virtual DbSet<KpiTarget> KpiTarget { get; set; }
+        public virtual DbSet<SwotTargetWithDeptId> SwotTargetWithDeptId { get; set; }
+        public virtual DbSet<Oee> Oee { get; set; }
+
+        #endregion
+
+        #region Drop
+
+        //public virtual DbSet<ActionImprovementList> ActionImprovementList { get; set; }
+        //public virtual DbSet<AssemblyChangeover> AssemblyChangeover { get; set; }
+        //public virtual DbSet<Attachments> Attachments { get; set; }
+        //public virtual DbSet<ChecksExist> ChecksExist { get; set; }
+        //public virtual DbSet<CheckSheet> CheckSheet { get; set; }
+        //public virtual DbSet<ChecksResultsList> ChecksResultsList { get; set; }
+        //public virtual DbSet<ChecksheetResult> ChecksheetResult { get; set; }
+        //public virtual DbSet<DashBoardPlannedDown> DashBoardPlannedDown { get; set; }
+        //public virtual DbSet<DefectEscalation> DefectEscalation { get; set; }
+        //public virtual DbSet<DefectEscalationList> DefectEscalationList { get; set; }
+        //public virtual DbSet<DefectGroup> DefectGroup { get; set; }
+        //public virtual DbSet<DepartmentalComments> DepartmentalComments { get; set; }
+        //public virtual DbSet<DeptReferences> DeptReferences { get; set; }
+        //public virtual DbSet<EnableDisableEscalation> EnableDisableEscalation { get; set; }
+        //public virtual DbSet<EscalationLog> EscalationLog { get; set; }
+        //public virtual DbSet<EscalationLog2> EscalationLog2 { get; set; }
+        //public virtual DbSet<EscalationLogList> EscalationLogList { get; set; }
+        //public virtual DbSet<EscalationMsg> EscalationMsg { get; set; }
+        //public virtual DbSet<EscalationReactions> EscalationReactions { get; set; }
+        //public virtual DbSet<EscalationEmailsNoti> EscalationEmailsNoti { get; set; }
+        //public virtual DbSet<FoundryCellCounter> FoundryCellCounter { get; set; }
+        //public virtual DbSet<HeatMapLoginRec> HeatMapLoginRec { get; set; }
+        //public virtual DbSet<HeatMapValues> HeatMapValues { get; set; }
+        //public virtual DbSet<Inspectors> Inspectors { get; set; }
+        //public virtual DbSet<LineTwoBolscrap> LineTwoBolscrap { get; set; }
+        //public virtual DbSet<MachineCycleTimeMasterEntries> MachineCycleTimeMasterEntries { get; set; }
+        //public virtual DbSet<MachineCycleTimeMasterRefs> MachineCycleTimeMasterRefs { get; set; }
+        //public virtual DbSet<MachineCycleTimeMasterView> MachineCycleTimeMasterView { get; set; }
+        //public virtual DbSet<MmComments> MmComments { get; set; }
+        //public virtual DbSet<MonitorScale> MonitorScale { get; set; }
+        //public virtual DbSet<MorningMeetingCom> MorningMeetingCom { get; set; }
+        //public virtual DbSet<ProductionIssuesActions> ProductionIssuesActions { get; set; }
+        //public virtual DbSet<Users> Users { get; set; }
+        //public virtual DbSet<AfNewhxhData> AfNewhxhData { get; set; }
+        //public virtual DbSet<AfNewhxhDataPn> AfNewhxhDataPn { get; set; }
+        //public virtual DbSet<AfProductionSummary> AfProductionSummary { get; set; }
+        //public virtual DbSet<AnodizeScrap> AnodizeScrap { get; set; }
+        //public virtual DbSet<AssyChangeover> AssyChangeover { get; set; }
+        //public virtual DbSet<AssyScrap> AssyScrap { get; set; }
+        //public virtual DbSet<CurrentGrossProdEolMach> CurrentGrossProdEolMach { get; set; }
+
+        #endregion
+
+
         public virtual DbSet<ActualCycles> ActualCycles { get; set; }
-        public virtual DbSet<AfNewhxhData> AfNewhxhData { get; set; }
-        public virtual DbSet<AfNewhxhDataPn> AfNewhxhDataPn { get; set; }
-        public virtual DbSet<AfProductionSummary> AfProductionSummary { get; set; }
-        public virtual DbSet<AnodizeScrap> AnodizeScrap { get; set; }
-        public virtual DbSet<AssemblyChangeover> AssemblyChangeover { get; set; }
-        public virtual DbSet<AssyChangeover> AssyChangeover { get; set; }
-        public virtual DbSet<AssyScrap> AssyScrap { get; set; }
-        public virtual DbSet<Attachments> Attachments { get; set; }
         public virtual DbSet<AuthorizeClocks> AuthorizeClocks { get; set; }
         public virtual DbSet<CavityList> CavityList { get; set; }
         public virtual DbSet<CellCavities> CellCavities { get; set; }
-        public virtual DbSet<CheckSheet> CheckSheet { get; set; }
         public virtual DbSet<CheckSheetList> CheckSheetList { get; set; }
-        public virtual DbSet<ChecksExist> ChecksExist { get; set; }
-        public virtual DbSet<ChecksResultsList> ChecksResultsList { get; set; }
-        public virtual DbSet<ChecksheetResult> ChecksheetResult { get; set; }
         public virtual DbSet<ClockNumList> ClockNumList { get; set; }
         public virtual DbSet<ClockNumberListConcat> ClockNumberListConcat { get; set; }
         public virtual DbSet<ComponentAreaView> ComponentAreaView { get; set; }
@@ -50,30 +107,20 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<CreateHourList> CreateHourList { get; set; }
         public virtual DbSet<CreateHourList2> CreateHourList2 { get; set; }
         public virtual DbSet<CreateHxH> CreateHxH { get; set; }
-        public virtual DbSet<CreateHxHview> CreateHxHview { get; set; }
-        public virtual DbSet<CurrentGrossProdEolMach> CurrentGrossProdEolMach { get; set; }
         public virtual DbSet<CycleTime> CycleTime { get; set; }
         public virtual DbSet<CycleTimeList> CycleTimeList { get; set; }
         public virtual DbSet<CycleTimeMachining> CycleTimeMachining { get; set; }
         public virtual DbSet<Cyclelossfoundry> Cyclelossfoundry { get; set; }
         public virtual DbSet<DailyDefectsTrend> DailyDefectsTrend { get; set; }
-        public virtual DbSet<DashBoardPlannedDown> DashBoardPlannedDown { get; set; }
         public virtual DbSet<DefectArea> DefectArea { get; set; }
-        public virtual DbSet<DefectEscalation> DefectEscalation { get; set; }
-        public virtual DbSet<DefectEscalationList> DefectEscalationList { get; set; }
-        public virtual DbSet<DefectGroup> DefectGroup { get; set; }
         public virtual DbSet<DefectList> DefectList { get; set; }
         public virtual DbSet<DefectListWithGross> DefectListWithGross { get; set; }
         public virtual DbSet<Defects> Defects { get; set; }
-        public virtual DbSet<Department> Department { get; set; }
         public virtual DbSet<DepartmentProd> DepartmentProd { get; set; }
-        public virtual DbSet<DepartmentalComments> DepartmentalComments { get; set; }
-        public virtual DbSet<DeptReferences> DeptReferences { get; set; }
         public virtual DbSet<DeptReferences2> DeptReferences2 { get; set; }
         public virtual DbSet<DistinctHour> DistinctHour { get; set; }
         public virtual DbSet<Downtime> Downtime { get; set; }
         public virtual DbSet<DowntimeDataList> DowntimeDataList { get; set; }
-        public virtual DbSet<DowntimeDataList2> DowntimeDataList2 { get; set; }
         public virtual DbSet<DowntimeDataList2Copy> DowntimeDataList2Copy { get; set; }
         public virtual DbSet<DowntimeDataListFmsb2> DowntimeDataListFmsb2 { get; set; }
         public virtual DbSet<DowntimeListGuid> DowntimeListGuid { get; set; }
@@ -82,29 +129,16 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<DowntimeReason21> DowntimeReason21 { get; set; }
         public virtual DbSet<DowntimeReportRecipient> DowntimeReportRecipient { get; set; }
         public virtual DbSet<DowntimeReportRecipients> DowntimeReportRecipients { get; set; }
-        public virtual DbSet<EmailNotification> EmailNotification { get; set; }
         public virtual DbSet<Employees> Employees { get; set; }
-        public virtual DbSet<EnableDisableEscalation> EnableDisableEscalation { get; set; }
         public virtual DbSet<EosComments> EosComments { get; set; }
-        public virtual DbSet<EscalationEmailsNoti> EscalationEmailsNoti { get; set; }
-        public virtual DbSet<EscalationLog> EscalationLog { get; set; }
-        public virtual DbSet<EscalationLog2> EscalationLog2 { get; set; }
-        public virtual DbSet<EscalationLogList> EscalationLogList { get; set; }
-        public virtual DbSet<EscalationMsg> EscalationMsg { get; set; }
-        public virtual DbSet<EscalationReactions> EscalationReactions { get; set; }
         public virtual DbSet<FinVerification> FinVerification { get; set; }
         public virtual DbSet<FinanceDailyInput> FinanceDailyInput { get; set; }
-        public virtual DbSet<FinanceDailyKpi> FinanceDailyKpi { get; set; }
-        public virtual DbSet<FinanceDeptFcst> FinanceDeptFcst { get; set; }
         public virtual DbSet<FinanceFigures> FinanceFigures { get; set; }
-        public virtual DbSet<FinanceFlashProjections> FinanceFlashProjections { get; set; }
         public virtual DbSet<FinanceLaborHours> FinanceLaborHours { get; set; }
-        public virtual DbSet<FinanceLaborHoursView> FinanceLaborHoursView { get; set; }
         public virtual DbSet<FinancePpmh> FinancePpmh { get; set; }
         public virtual DbSet<FinishingVerification> FinishingVerification { get; set; }
         public virtual DbSet<Fmparts> Fmparts { get; set; }
         public virtual DbSet<FoundryCastingParamAccess> FoundryCastingParamAccess { get; set; }
-        public virtual DbSet<FoundryCellCounter> FoundryCellCounter { get; set; }
         public virtual DbSet<FoundryCellCounterView> FoundryCellCounterView { get; set; }
         public virtual DbSet<FoundryCycleLossList> FoundryCycleLossList { get; set; }
         public virtual DbSet<FoundryGraphSummary> FoundryGraphSummary { get; set; }
@@ -125,8 +159,6 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<FurnaceShellNumbers> FurnaceShellNumbers { get; set; }
         public virtual DbSet<GetAfParts> GetAfParts { get; set; }
         public virtual DbSet<GetmachParts> GetmachParts { get; set; }
-        public virtual DbSet<HeatMapLoginRec> HeatMapLoginRec { get; set; }
-        public virtual DbSet<HeatMapValues> HeatMapValues { get; set; }
         public virtual DbSet<HourByHour> HourByHour { get; set; }
         public virtual DbSet<HourByHourEscalationActions> HourByHourEscalationActions { get; set; }
         public virtual DbSet<HourReference> HourReference { get; set; }
@@ -135,46 +167,43 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<HourlyScrapList> HourlyScrapList { get; set; }
         public virtual DbSet<HourlyScrapListWithCellSide> HourlyScrapListWithCellSide { get; set; }
         public virtual DbSet<HxhOpsClockNum> HxhOpsClockNum { get; set; }
-        public virtual DbSet<Inspectors> Inspectors { get; set; }
-        public virtual DbSet<LineTwoBolscrap> LineTwoBolscrap { get; set; }
+
+
         public virtual DbSet<LogisticsCommentsView> LogisticsCommentsView { get; set; }
-        public virtual DbSet<LogisticsCustomer> LogisticsCustomer { get; set; }
-        public virtual DbSet<LogisticsDollars> LogisticsDollars { get; set; }
+
         public virtual DbSet<LogisticsDollarsView> LogisticsDollarsView { get; set; }
-        public virtual DbSet<LogisticsInventory> LogisticsInventory { get; set; }
+
         public virtual DbSet<LogisticsInventoryView> LogisticsInventoryView { get; set; }
         public virtual DbSet<LogisticsMm> LogisticsMm { get; set; }
         public virtual DbSet<LogisticsPartInv> LogisticsPartInv { get; set; }
-        public virtual DbSet<LogisticsParts> LogisticsParts { get; set; }
+
         public virtual DbSet<LogisticsScrap> LogisticsScrap { get; set; }
         public virtual DbSet<MachLineLoadLog> MachLineLoadLog { get; set; }
         public virtual DbSet<MachProductionSummary> MachProductionSummary { get; set; }
         public virtual DbSet<MachScrap> MachScrap { get; set; }
         public virtual DbSet<MachToolBreakage> MachToolBreakage { get; set; }
         public virtual DbSet<MachToolBreakageEmailRecipients> MachToolBreakageEmailRecipients { get; set; }
-        public virtual DbSet<MachineCycleTimeMasterEntries> MachineCycleTimeMasterEntries { get; set; }
-        public virtual DbSet<MachineCycleTimeMasterRefs> MachineCycleTimeMasterRefs { get; set; }
-        public virtual DbSet<MachineCycleTimeMasterView> MachineCycleTimeMasterView { get; set; }
+
         public virtual DbSet<MachineGroup> MachineGroup { get; set; }
         public virtual DbSet<MachineGroupList> MachineGroupList { get; set; }
         public virtual DbSet<MachineGroupNumber> MachineGroupNumber { get; set; }
         public virtual DbSet<MachineGroupNumberList> MachineGroupNumberList { get; set; }
         public virtual DbSet<MachineLineLoadLogList> MachineLineLoadLogList { get; set; }
-        public virtual DbSet<MachineList> MachineList { get; set; }
+
         public virtual DbSet<MachineLookup> MachineLookup { get; set; }
         public virtual DbSet<MachineLookupView> MachineLookupView { get; set; }
         public virtual DbSet<MachineOwners> MachineOwners { get; set; }
         public virtual DbSet<MachinePartProd> MachinePartProd { get; set; }
         public virtual DbSet<MachineProd> MachineProd { get; set; }
-        public virtual DbSet<Machines> Machines { get; set; }
+
         public virtual DbSet<MachiningCombineDowntimeAll> MachiningCombineDowntimeAll { get; set; }
         public virtual DbSet<MachiningDieNumber> MachiningDieNumber { get; set; }
         public virtual DbSet<MachiningToolBreakageView> MachiningToolBreakageView { get; set; }
-        public virtual DbSet<MmComments> MmComments { get; set; }
-        public virtual DbSet<MonitorScale> MonitorScale { get; set; }
-        public virtual DbSet<MorningMeetingCom> MorningMeetingCom { get; set; }
+
+
         public virtual DbSet<OaeBootStrapClass> OaeBootStrapClass { get; set; }
         public virtual DbSet<OaeBootstrapClassView> OaeBootstrapClassView { get; set; }
+
         public virtual DbSet<OaeEmailRecipients> OaeEmailRecipients { get; set; }
         public virtual DbSet<OaeEscalationActions> OaeEscalationActions { get; set; }
         public virtual DbSet<OaeEscalationLog> OaeEscalationLog { get; set; }
@@ -190,7 +219,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<Prod> Prod { get; set; }
         public virtual DbSet<ProdScrap> ProdScrap { get; set; }
         public virtual DbSet<ProdScrap2> ProdScrap2 { get; set; }
-        public virtual DbSet<ProductionIssuesActions> ProductionIssuesActions { get; set; }
+
         public virtual DbSet<ProductionScrap> ProductionScrap { get; set; }
         public virtual DbSet<ProductionSummaryv2> ProductionSummaryv2 { get; set; }
         public virtual DbSet<ProductionSummaryv3> ProductionSummaryv3 { get; set; }
@@ -231,26 +260,19 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<SwotNetTargetEscalation> SwotNetTargetEscalation { get; set; }
         public virtual DbSet<SwotProfile> SwotProfile { get; set; }
         public virtual DbSet<SwotTargetEscalationView> SwotTargetEscalationView { get; set; }
-        public virtual DbSet<SwotTargetWithDeptId> SwotTargetWithDeptId { get; set; }
+
         public virtual DbSet<SwotTargets> SwotTargets { get; set; }
         public virtual DbSet<TemporaryLevelGetterOae> TemporaryLevelGetterOae { get; set; }
-        public virtual DbSet<Users> Users { get; set; }
+
         public virtual DbSet<TwentyFourHours> TwentyFourHours { get; set; }
         public virtual DbSet<SapBOM> SapBom { get; set; }
-        public virtual DbSet<KpiTarget> KpiTarget { get; set; }
+
         public virtual DbSet<AnodizeChecklist> AnodizeChecklist { get; set; }
         public virtual DbSet<AnodizeChecklistEntries> AnodizeChecklistEntries { get; set; }
-        public virtual DbSet<DowntimeOwner> DowntimeOwner { get; set; }
-        public virtual DbSet<EndOfShiftReport> EndOfShiftReports { get; set; }
-        public virtual DbSet<HxHProd> HxHProd { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-//            if (!optionsBuilder.IsConfigured)
-//            {
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-//                optionsBuilder.UseSqlServer("Data Source=SBNDINMS007;Initial Catalog=FMSB2;Integrated Security=False;User ID=rontoa20;Password=aebbie17;Connect Timeout=15;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False");
-//            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
