@@ -1205,14 +1205,14 @@ namespace FmsbwebCoreApi.Services
             monthRangeParams.Start = @params.MonthStart;
             monthRangeParams.End = @params.MonthEnd;
 
-            var scrapVariance = await _sapLibService.GetScrapVariance(monthRangeParams);
-            var scrapVariancePerProgram = await _sapLibService.GetScrapVariancePerProgram(dateRangeParams);
+            var scrapVariance = await _sapLibService.GetScrapVariance(monthRangeParams).ConfigureAwait(false);
+            var scrapVariancePerProgram = await _sapLibService.GetScrapVariancePerProgram(dateRangeParams).ConfigureAwait(false);
             var ppmhPlant = await _sapLibService.GetPlantWidePpmh(monthRangeParams).ConfigureAwait(false);
             var downtime = await _downtimeRepository.GetDowntime(new DowntimeResourceParameter
             {
                 Start = dateRangeParams.Start,
                 End = dateRangeParams.End
-            });
+            }).ConfigureAwait(false);
 
             var fileName = $"{@params.Area.ToUpper()}_PERFORMANCE_LVL0&1_DATA_EXPORT_{DateTime.Now.ToFileTime()}.xlsx";
 
@@ -1985,7 +1985,7 @@ namespace FmsbwebCoreApi.Services
 
                             ws.Cell(row, 6).Value = defect.ScrapDesc;
                             ws.Cell(row, 7).Value = defect.Qty;
-                            ws.Cell(row, 8).Value = defect.ScrapRate;
+                            ws.Cell(row, 8).Value = shift.Net == 0 ? 0 : defect.ScrapRate;
                             ws.Cell(row, 8).Style.NumberFormat.Format = "0.00%";
                         }
                     }
@@ -2022,7 +2022,9 @@ namespace FmsbwebCoreApi.Services
                 "Hour",
                 "Operation #",
                 "Operation # Name",
-                "Qty",
+                "AutoGage Scrap",
+                "Purchased Scrap",
+                "Qty"
             };
 
             const int firstRow = 1;
@@ -2057,7 +2059,10 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(row, 18).Value = item.HourHxh;
                 ws.Cell(row, 19).Value = item.OperationNumber;
                 ws.Cell(row, 20).Value = item.OperationNumberLoc;
-                ws.Cell(row, 21).Value = item.Qty;
+                ws.Cell(row, 21).Value = item.IsAutoGaugeScrap2;
+                ws.Cell(row, 22).Value = item.IsPurchashedExclude2;
+                ws.Cell(row, 23).Value = item.Qty;
+                
             }
 
             ws.Columns().AdjustToContents();
@@ -2083,17 +2088,71 @@ namespace FmsbwebCoreApi.Services
                 "OAE Target",
                 "Target",
                 "Gross",
+
+                "Warmers",
+                "SOL Scrap",
+                "EOL Scrap",
+                "Gage Scrap",
+                "Visual Scrap",
+
+                "Foundry Scrap",
+                "Machining Scrap",
+                "Anodize Scrap",
+                "Skirt Coat Scrap",
+                "Assembly Scrap",
+
+                "Total Scrap",
+
                 "Net",
                 "OAE",
-                "Warmers",
-                "Total Scrap"
+
             };
 
             const int firstRow = 1;
+            const XLBorderStyleValues border = XLBorderStyleValues.Thin;
 
-            for (var i = 0; i < columnNames.Count; i++)
+            for (var column = 0; column < columnNames.Count; column++)
             {
-                ws.Cell(firstRow, i + 1).Value = columnNames[i];
+                var col = column + 1;
+                ws.Cell(firstRow, col).Value = columnNames[column];
+
+                switch (column)
+                {
+                    case 9:
+                        ws.Cell(firstRow, col).Style.Fill.BackgroundColor = XLColor.Gray;
+                        break;
+                    case 10:
+                    case 11:
+                        ws.Cell(firstRow, col).Style.Fill.BackgroundColor = XLColor.Orange;
+                        break;
+                    case 12:
+                    case 13:
+                        ws.Cell(firstRow, col).Style.Fill.BackgroundColor = XLColor.Blue;
+                        break;
+                    case 14:
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
+                        ws.Cell(firstRow, col).Style.Fill.BackgroundColor = XLColor.Red;
+                        break;
+                    case 19:
+                        ws.Cell(firstRow, col).Style.Fill.BackgroundColor = XLColor.DarkRed;
+                        break;
+                }
+
+                if (column >= 7 && column <= 20)
+                {
+                    ws.Column(column + 1).Style.NumberFormat.Format = "_(* #,##0_);_(* (#,##0);_(* \"-\"??_);_(@_)";
+                }
+
+                if (column < 9 || column > 19) continue;
+                ws.Cell(firstRow, col).Style.Border.TopBorder = border;
+                ws.Cell(firstRow, col).Style.Border.LeftBorder = border;
+                ws.Cell(firstRow, col).Style.Border.RightBorder = border;
+                ws.Cell(firstRow, col).Style.Border.BottomBorder = border;
+                ws.Cell(firstRow, col).Style.Font.FontColor = XLColor.White;
+
             }
 
             var row = firstRow;
@@ -2103,28 +2162,47 @@ namespace FmsbwebCoreApi.Services
                 row++;
                 ws.Cell(row, 1).Value = item.ShiftDate;
                 ws.Cell(row, 2).Value = item.Shift;
-
                 ws.Cell(row, 3).Value = item.MachineName;
                 ws.Cell(row, 3).Hyperlink = new XLHyperlink(item.HxHUrl);
-
                 ws.Cell(row, 4).Value = item.Hour;
                 ws.Cell(row, 5).Value = item.CellSide;
                 ws.Cell(row, 6).Value = item.NetRateTarget;
-
                 ws.Cell(row, 7).Value = item.OaeTarget;
                 ws.Cell(row, 7).Style.NumberFormat.Format = "0.00%";
-
                 ws.Cell(row, 8).Value = item.Target;
                 ws.Cell(row, 9).Value = item.Gross;
-                ws.Cell(row, 10).Value = item.Net;
 
-                ws.Cell(row, 11).Value = item.Oae;
-                ws.Cell(row, 11).Style.Font.FontColor = XLColor.White;
-                ws.Cell(row, 11).Style.NumberFormat.Format = "0.00%";
-                ws.Cell(row, 11).Style.Fill.BackgroundColor = item.Oae < item.OaeTarget ? XLColor.Red : XLColor.Green;
+                ws.Cell(row, 10).Value = item.Warmers;
+                ws.Cell(row, 10).Style.Border.LeftBorder = border;
+                ws.Cell(row, 10).Style.Border.RightBorder = border;
 
-                ws.Cell(row, 12).Value = item.Warmers;
-                ws.Cell(row, 13).Value = item.TotalScrap;
+                ws.Cell(row, 11).Style.Border.LeftBorder = border;
+                ws.Cell(row, 11).Value = item.Sol;
+                ws.Cell(row, 12).Value = item.Eol;
+                ws.Cell(row, 12).Style.Border.RightBorder = border;
+
+                ws.Cell(row, 13).Style.Border.LeftBorder = border;
+                ws.Cell(row, 13).Value = item.GageScrap;
+                ws.Cell(row, 14).Value = item.VisualScrap;
+                ws.Cell(row, 14).Style.Border.RightBorder = border;
+
+                ws.Cell(row, 15).Style.Border.LeftBorder = border;
+                ws.Cell(row, 15).Value = item.Fs;
+                ws.Cell(row, 16).Value = item.Ms;
+                ws.Cell(row, 17).Value = item.Anod;
+                ws.Cell(row, 18).Value = item.Sc;
+                ws.Cell(row, 19).Value = item.Assy;
+                ws.Cell(row, 19).Style.Border.RightBorder = border;
+
+                ws.Cell(row, 20).Value = item.TotalScrap;
+                ws.Cell(row, 20).Style.Border.RightBorder = border;
+
+                ws.Cell(row, 21).Value = item.Net;
+                ws.Cell(row, 22).Value = item.Oae;
+                ws.Cell(row, 22).Style.Font.FontColor = XLColor.White;
+                ws.Cell(row, 22).Style.NumberFormat.Format = "0.00%";
+                ws.Cell(row, 22).Style.Fill.BackgroundColor = item.Oae < item.OaeTarget ? XLColor.Red : XLColor.Green;
+
             }
 
             ws.Columns().AdjustToContents();
@@ -2398,7 +2476,7 @@ namespace FmsbwebCoreApi.Services
 
         }
 
-        private static void SwotDowntimeRaw(IXLWorkbook wb, List<DowntimeDto> items)
+        private void SwotDowntimeRaw(IXLWorkbook wb, List<DowntimeDto> items)
         {
             var ws = wb.Worksheets.Add("Raw_DowntimeData").SetTabColor(XLColor.Yellow);
 
@@ -2438,7 +2516,7 @@ namespace FmsbwebCoreApi.Services
                 ws.Cell(row, 7).Value = item.Machine;
                 ws.Cell(row, 8).Value = item.Reason1;
                 ws.Cell(row, 9).Value = item.Reason2;
-                ws.Cell(row, 10).Value = item.Comments;
+                ws.Cell(row, 10).Value = _stringUtilityService.RemoveHtmlTags(item.Comments);
                 ws.Cell(row, 11).Value = item.DowntimeLoss;
             }
 
@@ -2454,7 +2532,6 @@ namespace FmsbwebCoreApi.Services
 
             var data = await _swotService.GetCharts(resourceParameter, true).ConfigureAwait(false);
 
-            var department = data.DepartmentData;
             var lineData = data.LineData[0];
             var lineRawData = data.RawData;
 
@@ -2512,6 +2589,80 @@ namespace FmsbwebCoreApi.Services
             SwotDowntimePareto(wb, downtimeByReason);
             SwotDowntimeRaw(wb, downtimeRaw);
 
+
+            await using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            var content = stream.ToArray();
+
+            return new DownloadResult
+            {
+                Content = content,
+                ContentType = ContentType,
+                FileName = fileName
+            };
+        }
+
+        public async Task<DownloadResult> DownloadSwotDepartment(SwotResourceParameter resourceParameter)
+        {
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
+            var data = await _swotService.GetCharts(resourceParameter, true).ConfigureAwait(false);
+
+            var department = data.DepartmentData;
+            var lineRawData = data.RawData;
+
+            //raw data 
+            var scrapRaw = lineRawData.Scrap as List<Scrap2>;
+            var productionRaw = lineRawData.Production as List<Production2>;
+            var downtimeRaw = lineRawData.Downtime as List<DowntimeDto>;
+
+            var startStr = resourceParameter.StartDate.ToShortDateString().Replace("/", ".");
+            var endStr = resourceParameter.EndDate.ToShortDateString().Replace("/", ".");
+
+            var fileName = $"{resourceParameter.Dept} SWOT EXPORT ({startStr}-{endStr}).xlsx";
+            using var wb = new XLWorkbook();
+
+            //Scrap
+            var scrapRateByArea = department?.ScrapRateByArea ?? new List<dynamic>();
+            var scrapByDefect = department?.ScrapCharts?.ScrapPareto?.Data ?? new List<dynamic>();
+            var scrapByShift = department?.ScrapCharts?.ScrapParetoByShift?.Data ?? new List<dynamic>();
+            var scrapByArea = department?.ScrapCharts?.ScrapParetoByArea?.Data ?? new List<dynamic>();
+            var scrapByProgram = department?.ScrapCharts?.ScrapParetoByProgram?.Data ?? new List<dynamic>();
+            var monthlyScrapRate = department?.ScrapCharts?.MonthlyScrapRates?.Data ?? new List<dynamic>();
+            var weeklyScrapRate = department?.ScrapCharts?.WeeklyScrapRates?.Data ?? new List<dynamic>();
+            var dailyScrapRateByShift = department?.ScrapCharts?.DailySbScrapRateByShift?.Data ?? new List<dynamic>();
+
+            SwotScrapRateByArea(wb, scrapRateByArea);
+            SwotScrapByDefect(wb, scrapByDefect);
+            SwotScrapByShift(wb, scrapByShift);
+            SwotScrapByProgram(wb, scrapByProgram);
+            SwotScrapByArea(wb, scrapByArea);
+            MonthlyScrapRates(wb, monthlyScrapRate);
+            WeeklyScrapRates(wb, weeklyScrapRate);
+            DailyScrapRateByShift(wb, dailyScrapRateByShift);
+            SwotScrapRaw(wb, scrapRaw);
+
+            //prod
+            var hourlyProduction = department?.ProductionCharts?.HourlyProduction?.Data ?? new List<dynamic>();
+            var productionByShift = department?.ProductionCharts?.ProductionByShift?.Data ?? new List<dynamic>();
+            var productionByProgram = department?.ProductionCharts?.ProductionByProgram?.Data ?? new List<dynamic>();
+            var dailyProduction = department?.ProductionCharts?.DailyProduction?.Data ?? new List<dynamic>();
+            var monthlyOae = department?.ProductionCharts?.MonthlyOae?.Data ?? new List<dynamic>();
+            var weeklyOae = department?.ProductionCharts?.WeeklyOae?.Data ?? new List<dynamic>();
+
+            SwotHourlyProduction(wb, hourlyProduction);
+            SwotProductionByShift(wb, productionByShift);
+            SwotProductionByProgram(wb, productionByProgram);
+            SwotDailyProduction(wb, dailyProduction);
+            SwotMonthlyOae(wb, monthlyOae);
+            SwotWeeklyOae(wb, weeklyOae);
+            SwotProductionRaw(wb, productionRaw);
+
+            //downtime
+            var downtimeByReason = department?.DowntimeCharts?.DowntimeByReason?.Data ?? new List<dynamic>();
+
+            SwotDowntimePareto(wb, downtimeByReason);
+            SwotDowntimeRaw(wb, downtimeRaw);
 
             await using var stream = new MemoryStream();
             wb.SaveAs(stream);

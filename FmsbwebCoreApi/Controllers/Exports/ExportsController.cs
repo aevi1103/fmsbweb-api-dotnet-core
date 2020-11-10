@@ -98,5 +98,20 @@ namespace FmsbwebCoreApi.Controllers.Exports
                 return BadRequest(e.Message);
             }
         }
+
+        [HttpGet]
+        [Route("swot/dept")]
+        public async Task<IActionResult> DownloadSwotDepartment([FromQuery] SwotResourceParameter resourceParameter)
+        {
+            try
+            {
+                var result = await _exportService.DownloadSwotDepartment(resourceParameter).ConfigureAwait(false);
+                return File(result.Content, result.ContentType, result.FileName);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }

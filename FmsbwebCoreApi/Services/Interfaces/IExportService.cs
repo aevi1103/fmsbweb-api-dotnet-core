@@ -15,5 +15,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<DownloadResult> DownloadPerformanceLevel0(SapResourceParameter resourceParameter);
         Task<DownloadResult> DownloadPerformanceLevel2(SapResourceParameter resourceParameter);
         Task<DownloadResult> DownloadSwot(SwotResourceParameter resourceParameter);
+        Task<DownloadResult> DownloadSwotDepartment(SwotResourceParameter resourceParameter);
     }
 }

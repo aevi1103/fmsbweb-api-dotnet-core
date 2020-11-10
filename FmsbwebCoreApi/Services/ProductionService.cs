@@ -559,8 +559,8 @@ namespace FmsbwebCoreApi.Services
                     var warmersDefects = warmersScrap;
 
                     var solDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "SOL").ToList();
-                    var gageScrapDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == true).ToList();
-                    var visualScrapDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL" && s.IsAutoGaugeScrap == false).ToList();
+                    var gageScrapDefects = withoutWarmersScrap.Where(s => s.IsAutoGaugeScrap == true).ToList();
+                    var visualScrapDefects = withoutWarmersScrap.Where(s => s.IsAutoGaugeScrap == false).ToList();
                     var eolDefects = withoutWarmersScrap.Where(s => s.OperationNumberLoc == "EOL").ToList();
                     var totalScrapDefects = withoutWarmersScrap;
 

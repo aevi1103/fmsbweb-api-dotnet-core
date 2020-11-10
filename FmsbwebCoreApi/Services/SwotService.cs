@@ -883,14 +883,17 @@ namespace FmsbwebCoreApi.Services
 
         #region Production
 
-        private static dynamic GetHourlyProduction(IEnumerable<HourlyProductionDto> hxhProd, SwotResourceParameter parameter, string line, SwotTargetDto lineSwotTarget)
+        private static dynamic GetHourlyProduction(IEnumerable<HourlyProductionDto> hxhProd, SwotResourceParameter parameter, string line, int NetRateTarget = 0)
         {
             var start = parameter.StartDate;
             var end = parameter.EndDate;
 
-            var data = hxhProd
-                .Where(x => x.MachineName == line)
-                .Where(x => x.ShiftDate >= start && x.ShiftDate <= end)
+            var qry = hxhProd.Where(x => x.ShiftDate >= start && x.ShiftDate <= end).AsQueryable();
+
+            if (!string.IsNullOrEmpty(line))
+                qry = qry.Where(x => x.MachineName == line);
+
+            var data = qry.ToList()
                 .Select(x =>
                 {
 
@@ -915,6 +918,17 @@ namespace FmsbwebCoreApi.Services
                         Oae = oae,
 
                         x.Warmers,
+                        x.Sol,
+                        x.Eol,
+                        x.GageScrap,
+                        x.VisualScrap,
+
+                        x.Fs,
+                        x.Ms,
+                        x.Anod,
+                        x.Sc,
+                        x.Assy,
+
                         x.TotalScrap,
 
                         x.HxHUrl
@@ -922,7 +936,8 @@ namespace FmsbwebCoreApi.Services
                     };
 
                 })
-                .OrderBy(x => x.CellSide)
+                .OrderBy(x => x.Line)
+                .ThenBy(x => x.CellSide)
                 .ThenBy(x => x.ShiftDate)
                 .ThenBy(x => x.ShiftOrder)
                 .ThenBy(x => x.Hour)
@@ -933,7 +948,7 @@ namespace FmsbwebCoreApi.Services
                 StartDate = start.ToShortDateString(),
                 EndDate = end.ToShortDateString(),
                 Line = line,
-                NetRateTarget = lineSwotTarget?.NetRate ?? 0,
+                NetRateTarget,
                 Data = data
             };
         }
@@ -1883,6 +1898,8 @@ namespace FmsbwebCoreApi.Services
 
                 ProductionCharts = new
                 {
+                    HourlyProduction = GetHourlyProduction(hxh, parameter, "", 0),
+
                     ProductionByShift = !parameter.IsFinishing
                         ? GetProductionByShift(prod, hxhProduction, parameter)
                         : GetProductionByShiftFinishing(hxh, parameter),
@@ -2216,7 +2233,7 @@ namespace FmsbwebCoreApi.Services
 
                         ProductionCharts = new
                         {
-                            HourlyProduction = GetHourlyProduction(hxh, parameter, line, lineSwotTarget),
+                            HourlyProduction = GetHourlyProduction(hxh, parameter, line, lineSwotTarget?.NetRate ?? 0),
 
                             ProductionByShift = !parameter.IsFinishing
                                                     ? GetProductionByShift(prod, hxhProduction, parameter, line)
@@ -2271,7 +2288,7 @@ namespace FmsbwebCoreApi.Services
                         : new {
                             Production = prod,
                             Scrap = scrap,
-                            HxH = hxh,
+                            //HxH = hxh,
                             Downtime = downtime
                         }
             };
