@@ -8,7 +8,7 @@ namespace FmsbwebCoreApi.Models.Logistics
     public class GetStockOverviewDto
     {
         public string Program { get; set; }
-        public DateTime Date { get; set; }
+        public DateTime? Date { get; set; }
         public int Total { get; set; }
         public int _0111{ get; set; }
         public int _0115 { get; set; }

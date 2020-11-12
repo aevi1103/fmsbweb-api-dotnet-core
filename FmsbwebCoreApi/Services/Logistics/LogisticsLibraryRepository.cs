@@ -19,27 +19,22 @@ namespace FmsbwebCoreApi.Services.Logistics
         private readonly Fmsb2Context _fmsb2Context;
         private readonly IMapper _mapper;
 
-        private readonly List<string> valuationClass = new List<string>() { "Finished products", "Semifinished products" };
-        private readonly List<string> partTypes = new List<string>() { "P5C", "P4H", "P3M", "P2F", "P2A", "P1A" };
-        private readonly int dailyAvg = 50000;
+        private readonly List<string> _valuationClass = new List<string>() { "Finished products", "Semifinished products" };
+        private readonly List<string> _partTypes = new List<string>() { "P5C", "P4H", "P3M", "P2F", "P2A", "P1A" };
+        private const int DailyAvg = 50000;
 
         public LogisticsLibraryRepository(SapContext context, Fmsb2Context fmsb2Context, IMapper mapper)
         {
-            _context = context ??
-                throw new ArgumentNullException(nameof(context));
-
-            _fmsb2Context = fmsb2Context ??
-                throw new ArgumentNullException(nameof(fmsb2Context));
-
-            _mapper = mapper ??
-                throw new ArgumentNullException(nameof(mapper));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _fmsb2Context = fmsb2Context ?? throw new ArgumentNullException(nameof(fmsb2Context));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public IEnumerable<GetStockOverviewDto> GetStockOverview(DateTime date)
         {
             var stockOverview = _context.SapDumpWithSafetyStock
                         .Where(x => x.Date == date)
-                        .Where(x => valuationClass.Contains(x.ValuationClass))
+                        .Where(x => _valuationClass.Contains(x.ValuationClass))
                         .ToList();
 
             var mappedData = _mapper.Map<IEnumerable<SapDumpNewDto>>(stockOverview);
@@ -48,25 +43,25 @@ namespace FmsbwebCoreApi.Services.Logistics
                         .Select(x => new GetStockOverviewDto
                         {
                             Program = x.Key.Program,
-                            Date = (DateTime)x.Key.Date,
-                            Total = (int)x.Sum(s => s.Total),
-                            _0111 = (int)x.Sum(s => s._0111),
-                            _0115 = (int)x.Sum(s => s._0115),
-                            _4000 = (int)x.Sum(s => s._4000),
-                            _5000 = (int)x.Sum(s => s._5000),
+                            Date = x.Key.Date,
+                            Total = (int)x.Sum(s => s.Total ?? 0),
+                            _0111 = (int)x.Sum(s => s._0111 ?? 0),
+                            _0115 = (int)x.Sum(s => s._0115 ?? 0),
+                            _4000 = (int)x.Sum(s => s._4000 ?? 0),
+                            _5000 = (int)x.Sum(s => s._5000 ?? 0),
 
-                            Qc01 = (int)x.Sum(s => s.Qc01),
-                            Qc02 = (int)x.Sum(s => s.Qc02),
-                            Qc03 = (int)x.Sum(s => s.Qc03),
-                            Qc04 = (int)x.Sum(s => s.Qc04),
-                            Qc05 = (int)x.Sum(s => s.Qc05),
+                            Qc01 = (int)x.Sum(s => s.Qc01 ?? 0),
+                            Qc02 = (int)x.Sum(s => s.Qc02 ?? 0),
+                            Qc03 = (int)x.Sum(s => s.Qc03 ?? 0),
+                            Qc04 = (int)x.Sum(s => s.Qc04 ?? 0),
+                            Qc05 = (int)x.Sum(s => s.Qc05 ?? 0),
 
-                            _0130 = (int)x.Sum(s => s._0130),
-                            _0131 = (int)x.Sum(s => s._0131),
-                            _0135 = (int)x.Sum(s => s._0135),
-                            _0160 = (int)x.Sum(s => s._0160),
-                            _0300 = (int)x.Sum(s => s._0300),
-                            _0125 = (int)x.Sum(s => s._0125)
+                            _0130 = (int)x.Sum(s => s._0130 ?? 0),
+                            _0131 = (int)x.Sum(s => s._0131 ?? 0),
+                            _0135 = (int)x.Sum(s => s._0135 ?? 0),
+                            _0160 = (int)x.Sum(s => s._0160 ?? 0),
+                            _0300 = (int)x.Sum(s => s._0300 ?? 0),
+                            _0125 = (int)x.Sum(s => s._0125 ?? 0)
                         })
                         .OrderByDescending(x => x.Total)
                         .ToList();
@@ -95,7 +90,7 @@ namespace FmsbwebCoreApi.Services.Logistics
 
             var stock = _context
                             .SapDumpNewUnpivot
-                            .Where(x => valuationClass.Contains(x.ValuationClass))
+                            .Where(x => _valuationClass.Contains(x.ValuationClass))
                             .Where(x => x.Qty > 0)
                             .Where(x => x.Date == date)
                             .GroupBy(x => new { x.Program, x.Date, x.Location, x.SlocOrder })
@@ -257,7 +252,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Foundry Casting (0115, 0125)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DailyAvg
                             });
 
             var machineWip = inventoryData
@@ -269,7 +264,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Machine WIP (0130)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DailyAvg
                             });
 
             var finishing = inventoryData
@@ -281,7 +276,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "Finishing (P2F)",
                                 Total = (decimal)x.Sum(t => t.TotalUnrestInv),
-                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DailyAvg
                             });
 
             var sbFinGood = inventoryData
@@ -294,7 +289,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "SB – Finish Goods",
                                 Total = (decimal)x.Sum(t => t._0300),
-                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DailyAvg
                             });
 
             var sbtFinGood = inventoryData
@@ -307,7 +302,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Key.Date,
                                 Category = "SBT – Finish Goods",
                                 Total = (decimal)x.Sum(t => t._0300),
-                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / dailyAvg
+                                AvgDays = (decimal)x.Sum(t => t.TotalUnrestInv) / DailyAvg
                             });
 
             var inventoryStaus = foundryCasting
@@ -323,9 +318,9 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 Date = x.Date,
                                 Category = x.Category,
                                 Total = x.Total,
-                                AvgDays = Math.Round((x.Total / dailyAvg), 1),
+                                AvgDays = Math.Round((x.Total / DailyAvg), 1),
                                 Comments = logiticsComments.Any(c => c.Category == x.Category)
-                                            ? logiticsComments.Where(c => c.Category == x.Category).First().Comments
+                                            ? logiticsComments.First(c => c.Category == x.Category).Comments
                                             : ""
                             })
                             .ToList();
@@ -339,6 +334,14 @@ namespace FmsbwebCoreApi.Services.Logistics
             List<LogisticsDollarsDto> dollarsData,
             List<string> dmax)
         {
+            /*
+             * SB - Raw Material => Raw material exclude DMAX
+             * SB - WIP => "P5C", "P4H", "P3M", "P2F", "P2A", "P1A" and exclude DMAX
+             * SB Fin Good => P1A exclude DMAX
+             * SBT Raw Materials => Dmax Raw Material
+             */
+
+
             var sbRawMaterial = rawMatData
                                 .Where(x => !dmax.Contains(x.Material))
                                 .GroupBy(x => new { x.Date })
@@ -353,7 +356,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 .ToList();
 
             var sbWip = data
-                            .Where(x => partTypes.Contains(x.TypeSap))
+                            .Where(x => _partTypes.Contains(x.TypeSap))
                             .Where(x => !dmax.Contains(x.Material))
                             .GroupBy(x => new { x.Date })
                             .Select(x => new InventoryCostDto
@@ -394,7 +397,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                                 .ToList();
 
             var sbtWip = data
-                            .Where(x => partTypes.Contains(x.TypeSap))
+                            .Where(x => _partTypes.Contains(x.TypeSap))
                             .Where(x => dmax.Contains(x.Material))
                             .GroupBy(x => new { x.Date })
                             .Select(x => new InventoryCostDto
@@ -504,14 +507,14 @@ namespace FmsbwebCoreApi.Services.Logistics
             var avgShip = await (from d in _context.SapDumpNewView
                            from v in _context.AvgShipDayPart
                                .Where(m => m.Material == d.Material).DefaultIfEmpty()
-                           where d.Date >= start && d.Date <= end && ((v.Show == null ? false : v.Show) == true)
+                           where d.Date >= start && d.Date <= end && ((v.Show ?? false) == true)
                            select new
                            {
                                d.Date,
                                d.Material,
                                d.TotalUnrestInv,
                                d._0300,
-                               AvgShipDay = v.AvgShipDay == null ? 0 : v.AvgShipDay,
+                               AvgShipDay = v.AvgShipDay ?? 0,
                                d.SafeftyStock
                            }).ToListAsync().ConfigureAwait(false);
 
@@ -521,8 +524,8 @@ namespace FmsbwebCoreApi.Services.Logistics
                             .Select(x => new InventoryDaysOnHandDto
                             {
                                 Date = (DateTime)x.Date,
-                                Sort = logisticsParts.Any(p => p.Part == x.Material) ? (int)logisticsParts.Where(p => p.Part == x.Material).First().Sort : -1,
-                                Program = logisticsParts.Any(p => p.Part == x.Material) ? logisticsParts.Where(p => p.Part == x.Material).First().Program : null,
+                                Sort = logisticsParts.Any(p => p.Part == x.Material) ? (int)logisticsParts.First(p => p.Part == x.Material).Sort : -1,
+                                Program = logisticsParts.Any(p => p.Part == x.Material) ? logisticsParts.First(p => p.Part == x.Material).Program : null,
                                 Material = x.Material,
                                 TotalUnreistrictedQty = (int)x.TotalUnrestInv,
                                 FinGoodIn0300 = (int)x._0300,

@@ -21,6 +21,8 @@ namespace FmsbwebCoreApi.Entity.SAP
         public string Location { get; set; }
         [Column(TypeName = "decimal(18, 2)")]
         public decimal? Qty { get; set; }
+        [Column("Safety Stock", TypeName = "decimal(18, 2)")]
+        public decimal? SafetyStock { get; set; }
         [Column("Standard price", TypeName = "decimal(18, 2)")]
         public decimal? StandardPrice { get; set; }
         [Column("per")]

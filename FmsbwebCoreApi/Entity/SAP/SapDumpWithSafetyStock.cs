@@ -78,9 +78,11 @@ namespace FmsbwebCoreApi.Entity.SAP
         public decimal? _0135 { get; set; }
         [Column("0160", TypeName = "decimal(18, 2)")]
         public decimal? _0160 { get; set; }
+
         [Column("0300", TypeName = "decimal(18, 2)")]
-        public decimal? _0300 { get; set; }
-        [Column("0125", TypeName = "decimal(18, 2)")]
+        public decimal? _0300 { get; set; } //0400 now in the excel file
+
+        [Column("0125", TypeName = "decimal(18, 2)")] 
         public decimal? _0125 { get; set; }
         [Column("0140", TypeName = "decimal(18, 2)")]
         public decimal? _0140 { get; set; }

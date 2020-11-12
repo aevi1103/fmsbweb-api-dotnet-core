@@ -70,7 +70,7 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<List<ScrapAreaCode>> GetScrapAreaCodes()
         {
-            return await _context.ScrapAreaCode.ToListAsync();
+            return await _context.ScrapAreaCode.ToListAsync().ConfigureAwait(false);
         }
     }
 }

@@ -29,6 +29,9 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<LogisticsDollars> LogisticsDollars { get; set; }
         public virtual DbSet<LogisticsInventory> LogisticsInventory { get; set; }
         public virtual DbSet<LogisticsParts> LogisticsParts { get; set; }
+        public virtual DbSet<LogisticsInventoryCostType> LogisticsInventoryCostTypes { get; set; }
+        public virtual DbSet<LogisticsInventoryCostTarget> LogisticsInventoryCostTargets { get; set; }
+        public virtual DbSet<LogisticCustomerName> LogisticCustomerNames { get; set; }
         public virtual DbSet<MachineList> MachineList { get; set; }
         public virtual DbSet<Machines> Machines { get; set; }
         public virtual DbSet<DowntimeOwner> DowntimeOwner { get; set; }
@@ -37,6 +40,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<KpiTarget> KpiTarget { get; set; }
         public virtual DbSet<SwotTargetWithDeptId> SwotTargetWithDeptId { get; set; }
         public virtual DbSet<Oee> Oee { get; set; }
+
 
         #endregion
 

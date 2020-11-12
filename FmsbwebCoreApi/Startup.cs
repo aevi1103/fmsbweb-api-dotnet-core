@@ -120,13 +120,13 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.IEndOfShiftReportRepository, Repositories.EndOfShiftReportRepository>();
             services.AddScoped<Repositories.Interfaces.IMachineMappingRepository, Repositories.MachineMappingRepository>();
             services.AddScoped<Repositories.Interfaces.IAutoGageRepository, Repositories.AutoGageRepository>();
+            services.AddScoped<Repositories.Interfaces.ILogisticsRepository, Repositories.LogisticsRepository>();
 
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ICharacteristicRepository, Repositories.QualityCheckSheets.CharacteristicRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IMachineRepository, Repositories.QualityCheckSheets.MachineRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IOrganizationPartRepository, Repositories.QualityCheckSheets.OrganizationPartRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ISubMachineRepository, Repositories.QualityCheckSheets.SubMachineRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IReCheckRepository, Repositories.QualityCheckSheets.ReCheckRepository>();
-
 
             //inject services
             services.AddScoped<Services.Interfaces.ISapLibraryService, Services.SapLibraryService>();
@@ -139,6 +139,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.IEndOfShiftReportService, Services.EndOFShiftReportService>();
             services.AddScoped<Services.Interfaces.IExportService, Services.ExportService>();
             services.AddScoped<Services.Interfaces.ISwotService, Services.SwotService>();
+            services.AddScoped<Services.Interfaces.ILogisticsService, Services.LogisticsService>();
 
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICharacteristicService, Services.QualityCheckSheets.CharacteristicService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();

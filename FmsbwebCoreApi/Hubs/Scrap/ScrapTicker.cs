@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using FmsbwebCoreApi.Hubs.Downtime;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using TableDependency.SqlClient;
@@ -55,7 +52,7 @@ namespace FmsbwebCoreApi.Hubs.Scrap
 
         private async Task BroadCastChange(ScrapModel data)
         {
-            await Hub.Clients.All.SendAsync("BroadCastChange", data);
+            await Hub.Clients.All.SendAsync("BroadCastChange", data).ConfigureAwait(false);
         }
 
         private static void SqlTableDependency_OnError(object sender, ErrorEventArgs e)

@@ -39,6 +39,7 @@ namespace FmsbwebCoreApi.Controllers.Logistics
                                 .Select(x => new { x.SlocOrder, x.SlocName, x.Sloc, category = $"{x.SlocName} ({x.Sloc})" })
                                 .OrderBy(x => x.SlocOrder)
                                 .Distinct();
+                                
             var series = stockOverviewBySlocFromRepo.Select(x => x.Program).Distinct();
 
             var resourceToReturn = new
