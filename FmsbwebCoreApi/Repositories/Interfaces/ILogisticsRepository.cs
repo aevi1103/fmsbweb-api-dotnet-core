@@ -15,7 +15,7 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
 
         Task RemoveRange(DateTime dateTime);
 
-        Task<List<SapDumpNewUnpivot>> GetDataUnpivot(DateTime datetime);
+        Task<List<SapDumpNewUnpivotWithUnrestrictedInv>> GetDataUnpivot(DateTime datetime);
         Task<List<LogisticsInventoryCostTarget>> GetCostTarget();
         Task<LogisticsInventoryCostTarget> AddOrUpdateCostTarget(LogisticsInventoryCostTarget data);
         Task<LogisticsCustomer> AddOrUpdateCustomerComment(LogisticsCustomer data);

@@ -37,6 +37,7 @@ namespace FmsbwebCoreApi.Context.SAP
         public virtual DbSet<SapDump2> SapDump2 { get; set; }
         public virtual DbSet<SapDumpNew> SapDumpNew { get; set; }
         public virtual DbSet<SapDumpNewUnpivot> SapDumpNewUnpivot { get; set; }
+        public virtual DbSet<SapDumpNewUnpivotWithUnrestrictedInv> SapDumpNewUnpivotWithUnrestrictedInv { get; set; }
         public virtual DbSet<SapDumpNewView> SapDumpNewView { get; set; }
         public virtual DbSet<SapDumpNewView2> SapDumpNewView2 { get; set; }
         public virtual DbSet<SapDumpView2> SapDumpView2 { get; set; }
@@ -336,6 +337,21 @@ namespace FmsbwebCoreApi.Context.SAP
                 entity.HasNoKey();
 
                 entity.ToView("SAP_Dump_New_Unpivot");
+
+                entity.Property(e => e.Material).IsUnicode(false);
+
+                entity.Property(e => e.Program).IsUnicode(false);
+
+                entity.Property(e => e.Type).IsUnicode(false);
+
+                entity.Property(e => e.ValuationClass).IsUnicode(false);
+            });
+
+            modelBuilder.Entity<SapDumpNewUnpivotWithUnrestrictedInv>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("SAP_Dump_New_Unpivot_with_unrestricted_inv");
 
                 entity.Property(e => e.Material).IsUnicode(false);
 

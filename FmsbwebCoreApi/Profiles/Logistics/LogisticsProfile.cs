@@ -14,6 +14,7 @@ namespace FmsbwebCoreApi.Profiles.Logistics
         public LogisticsProfile()
         {
             CreateMap<SapDumpWithSafetyStock, SapDumpNewDto>();
+            CreateMap<SapDumpNewUnpivotWithUnrestrictedInv, SapDumpUnpivotDto>();
         }
     }
 }

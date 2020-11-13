@@ -38,5 +38,19 @@ namespace FmsbwebCoreApi.Controllers.Logistics
                 return BadRequest(e.Message);
             }
         }
+
+        [Route("stat")]
+        public async Task<ActionResult> GetLogisticsStatus(DateTime dateTime)
+        {
+            try
+            {
+                var data = await _logisticsService.GetLogisticsStatus(dateTime).ConfigureAwait(false);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
     }
 }

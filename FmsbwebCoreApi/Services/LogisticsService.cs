@@ -8,8 +8,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Wordprocessing;
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.SAP;
+using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models.Logistics;
 using FmsbwebCoreApi.Repositories;
@@ -22,9 +24,17 @@ namespace FmsbwebCoreApi.Services
 {
     public class LogisticsService : LogisticsRepository, ILogisticsService
     {
+        private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
-        public LogisticsService(SapContext context, Fmsb2Context fmsb2Context) : base(context, fmsb2Context)
+        private const string Unrestricted = "Total Unrest. Inv.";
+        private static readonly List<string> ValuationClass = new List<string>() { "Finished products", "Semifinished products" };
+        //todo: just do a p4,p5,p3,p2,p1
+        private static readonly List<string> PartTypes = new List<string>() { "P5C", "P4H", "P3M", "P2F", "P2A", "P1A" };
+
+        public LogisticsService(SapContext context, Fmsb2Context fmsb2Context, IMapper mapper, IConfiguration configuration) : base(context, fmsb2Context)
         {
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         private static string ProductionPath => @"\\sbndinms003\D\FMSBWEB\SAP_Dump_Files_New";
@@ -220,9 +230,13 @@ namespace FmsbwebCoreApi.Services
 
         }
 
-        private static dynamic GetInventoryStatus(IEnumerable<SapDumpUnpivotDto> dto)
+        private static dynamic GetInventoryStatus(List<SapDumpUnpivotDto> dto)
         {
-            var result = dto
+            var data = dto.Where(x => !string.IsNullOrWhiteSpace(x.Sloc)).ToList();
+
+            var result = data
+                .Where(x => x.Location == Unrestricted)
+                .Where(x => x.Qty > 0)
                 .GroupBy(x => new {x.Sloc})
                 .Select(x => new
                 {
@@ -230,22 +244,58 @@ namespace FmsbwebCoreApi.Services
                     Qty = x.Sum(q => q.Qty)
                 });
 
-            return result;
+            var others = data
+                .Where(x => x.Location == "0300")
+                .Where(x => x.Type == "P1A")
+                .Where(x => x.Qty > 0)
+                .GroupBy(x => new { x.Sloc })
+                .Select(x => new
+                {
+                    x.Key.Sloc,
+                    Qty = x.Sum(q => q.Qty)
+                });
+
+            return result.Concat(others).ToList();
         }
 
-        private static dynamic GetInventoryCost(IEnumerable<SapDumpUnpivotDto> dto)
+        private static dynamic GetInventoryCost(List<SapDumpUnpivotDto> dto, List<LogisticsInventoryCostTarget> targets)
         {
-            var result = dto
+            var data = dto.Where(x => x.CostType != null).ToList();
+
+            var raw = data
+                .Where(x => x.Location == Unrestricted)
                 .GroupBy(x => new { x.CostType })
                 .Select(x => new
                 {
                     x.Key.CostType,
-                    Qty = x.Sum(q => q.PricePerQty)
+                    Cost = x.Sum(q => q.PricePerQty),
+                    Target = targets.FirstOrDefault(t => t.LogisticsInventoryCostType.Type == x.Key.CostType)?.Target ?? 0
                 });
 
-            return result;
-        }
+            var wip = data
+                .Where(x => x.Location == "NotIn0300")
+                .Where(x => PartTypes.Contains(x.Type))
+                .GroupBy(x => new { x.CostType })
+                .Select(x => new
+                {
+                    x.Key.CostType,
+                    Cost = x.Sum(q => q.PricePerQty),
+                    Target = targets.FirstOrDefault(t => t.LogisticsInventoryCostType.Type == x.Key.CostType)?.Target ?? 0
+                });
 
+            var fin = data
+                .Where(x => x.Location == "0300")
+                .Where(x => x.Type == "P1A")
+                .GroupBy(x => new { x.CostType })
+                .Select(x => new
+                {
+                    x.Key.CostType,
+                    Cost = x.Sum(q => q.PricePerQty),
+                    Target = targets.FirstOrDefault(t => t.LogisticsInventoryCostType.Type == x.Key.CostType)?.Target ?? 0
+                });
+
+            return raw.Concat(wip).Concat(fin).ToList();
+        }
 
         private static dynamic GetDaysOnHand(IEnumerable<SapDumpUnpivotDto> dto)
         {
@@ -269,6 +319,46 @@ namespace FmsbwebCoreApi.Services
                     };
 
                 });
+
+            return result.OrderByDescending(x => x.Qty).ToList();
+        }
+
+        private static dynamic StockOverviewByProgram(IEnumerable<SapDumpUnpivotDto> dto)
+        {
+            //todo: just un filter this => Total Unrest. Inv., NotIn0300 instead
+            var slocs = new List<string> { "0111", "0115", "4000", "5000", "QC01", "QC02", "0130", "0131", "0135", "0160", "0300", "0125" };
+
+            var data = dto
+                //.Where(x => x.Location == Unrestricted)
+                .Where(x => ValuationClass.Contains(x.ValuationClass))
+                .Where(x => slocs.Contains(x.Location))
+                .GroupBy(x => new {x.Program})
+                .Select(x => new
+                {
+                    x.Key.Program,
+                    Qty = x.Sum(q => q.Qty)
+                })
+                .OrderByDescending(x => x.Qty)
+                .ToList();
+
+            return data;
+        }
+
+        private static dynamic GetStockOverView(List<SapDumpUnpivotDto> data)
+        {
+            var excludeLoc = new List<string>() { "Total Unrest. Inv.", "NotIn0300" };
+            var result = data
+                .Where(x => !excludeLoc.Contains(x.Location))
+                .Where(x => ValuationClass.Contains(x.ValuationClass))
+                .GroupBy(x => new {x.Program, x.Location})
+                .Select(x => new
+                {
+                    x.Key.Program,
+                    x.Key.Location,
+                    Qty = x.Sum(q => q.Qty)
+                })
+                .OrderByDescending(x => x.Program)
+                .ToList();
 
             return result;
         }
@@ -302,19 +392,29 @@ namespace FmsbwebCoreApi.Services
 
         public async Task<dynamic> GetLogisticsStatus(DateTime dateTime)
         {
-            var data = await GetDataUnpivot(dateTime).ConfigureAwait(false);
-
-            var config = new MapperConfiguration(cfg => cfg.CreateMap<List<SapDumpNewUnpivot>, List<SapDumpUnpivotDto>>());
-            var mapper = config.CreateMapper();
-            var dto = mapper.Map<List<SapDumpUnpivotDto>>(data);
-
-            return new
+            try
             {
-                InventoryStatus = GetInventoryStatus(dto),
-                InventoryCost = GetInventoryCost(dto),
-                CustomerComments = GetCustomerComments(dateTime),
-                DaysOnHand = GetDaysOnHand(dto)
-            };
+                var data = await GetDataUnpivot(dateTime).ConfigureAwait(false);
+                var dto = _mapper.Map<List<SapDumpUnpivotDto>>(data);
+                var customerComments = await GetCustomerComments(dateTime).ConfigureAwait(false);
+                var costTargets = await GetCostTarget().ConfigureAwait(false);
+
+                return new
+                {
+                    InventoryStatus = GetInventoryStatus(dto),
+                    InventoryCost = GetInventoryCost(dto, costTargets),
+                    CustomerComments = customerComments,
+                    DaysOnHand = GetDaysOnHand(dto),
+                    StockOverviewByProgram = StockOverviewByProgram(dto),
+                    StockOverview = GetStockOverView(dto)
+                };
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
         }
     }
 }

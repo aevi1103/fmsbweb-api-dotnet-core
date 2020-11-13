@@ -83,10 +83,10 @@ namespace FmsbwebCoreApi.Repositories
             }
         }
 
-        public async Task<List<SapDumpNewUnpivot>> GetDataUnpivot(DateTime datetime)
+        public async Task<List<SapDumpNewUnpivotWithUnrestrictedInv>> GetDataUnpivot(DateTime datetime)
         {
             return await _context
-                .SapDumpNewUnpivot
+                .SapDumpNewUnpivotWithUnrestrictedInv
                 .AsNoTracking()
                 .Where(x => x.Date == datetime)
                 .ToListAsync()
@@ -97,6 +97,7 @@ namespace FmsbwebCoreApi.Repositories
         {
             return await _fmsb2Context
                 .LogisticsInventoryCostTargets
+                .Include(x => x.LogisticsInventoryCostType)
                 .AsNoTracking()
                 .ToListAsync()
                 .ConfigureAwait(false);
@@ -153,9 +154,18 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<List<LogisticsCustomer>> GetCustomerComments(DateTime dateTime)
         {
-            var logistics = _fmsb2Context.LogisticsMm.FirstOrDefaultAsync(x => x.Date == dateTime);
+            var logistics = await _fmsb2Context
+                .LogisticsMm
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Date == dateTime);
+
             if (logistics == null) return new List<LogisticsCustomer>();
-            return await _fmsb2Context.LogisticsCustomer.Where(x => x.LogisticsId == logistics.Id).ToListAsync().ConfigureAwait(false);
+            return await _fmsb2Context
+                .LogisticsCustomer
+                .AsNoTracking()
+                .Where(x => x.LogisticsId == logistics.Id)
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
     }
 }

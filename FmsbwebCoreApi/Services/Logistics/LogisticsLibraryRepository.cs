@@ -1,15 +1,13 @@
-﻿using System;
+﻿using AutoMapper;
+using FmsbwebCoreApi.Context.Fmsb2;
+using FmsbwebCoreApi.Context.SAP;
+using FmsbwebCoreApi.Entity.SAP;
+using FmsbwebCoreApi.Models.Logistics;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using FmsbwebCoreApi.Models.Logistics;
-
-using FmsbwebCoreApi.Context.SAP;
-using FmsbwebCoreApi.Context.Fmsb2;
-using AutoMapper;
-using FmsbwebCoreApi.Entity.SAP;
-using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Services.Logistics
 {
