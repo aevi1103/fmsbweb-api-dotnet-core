@@ -11,6 +11,6 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         public LogisticsInventoryCostType LogisticsInventoryCostType { get; set; }
         public int LogisticsInventoryCostTypeId { get; set; }
         public decimal Target { get; set; }
-        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStamp { get; set; } = DateTime.Now;
     }
 }

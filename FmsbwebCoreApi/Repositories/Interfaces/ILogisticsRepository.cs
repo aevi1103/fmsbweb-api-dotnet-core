@@ -16,10 +16,12 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
         Task RemoveRange(DateTime dateTime);
 
         Task<List<SapDumpNewUnpivotWithUnrestrictedInv>> GetDataUnpivot(DateTime datetime);
-        Task<List<LogisticsInventoryCostTarget>> GetCostTarget();
+        Task<List<LogisticsInventoryCostTarget>> GetCostTargets();
         Task<LogisticsInventoryCostTarget> AddOrUpdateCostTarget(LogisticsInventoryCostTarget data);
         Task<LogisticsCustomer> AddOrUpdateCustomerComment(LogisticsCustomer data);
         Task<List<LogisticCustomerName>> GetCustomerName();
         Task<List<LogisticsCustomer>> GetCustomerComments(DateTime dateTime);
+        Task<List<InvProgramTargets>> GetInventoryProgramTargets();
+        Task<List<LogisticsInventoryCostType>> GetCostTypes();
     }
 }

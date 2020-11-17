@@ -397,7 +397,9 @@ namespace FmsbwebCoreApi.Services
                 var data = await GetDataUnpivot(dateTime).ConfigureAwait(false);
                 var dto = _mapper.Map<List<SapDumpUnpivotDto>>(data);
                 var customerComments = await GetCustomerComments(dateTime).ConfigureAwait(false);
-                var costTargets = await GetCostTarget().ConfigureAwait(false);
+                var costTargets = await GetCostTargets().ConfigureAwait(false);
+                var stockDetails = await GetData(dateTime).ConfigureAwait(false);
+                var invTargetByProgramAndSloc = await GetInventoryProgramTargets().ConfigureAwait(false);
 
                 return new
                 {
@@ -406,7 +408,9 @@ namespace FmsbwebCoreApi.Services
                     CustomerComments = customerComments,
                     DaysOnHand = GetDaysOnHand(dto),
                     StockOverviewByProgram = StockOverviewByProgram(dto),
-                    StockOverview = GetStockOverView(dto)
+                    StockOverview = GetStockOverView(dto),
+                    StockOverviewDetails = stockDetails,
+                    InvTargetByProgramAndSloc = invTargetByProgramAndSloc
                 };
             }
             catch (Exception e)

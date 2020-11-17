@@ -93,7 +93,7 @@ namespace FmsbwebCoreApi.Repositories
                 .ConfigureAwait(false);
         }
 
-        public async Task<List<LogisticsInventoryCostTarget>> GetCostTarget()
+        public async Task<List<LogisticsInventoryCostTarget>> GetCostTargets()
         {
             return await _fmsb2Context
                 .LogisticsInventoryCostTargets
@@ -111,7 +111,7 @@ namespace FmsbwebCoreApi.Repositories
 
             try
             {
-                _fmsb2Context.LogisticsInventoryCostTargets.Update(data);
+                _fmsb2Context.Update(data);
                 await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
                 await transaction.CommitAsync().ConfigureAwait(false);
                 return data;
@@ -157,13 +157,30 @@ namespace FmsbwebCoreApi.Repositories
             var logistics = await _fmsb2Context
                 .LogisticsMm
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Date == dateTime);
+                .FirstOrDefaultAsync(x => x.Date == dateTime)
+                .ConfigureAwait(false);
 
             if (logistics == null) return new List<LogisticsCustomer>();
             return await _fmsb2Context
                 .LogisticsCustomer
                 .AsNoTracking()
                 .Where(x => x.LogisticsId == logistics.Id)
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public async Task<List<InvProgramTargets>> GetInventoryProgramTargets()
+        {
+            return await _context.InvProgramTargets
+                .AsNoTracking()
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public async Task<List<LogisticsInventoryCostType>> GetCostTypes()
+        {
+            return await _fmsb2Context.LogisticsInventoryCostTypes
+                .AsNoTracking()
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
