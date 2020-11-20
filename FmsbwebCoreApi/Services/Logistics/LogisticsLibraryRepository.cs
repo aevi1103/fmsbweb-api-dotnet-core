@@ -125,7 +125,7 @@ namespace FmsbwebCoreApi.Services.Logistics
 
                     if (isExist)
                     {
-                        result.Add(stock.Where(x => x.Sloc == location.Sloc && x.Program == program).First());
+                        result.Add(stock.First(x => x.Sloc == location.Sloc && x.Program == program));
                     }
                     else
                     {
@@ -148,7 +148,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                 SlocName = x.SlocName,
                 Program = "Min",
                 Stock = targets.Any(t => t.Sloc == x.Sloc)
-                       ? targets.Where(t => t.Sloc == x.Sloc).FirstOrDefault().Min
+                       ? targets.FirstOrDefault(t => t.Sloc == x.Sloc)?.Min ?? 0
                        : 0
             }).OrderBy(x => x.SlocOrder).ToList();
 
@@ -159,7 +159,7 @@ namespace FmsbwebCoreApi.Services.Logistics
                 SlocName = x.SlocName,
                 Program = "Max",
                 Stock = targets.Any(t => t.Sloc == x.Sloc)
-                       ? targets.Where(t => t.Sloc == x.Sloc).FirstOrDefault().Max
+                       ? targets.FirstOrDefault(t => t.Sloc == x.Sloc)?.Max ?? 0
                        : 0
             }).OrderBy(x => x.SlocOrder).ToList();
 

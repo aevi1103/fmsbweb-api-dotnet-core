@@ -53,36 +53,6 @@ namespace FmsbwebCoreApi.Repositories
             }
         }
 
-        public async Task RemoveRange(DateTime dateTime)
-        {
-            var isAny = await _context
-                                .SapDumpWithSafetyStock
-                                .AsNoTracking()
-                                .AnyAsync(x => x.Date == dateTime)
-                                .ConfigureAwait(false);
-
-            if (!isAny) return;
-
-            await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
-
-            try
-            {
-                var dataToRemove = await _context.SapDumpWithSafetyStock
-                    .Where(x => x.Date == dateTime)
-                    .ToListAsync()
-                    .ConfigureAwait(false);
-
-                _context.SapDumpWithSafetyStock.RemoveRange(dataToRemove);
-                await _context.SaveChangesAsync().ConfigureAwait(false);
-                await transaction.CommitAsync().ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                await transaction.RollbackAsync().ConfigureAwait(false);
-                throw new Exception(e.Message);
-            }
-        }
-
         public async Task<List<SapDumpNewUnpivotWithUnrestrictedInv>> GetDataUnpivot(DateTime datetime)
         {
             return await _context
@@ -106,7 +76,6 @@ namespace FmsbwebCoreApi.Repositories
         public async Task<LogisticsInventoryCostTarget> AddOrUpdateCostTarget(LogisticsInventoryCostTarget data)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
-
             await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
 
             try
@@ -123,7 +92,24 @@ namespace FmsbwebCoreApi.Repositories
             }
         }
 
-        public async Task<LogisticsCustomer> AddOrUpdateCustomerComment(LogisticsCustomer data)
+        public async Task DeleteCostTarget(int id)
+        {
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+
+            try
+            {
+                _fmsb2Context.LogisticsInventoryCostTargets.Remove(new LogisticsInventoryCostTarget {LogisticsInventoryCostTargetId = id});
+                await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
+        }
+
+        public async Task<LogisticsCustomer> AddOrUpdateCustomerComment(LogisticsCustomer data, DateTime dateTime)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
 
@@ -131,6 +117,29 @@ namespace FmsbwebCoreApi.Repositories
 
             try
             {
+                var logistics = await _fmsb2Context
+                    .LogisticsMm
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.Date == dateTime)
+                    .ConfigureAwait(false);
+
+                if (logistics == null)
+                {
+                    logistics = new LogisticsMm
+                    {
+                        Date = dateTime,
+                        ModifiedDate = DateTime.Now
+                    };
+
+                    await _fmsb2Context.LogisticsMm.AddAsync(logistics).ConfigureAwait(false);
+                    await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+
+                    data.LogisticsId = logistics.Id;
+                }
+
+                if (data.LogisticsId == 0)
+                    data.LogisticsId = logistics.Id;
+
                 _fmsb2Context.LogisticsCustomer.Update(data);
                 await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
                 await transaction.CommitAsync().ConfigureAwait(false);
@@ -143,11 +152,14 @@ namespace FmsbwebCoreApi.Repositories
             }
         }
 
+
+
         public async Task<List<LogisticCustomerName>> GetCustomerName()
         {
             return await _fmsb2Context
                 .LogisticCustomerNames
                 .AsNoTracking()
+                .OrderBy(x => x.LogisticCustomerNameId)
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
@@ -161,12 +173,36 @@ namespace FmsbwebCoreApi.Repositories
                 .ConfigureAwait(false);
 
             if (logistics == null) return new List<LogisticsCustomer>();
+
             return await _fmsb2Context
                 .LogisticsCustomer
                 .AsNoTracking()
                 .Where(x => x.LogisticsId == logistics.Id)
+                .OrderByDescending(x => x.Comment)
                 .ToListAsync()
                 .ConfigureAwait(false);
+        }
+
+        public async Task DeleteCustomerComment(int id)
+        {
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+
+            try
+            {
+                _fmsb2Context.LogisticsCustomer.Remove(new LogisticsCustomer { Id = id });
+                await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
+        }
+
+        public async Task<List<LogisticsInventoryLocation>> GetInventoryLocations()
+        {
+            return await _fmsb2Context.LogisticsInventoryLocations.ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<List<InvProgramTargets>> GetInventoryProgramTargets()

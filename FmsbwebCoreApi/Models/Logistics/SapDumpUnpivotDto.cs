@@ -27,9 +27,11 @@ namespace FmsbwebCoreApi.Models.Logistics
         public int SlocOrder { get; set; }
 
         public string Sloc => GetSloc();
+        public int SlocOrder2 => GetSlocOrder();
         public bool IsRawMaterial => Type.Contains("7", StringComparison.CurrentCultureIgnoreCase);
         public bool IsDmax => Program.ToLower(new CultureInfo("en-US")) == "dmax";
         public string CostType => GetCostType();
+        public int CostTypeOrder => GetCostTypeOrder();
 
         private string GetSloc()
         {
@@ -47,40 +49,67 @@ namespace FmsbwebCoreApi.Models.Logistics
             };
         }
 
+        private int GetSlocOrder()
+        {
+            return Type switch
+            {
+                "P1A" when Program == "DMAX" && Location.Trim() == "0300" => 5,
+                "P1A" when Program != "DMAX" && Location.Trim() == "0300" => 4,
+                _ => Type switch
+                {
+                    "P5C" => 1,
+                    "P3M" => 2,
+                    "P2F" => 3,
+                    _ => 9999
+                }
+            };
+        }
+
         private string GetCostType()
         {
 
             if (Program != "DMAX" && !IsRawMaterial && NonRawMaterialParts.Contains(Type) && Location == "NotIn0300")
-            {
                 return "SB – WIP"; //not in 0300
-            }
 
             if (Program == "DMAX" && !IsRawMaterial && NonRawMaterialParts.Contains(Type) && Location == "NotIn0300")
-            {
                 return "SBT – WIP";
-            }
 
             if (!IsDmax && !IsRawMaterial && Type == "P1A" && Location == "0300")
-            {
                 return "SB – Finish Goods"; // in 0300
-            }
 
             if (IsDmax && !IsRawMaterial && Type == "P1A" && Location == "0300")
-            {
                 return "SBT – Finish Goods";
-            }
 
             if (!IsDmax && IsRawMaterial)
-            {
                 return "SB – Raw Material"; //get unrestricted 
-            }
 
             if (IsDmax && IsRawMaterial)
-            {
                 return "SBT – Raw Material";
-            }
 
             return null;
+        }
+
+        private int GetCostTypeOrder()
+        {
+            if (!IsDmax && IsRawMaterial)
+                return 1;
+
+            if (Program != "DMAX" && !IsRawMaterial && NonRawMaterialParts.Contains(Type) && Location == "NotIn0300")
+                return 2;
+
+            if (!IsDmax && !IsRawMaterial && Type == "P1A" && Location == "0300")
+                return 3;
+
+            if (IsDmax && IsRawMaterial)
+                return 4;
+
+            if (Program == "DMAX" && !IsRawMaterial && NonRawMaterialParts.Contains(Type) && Location == "NotIn0300")
+                return 5;
+
+            if (IsDmax && !IsRawMaterial && Type == "P1A" && Location == "0300")
+                return 6;
+
+            return 9999;
         }
     }
 }

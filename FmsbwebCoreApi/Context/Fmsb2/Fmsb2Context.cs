@@ -32,6 +32,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
         public virtual DbSet<LogisticsInventoryCostType> LogisticsInventoryCostTypes { get; set; }
         public virtual DbSet<LogisticsInventoryCostTarget> LogisticsInventoryCostTargets { get; set; }
         public virtual DbSet<LogisticCustomerName> LogisticCustomerNames { get; set; }
+        public virtual DbSet<LogisticsInventoryLocation> LogisticsInventoryLocations { get; set; }
         public virtual DbSet<MachineList> MachineList { get; set; }
         public virtual DbSet<Machines> Machines { get; set; }
         public virtual DbSet<DowntimeOwner> DowntimeOwner { get; set; }

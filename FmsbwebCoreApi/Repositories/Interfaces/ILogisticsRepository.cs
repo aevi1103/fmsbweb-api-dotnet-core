@@ -10,18 +10,21 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
     public interface ILogisticsRepository
     {
         Task<List<SapDumpWithSafetyStock>> GetData(DateTime dateTime);
-
         Task<SapDumpWithSafetyStock> Insert(SapDumpWithSafetyStock data);
-
-        Task RemoveRange(DateTime dateTime);
-
         Task<List<SapDumpNewUnpivotWithUnrestrictedInv>> GetDataUnpivot(DateTime datetime);
+        Task<List<LogisticsInventoryCostType>> GetCostTypes();
+
+        Task<List<LogisticCustomerName>> GetCustomerName();
+        Task<List<InvProgramTargets>> GetInventoryProgramTargets();
+
         Task<List<LogisticsInventoryCostTarget>> GetCostTargets();
         Task<LogisticsInventoryCostTarget> AddOrUpdateCostTarget(LogisticsInventoryCostTarget data);
-        Task<LogisticsCustomer> AddOrUpdateCustomerComment(LogisticsCustomer data);
-        Task<List<LogisticCustomerName>> GetCustomerName();
+        Task DeleteCostTarget(int id);
+
+        Task<LogisticsCustomer> AddOrUpdateCustomerComment(LogisticsCustomer data, DateTime dateTime);
         Task<List<LogisticsCustomer>> GetCustomerComments(DateTime dateTime);
-        Task<List<InvProgramTargets>> GetInventoryProgramTargets();
-        Task<List<LogisticsInventoryCostType>> GetCostTypes();
+        Task DeleteCustomerComment(int id);
+
+        Task<List<LogisticsInventoryLocation>> GetInventoryLocations();
     }
 }

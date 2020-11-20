@@ -13,6 +13,7 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.SAP;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
+using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.Models.Logistics;
 using FmsbwebCoreApi.Repositories;
 using FmsbwebCoreApi.Services.Interfaces;
@@ -37,8 +38,13 @@ namespace FmsbwebCoreApi.Services
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        private static string ProductionPath => @"\\sbndinms003\D\FMSBWEB\SAP_Dump_Files_New";
-        private static string DevPath => @"C:\SAP Dump New";
+        private static string InventoryProdPath => @"\\sbndinms003\D\FMSBWEB\SAP_Dump_Files_New";
+        private static string InventoryDevPath => @"C:\SAP_Dump_Files_New";
+
+        private static string OrderProdPath => @"\\sbndinms003\D\FMSBWEB\SAP Production Order";
+        private static string OrderDevPath => @"C:\SAP Production Order";
+
+        #region Upload Inventory File
 
         private static async Task<string> UploadFile(IFormFile file, DateTime dateNow)
         {
@@ -46,11 +52,11 @@ namespace FmsbwebCoreApi.Services
 
             try
             {
-                var directory = ProductionPath;
+                var directory = InventoryProdPath;
 
-                #if DEBUG
-                    directory = DevPath;
-                #endif
+#if DEBUG
+                directory = InventoryDevPath;
+#endif
 
                 directory = Path.Combine(directory, dateNow.Year.ToString(), dateNow.Month.ToString());
 
@@ -73,7 +79,7 @@ namespace FmsbwebCoreApi.Services
             }
         }
 
-        private static DataTable ConvertExcelToDataTable(string filePath, DateTime dateNow)
+        private static DataTable ConvertExcelToDataTableInventory(string filePath, DateTime dateNow)
         {
             var dt = new DataTable();
             var firstRow = true;
@@ -151,13 +157,19 @@ namespace FmsbwebCoreApi.Services
             {
                 var tblName = "SAP_Dump_With_SafetyStock";
 
-                #if DEBUG
-                        tblName = "SAP_Dump_With_SafetyStock_temp";
-                #endif
+#if DEBUG
+                tblName = "SAP_Dump_With_SafetyStock_temp";
+#endif
 
-                await RemoveRange(date).ConfigureAwait(false);
                 await using var conn = new SqlConnection(_configuration.GetConnectionString("sapConn"));
                 conn.Open();
+
+                var deleteQry = $"delete from {tblName} where date = @date";
+                await using (var cmd = new SqlCommand(deleteQry, conn))
+                {
+                    cmd.Parameters.AddWithValue("@date", date);
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
 
                 using var bulk = new SqlBulkCopy(conn);
                 bulk.ColumnMappings.Add("Material", "Material");
@@ -216,7 +228,7 @@ namespace FmsbwebCoreApi.Services
                 bulk.ColumnMappings.Add("date", "date");
 
                 bulk.DestinationTableName = tblName;
-                
+
                 await bulk.WriteToServerAsync(dr).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -230,32 +242,191 @@ namespace FmsbwebCoreApi.Services
 
         }
 
-        private static dynamic GetInventoryStatus(List<SapDumpUnpivotDto> dto)
+        #endregion
+
+        #region Upload Production Order
+
+        private static async Task<string> UploadProductionOrderFile(IFormFile file, DateTime dateNow)
+        {
+            if (file == null) throw new ArgumentNullException(nameof(file));
+
+            try
+            {
+                var directory = OrderProdPath;
+
+#if DEBUG
+                directory = OrderDevPath;
+#endif
+
+                directory = Path.Combine(directory, dateNow.Year.ToString(), dateNow.Month.ToString());
+
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+
+                var fileExtension = Path.GetExtension(file.FileName);
+                var newFileName = $"{dateNow:MM_dd_yyyy}{fileExtension}";
+
+                var filePath = Path.Combine(directory, newFileName);
+
+                await using var stream = new FileStream(filePath, FileMode.Create);
+                await file.CopyToAsync(stream).ConfigureAwait(false);
+
+                return filePath;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        private static DataTable ConvertExcelToDataTableProdOrder(string filePath, DateTime dateNow)
+        {
+            var dt = new DataTable();
+            var firstRow = true;
+
+            try
+            {
+                using var wb = new XLWorkbook(filePath);
+                var ws = wb.Worksheet(1);
+                var rows = ws.RowsUsed();
+                foreach (var row in rows)
+                {
+                    Console.WriteLine($"{row} / {rows.Count()}");
+
+                    //Use the first row to add columns to DataTable.
+                    if (firstRow)
+                    {
+                        var cells = row.Cells();
+                        foreach (var cell in cells)
+                        {
+                            var columnName = cell.Value.ToString();
+                            dt.Columns.Add(columnName);
+
+                            Console.WriteLine(columnName);
+                        }
+
+                        //add new column outside the excel file, modified date
+                        dt.Columns.Add("uploadDateTime");
+
+                        //add new column outside the excel file, date col
+                        dt.Columns.Add("date");
+
+                        firstRow = false;
+                    }
+                    else
+                    {
+                        dt.Rows.Add();
+                        var i = 0;
+                        var cells = row.Cells(false);
+                        foreach (var cell in cells)
+                        {
+                            var cellVal = cell.Value.ToString();
+                            dt.Rows[^1][i] = cellVal;
+                            i++;
+                        }
+
+                        dt.Rows[^1][i] = DateTime.Now;
+                        dt.Rows[^1][i + 1] = dateNow.Date;
+
+                    }
+                }
+
+                return dt;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            finally
+            {
+                dt.Dispose();
+            }
+
+        }
+
+        private async Task BulkInsertProdOrder(DataTable dt, DateTime date)
+        {
+            var dr = new DataTableReader(dt);
+
+            try
+            {
+                var tblName = "SAP_ProdOrders";
+
+#if DEBUG
+                tblName = "SAP_ProdOrders_temp";
+#endif
+
+                await using var conn = new SqlConnection(_configuration.GetConnectionString("sapConn"));
+                conn.Open();
+
+                var deleteQry = $"delete from {tblName};";
+                await using (var cmd = new SqlCommand(deleteQry, conn))
+                {
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+
+                using var bulk = new SqlBulkCopy(conn);
+                bulk.ColumnMappings.Add("Order", "Order");
+                bulk.ColumnMappings.Add("Activity", "Activity");
+                bulk.ColumnMappings.Add("Work center", "WorkCenter");
+                bulk.ColumnMappings.Add("Operation short text", "OperationsShortText");
+                bulk.ColumnMappings.Add("Operation Quantity (MEINH)", "OperationQuantity");
+                bulk.ColumnMappings.Add("Operation unit (=MEINH)", "OperationUnit");
+                bulk.ColumnMappings.Add("ActStartDateExecution", "ActStartDateExecution");
+                bulk.ColumnMappings.Add("ActStartTimeExecution", "ActFinishTimeExecutn");
+                bulk.ColumnMappings.Add("System Status", "SystemStatus");
+                bulk.ColumnMappings.Add("uploadDateTime", "uploadDateTime");
+                bulk.ColumnMappings.Add("date", "date");
+
+                bulk.DestinationTableName = tblName;
+
+                await bulk.WriteToServerAsync(dr).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+            finally
+            {
+                await dr.DisposeAsync().ConfigureAwait(false);
+            }
+
+        }
+
+        #endregion
+
+        #region Inventory Implementation Details
+
+        private static List<Models.InventoryStatusDto> GetInventoryStatus(List<SapDumpUnpivotDto> dto)
         {
             var data = dto.Where(x => !string.IsNullOrWhiteSpace(x.Sloc)).ToList();
 
             var result = data
                 .Where(x => x.Location == Unrestricted)
                 .Where(x => x.Qty > 0)
-                .GroupBy(x => new {x.Sloc})
-                .Select(x => new
+                .GroupBy(x => new { x.Sloc, x.SlocOrder2, x.Date })
+                .Select(x => new Models.InventoryStatusDto
                 {
-                    x.Key.Sloc,
-                    Qty = x.Sum(q => q.Qty)
+                    Date = x.Key.Date,
+                    Sloc = x.Key.Sloc,
+                    SlocOrder = x.Key.SlocOrder2,
+                    Qty = x.Sum(q => q.Qty ?? 0)
                 });
 
             var others = data
                 .Where(x => x.Location == "0300")
                 .Where(x => x.Type == "P1A")
                 .Where(x => x.Qty > 0)
-                .GroupBy(x => new { x.Sloc })
-                .Select(x => new
+                .GroupBy(x => new { x.Sloc, x.SlocOrder2, x.Date })
+                .Select(x => new Models.InventoryStatusDto
                 {
-                    x.Key.Sloc,
-                    Qty = x.Sum(q => q.Qty)
+                    Date = x.Key.Date,
+                    Sloc = x.Key.Sloc,
+                    SlocOrder = x.Key.SlocOrder2,
+                    Qty = x.Sum(q => q.Qty ?? 0)
                 });
 
-            return result.Concat(others).ToList();
+            return result.Concat(others).OrderBy(x => x.SlocOrder).ToList();
         }
 
         private static dynamic GetInventoryCost(List<SapDumpUnpivotDto> dto, List<LogisticsInventoryCostTarget> targets)
@@ -264,10 +435,12 @@ namespace FmsbwebCoreApi.Services
 
             var raw = data
                 .Where(x => x.Location == Unrestricted)
-                .GroupBy(x => new { x.CostType })
+                .GroupBy(x => new { x.CostType, x.CostTypeOrder, x.Date })
                 .Select(x => new
                 {
+                    x.Key.Date,
                     x.Key.CostType,
+                    x.Key.CostTypeOrder,
                     Cost = x.Sum(q => q.PricePerQty),
                     Target = targets.FirstOrDefault(t => t.LogisticsInventoryCostType.Type == x.Key.CostType)?.Target ?? 0
                 });
@@ -275,10 +448,12 @@ namespace FmsbwebCoreApi.Services
             var wip = data
                 .Where(x => x.Location == "NotIn0300")
                 .Where(x => PartTypes.Contains(x.Type))
-                .GroupBy(x => new { x.CostType })
+                .GroupBy(x => new { x.CostType, x.CostTypeOrder, x.Date })
                 .Select(x => new
                 {
+                    x.Key.Date,
                     x.Key.CostType,
+                    x.Key.CostTypeOrder,
                     Cost = x.Sum(q => q.PricePerQty),
                     Target = targets.FirstOrDefault(t => t.LogisticsInventoryCostType.Type == x.Key.CostType)?.Target ?? 0
                 });
@@ -286,15 +461,17 @@ namespace FmsbwebCoreApi.Services
             var fin = data
                 .Where(x => x.Location == "0300")
                 .Where(x => x.Type == "P1A")
-                .GroupBy(x => new { x.CostType })
+                .GroupBy(x => new { x.CostType, x.CostTypeOrder, x.Date })
                 .Select(x => new
                 {
+                    x.Key.Date,
                     x.Key.CostType,
+                    x.Key.CostTypeOrder,
                     Cost = x.Sum(q => q.PricePerQty),
                     Target = targets.FirstOrDefault(t => t.LogisticsInventoryCostType.Type == x.Key.CostType)?.Target ?? 0
                 });
 
-            return raw.Concat(wip).Concat(fin).ToList();
+            return raw.Concat(wip).Concat(fin).OrderBy(x => x.CostTypeOrder).ToList();
         }
 
         private static dynamic GetDaysOnHand(IEnumerable<SapDumpUnpivotDto> dto)
@@ -320,19 +497,24 @@ namespace FmsbwebCoreApi.Services
 
                 });
 
-            return result.OrderByDescending(x => x.Qty).ToList();
+            return result.OrderByDescending(x => x.Qty)
+                .ThenByDescending(x => x.DaysOnHand)
+                .ThenBy(x => x.Program)
+                .ToList();
         }
 
         private static dynamic StockOverviewByProgram(IEnumerable<SapDumpUnpivotDto> dto)
         {
             //todo: just un filter this => Total Unrest. Inv., NotIn0300 instead
-            var slocs = new List<string> { "0111", "0115", "4000", "5000", "QC01", "QC02", "0130", "0131", "0135", "0160", "0300", "0125" };
+            //var slocs = new List<string> { "0111", "0115", "4000", "5000", "QC01", "QC02", "0130", "0131", "0135", "0160", "0300", "0125" };
+            var excludeLoc = new List<string>() { "Total Unrest. Inv.", "NotIn0300" };
 
             var data = dto
                 //.Where(x => x.Location == Unrestricted)
                 .Where(x => ValuationClass.Contains(x.ValuationClass))
-                .Where(x => slocs.Contains(x.Location))
-                .GroupBy(x => new {x.Program})
+                //.Where(x => slocs.Contains(x.Location))
+                .Where(x => !excludeLoc.Contains(x.Location))
+                .GroupBy(x => new { x.Program })
                 .Select(x => new
                 {
                     x.Key.Program,
@@ -350,7 +532,7 @@ namespace FmsbwebCoreApi.Services
             var result = data
                 .Where(x => !excludeLoc.Contains(x.Location))
                 .Where(x => ValuationClass.Contains(x.ValuationClass))
-                .GroupBy(x => new {x.Program, x.Location})
+                .GroupBy(x => new { x.Program, x.Location })
                 .Select(x => new
                 {
                     x.Key.Program,
@@ -363,7 +545,15 @@ namespace FmsbwebCoreApi.Services
             return result;
         }
 
-        public async Task Save(IFormFile file, DateTime dateTime)
+        #endregion
+
+        #region Prod order Implementation Details
+
+        
+
+        #endregion
+
+        public async Task UploadInventoryFile(IFormFile file, DateTime dateTime)
         {
             if (file == null) throw new ArgumentNullException(nameof(file));
 
@@ -373,7 +563,7 @@ namespace FmsbwebCoreApi.Services
                 throw new FileFormatException("Invalid file extension, please upload '.xlsx' file only!");
 
             var filePath = await UploadFile(file, dateTime).ConfigureAwait(false);
-            var dt = ConvertExcelToDataTable(filePath, dateTime);
+            var dt = ConvertExcelToDataTableInventory(filePath, dateTime);
 
             var columnCount = dt.Columns.Count;
 
@@ -383,11 +573,37 @@ namespace FmsbwebCoreApi.Services
             if (columnCount < maxColumn || columnCount > maxColumn)
             {
                 File.Delete(filePath);
-                throw new OperationCanceledException("Invalid column count, expected column count is 42!");
+                throw new OperationCanceledException($"Invalid column count, expected column count is {maxColumn}!");
             }
 
             await BulkInsert(dt, dateTime).ConfigureAwait(false);
 
+        }
+
+        public async Task UploadProductionOrder(IFormFile file, DateTime dateTime)
+        {
+            if (file == null) throw new ArgumentNullException(nameof(file));
+
+            var fileExtension = Path.GetExtension(file.FileName) ?? throw new ArgumentNullException("Path.GetExtension(file.FileName)");
+
+            if (fileExtension.ToLower(new CultureInfo("en-US")) != ".xlsx")
+                throw new FileFormatException("Invalid file extension, please upload '.xlsx' file only!");
+
+            var filePath = await UploadProductionOrderFile(file, dateTime).ConfigureAwait(false);
+            var dt = ConvertExcelToDataTableProdOrder(filePath, dateTime);
+
+            var columnCount = dt.Columns.Count;
+
+            // excel column is 9, plus two columns for date
+            const int maxColumn = 11;
+
+            if (columnCount < maxColumn || columnCount > maxColumn)
+            {
+                File.Delete(filePath);
+                throw new OperationCanceledException($"Invalid column count, expected column count is {maxColumn}!");
+            }
+
+            await BulkInsertProdOrder(dt, dateTime).ConfigureAwait(false);
         }
 
         public async Task<dynamic> GetLogisticsStatus(DateTime dateTime)
@@ -396,21 +612,14 @@ namespace FmsbwebCoreApi.Services
             {
                 var data = await GetDataUnpivot(dateTime).ConfigureAwait(false);
                 var dto = _mapper.Map<List<SapDumpUnpivotDto>>(data);
-                var customerComments = await GetCustomerComments(dateTime).ConfigureAwait(false);
                 var costTargets = await GetCostTargets().ConfigureAwait(false);
-                var stockDetails = await GetData(dateTime).ConfigureAwait(false);
-                var invTargetByProgramAndSloc = await GetInventoryProgramTargets().ConfigureAwait(false);
 
                 return new
                 {
                     InventoryStatus = GetInventoryStatus(dto),
                     InventoryCost = GetInventoryCost(dto, costTargets),
-                    CustomerComments = customerComments,
-                    DaysOnHand = GetDaysOnHand(dto),
-                    StockOverviewByProgram = StockOverviewByProgram(dto),
-                    StockOverview = GetStockOverView(dto),
-                    StockOverviewDetails = stockDetails,
-                    InvTargetByProgramAndSloc = invTargetByProgramAndSloc
+                    CustomerComments = await GetCustomerCommentsDto(dateTime).ConfigureAwait(false),
+                    DaysOnHand = GetDaysOnHand(dto)
                 };
             }
             catch (Exception e)
@@ -419,6 +628,38 @@ namespace FmsbwebCoreApi.Services
                 throw;
             }
 
+        }
+
+        public async Task<dynamic> GetLogisticsSettingsStatus(DateTime dateTime)
+        {
+            try
+            {
+                var stockDetails = await GetData(dateTime).ConfigureAwait(false);
+
+                return new
+                {
+                    StockOverviewDetails = stockDetails,
+                    CustomerComments = await GetCustomerCommentsDto(dateTime).ConfigureAwait(false),
+                };
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+
+        public async Task<List<LogisticsCustomerDto>> GetCustomerCommentsDto(DateTime dateTime)
+        {
+            var comments = await GetCustomerComments(dateTime).ConfigureAwait(false);
+            return comments.Select(x => new LogisticsCustomerDto
+            {
+                Id = x.Id,
+                LogisticsId = x.LogisticsId, 
+                Customer = x.Customer, 
+                Comment = x.Comment, 
+                Date = dateTime
+            }).ToList();
         }
     }
 }
