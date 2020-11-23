@@ -205,6 +205,21 @@ namespace FmsbwebCoreApi.Repositories
             return await _fmsb2Context.LogisticsInventoryLocations.ToListAsync().ConfigureAwait(false);
         }
 
+        public async Task<List<SapProdOrders>> GetProductionOrders(string workCenter)
+        {
+            return await _context.SapProdOrders
+                    .AsNoTracking()
+                    .Where(x => x.WorkCenter.ToLower() == workCenter.ToLower().Trim() && !string.IsNullOrEmpty(x.ActStartDateExecution))
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+        }
+
+        public async Task<List<string>> GetProductionOrderWorkCenters()
+        {
+            return await _context.SapProdOrders.Select(x => x.WorkCenter).Distinct().OrderBy(x => x).ToListAsync()
+                .ConfigureAwait(false);
+        }
+
         public async Task<List<InvProgramTargets>> GetInventoryProgramTargets()
         {
             return await _context.InvProgramTargets

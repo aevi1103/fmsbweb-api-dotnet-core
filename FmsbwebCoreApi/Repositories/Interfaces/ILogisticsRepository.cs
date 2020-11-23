@@ -13,18 +13,17 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
         Task<SapDumpWithSafetyStock> Insert(SapDumpWithSafetyStock data);
         Task<List<SapDumpNewUnpivotWithUnrestrictedInv>> GetDataUnpivot(DateTime datetime);
         Task<List<LogisticsInventoryCostType>> GetCostTypes();
-
         Task<List<LogisticCustomerName>> GetCustomerName();
         Task<List<InvProgramTargets>> GetInventoryProgramTargets();
-
         Task<List<LogisticsInventoryCostTarget>> GetCostTargets();
         Task<LogisticsInventoryCostTarget> AddOrUpdateCostTarget(LogisticsInventoryCostTarget data);
         Task DeleteCostTarget(int id);
-
         Task<LogisticsCustomer> AddOrUpdateCustomerComment(LogisticsCustomer data, DateTime dateTime);
         Task<List<LogisticsCustomer>> GetCustomerComments(DateTime dateTime);
         Task DeleteCustomerComment(int id);
-
         Task<List<LogisticsInventoryLocation>> GetInventoryLocations();
+
+        Task<List<SapProdOrders>> GetProductionOrders(string workCenter);
+        Task<List<string>> GetProductionOrderWorkCenters();
     }
 }

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
+using FluentDateTime;
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Context.SAP;
 using FmsbwebCoreApi.Entity.Fmsb2;
@@ -16,10 +16,11 @@ using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.Models.Logistics;
 using FmsbwebCoreApi.Repositories;
+using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-
 
 namespace FmsbwebCoreApi.Services
 {
@@ -27,20 +28,26 @@ namespace FmsbwebCoreApi.Services
     {
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly IProductionService _productionService;
         private const string Unrestricted = "Total Unrest. Inv.";
         private static readonly List<string> ValuationClass = new List<string>() { "Finished products", "Semifinished products" };
         //todo: just do a p4,p5,p3,p2,p1
         private static readonly List<string> PartTypes = new List<string>() { "P5C", "P4H", "P3M", "P2F", "P2A", "P1A" };
 
-        public LogisticsService(SapContext context, Fmsb2Context fmsb2Context, IMapper mapper, IConfiguration configuration) : base(context, fmsb2Context)
+        public LogisticsService(
+            SapContext context,
+            Fmsb2Context fmsb2Context,
+            IMapper mapper,
+            IConfiguration configuration,
+            IProductionService productionService) : base(context, fmsb2Context)
         {
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
         }
 
         private static string InventoryProdPath => @"\\sbndinms003\D\FMSBWEB\SAP_Dump_Files_New";
         private static string InventoryDevPath => @"C:\SAP_Dump_Files_New";
-
         private static string OrderProdPath => @"\\sbndinms003\D\FMSBWEB\SAP Production Order";
         private static string OrderDevPath => @"C:\SAP Production Order";
 
@@ -344,7 +351,7 @@ namespace FmsbwebCoreApi.Services
 
         }
 
-        private async Task BulkInsertProdOrder(DataTable dt, DateTime date)
+        private async Task BulkInsertProdOrder(DataTable dt)
         {
             var dr = new DataTableReader(dt);
 
@@ -549,7 +556,82 @@ namespace FmsbwebCoreApi.Services
 
         #region Prod order Implementation Details
 
-        
+        private static List<DatesWithWorkingDayFlag> GetDates(DateTime start, DateTime end)
+        {
+            var dates = new List<DatesWithWorkingDayFlag>();
+            var dateStart = start;
+            while (dateStart <= end)
+            {
+                dates.Add(new DatesWithWorkingDayFlag { Date = dateStart});
+                dateStart = dateStart.AddDays(1);
+            }
+            return dates;
+        }
+
+        private dynamic GetWorkCenterOrder(IEnumerable<SapProdOrdersDto> ordersDto, IEnumerable<Production2> prodByWorkCenter, DateTime minDate, DateTime maxDate)
+        {
+            // create a list of dates based on min and max dates from orders
+            var dates = GetDates(minDate, maxDate);
+
+            // filter orders from min and max dates and map to dto
+            var data = ordersDto.Where(x => x.ActStartDateExecutionDate >= minDate && x.ActStartDateExecutionDate <= maxDate);
+            var dto = _mapper.Map<List<SapProdOrdersDto>>(data);
+
+            var weeklyOrders = dto
+                .GroupBy(x => new { x.WeekNumber })
+                .Select(x =>
+                {
+                    var total = x.Sum(q => q.OperationQuantity ?? 0);
+                    var workingDaysCount = dates.Count(w => w.WeekNumber == x.Key.WeekNumber && w.IsWorkingDay);
+
+                    var totalPerDay = workingDaysCount == 0 ? 0 : (double)total / workingDaysCount;
+                    //var weeklyTotalPerDay = (int)Math.Round((double)totalPerDay, 0);
+                    var weeklyTotalPerDay = totalPerDay;
+
+                    return new
+                    {
+                        x.Key.WeekNumber,
+                        OperationQuantity = total,
+                        WorkingDays = workingDaysCount,
+                        WeeklyTotalPerDay = weeklyTotalPerDay
+                    };
+
+                })
+                .OrderBy(x => x.WeekNumber)
+                .ToList();
+
+            double cumulativeOrder = 0;
+            var cumulativeBuilt = 0;
+            var result = dates.Select(x =>
+            {
+                var dailyOrder = !x.IsWorkingDay ? 0 : weeklyOrders.FirstOrDefault(w => w.WeekNumber == x.WeekNumber)?.WeeklyTotalPerDay ?? 0;
+                var dailyProduction = prodByWorkCenter.Where(p => p.ShiftDate == x.Date).Sum(q => q.QtyProd ?? 0);
+
+                cumulativeOrder += dailyOrder;
+                cumulativeBuilt += dailyProduction;
+
+                return new
+                {
+                    x.WeekNumber,
+                    x.Date,
+                    x.Day,
+                    x.IsWorkingDay,
+                    x.IsWeekEnd,
+                    x.IsHoliday,
+                    x.Holiday,
+                    IsToday = x.Date == DateTime.Today,
+
+                    Order = dailyOrder,
+                    CummulativeOrder = cumulativeOrder,
+
+                    Built = dailyProduction,
+                    CummulativeBuilt = cumulativeBuilt,
+
+                };
+            });
+
+            return result;
+        }
 
         #endregion
 
@@ -603,7 +685,7 @@ namespace FmsbwebCoreApi.Services
                 throw new OperationCanceledException($"Invalid column count, expected column count is {maxColumn}!");
             }
 
-            await BulkInsertProdOrder(dt, dateTime).ConfigureAwait(false);
+            await BulkInsertProdOrder(dt).ConfigureAwait(false);
         }
 
         public async Task<dynamic> GetLogisticsStatus(DateTime dateTime)
@@ -661,6 +743,29 @@ namespace FmsbwebCoreApi.Services
                 Date = dateTime
             }).ToList();
         }
+
+        public async Task<dynamic> GetWeeklyProductionOrder(string workCenter)
+        {
+            var orders = await GetProductionOrders(workCenter).ConfigureAwait(false);
+            var ordersDto = _mapper.Map<List<SapProdOrdersDto>>(orders);
+
+            // get min and max dates
+            var minDate = ordersDto.Select(x => x.ActStartDateExecutionDate).Min().FirstDayOfWeek();
+            var maxDate = ordersDto.Select(x => x.ActStartDateExecutionDate).Max().EndOfWeek();
+
+            var production = await _productionService.GetProductionQueryable(new ProductionResourceParameter
+            {
+                WorkCenter = workCenter,
+                StartDate = minDate,
+                EndDate = maxDate
+            })
+                .ToListAsync()
+                .ConfigureAwait(false);
+
+            return GetWorkCenterOrder(ordersDto, production, minDate, maxDate);
+        }
+
+ 
     }
 }
 

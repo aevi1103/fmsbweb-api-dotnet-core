@@ -52,13 +52,16 @@ namespace FmsbwebCoreApi.Repositories
             if (!string.IsNullOrEmpty(resourceParameter.Shift))
                 qry = qry.Where(x => x.Shift == resourceParameter.Shift);
 
-            if (resourceParameter.WorkCenters.Count > 0)
+            if (!string.IsNullOrEmpty(resourceParameter.WorkCenter))
+                qry = qry.Where(x => x.WorkCenter.ToLower() == resourceParameter.WorkCenter.ToLower().Trim());
+
+            if (resourceParameter.WorkCenters.Any())
                 qry = qry.Where(x => resourceParameter.WorkCenters.Contains(x.WorkCenter));
 
-            if (resourceParameter.MachinesHxh.Count > 0)
+            if (resourceParameter.MachinesHxh.Any())
                 qry = qry.Where(x => resourceParameter.MachinesHxh.Contains(x.MachineHxh));
 
-            if (resourceParameter.Lines.Count > 0)
+            if (resourceParameter.Lines.Any())
                 qry = qry.Where(x => resourceParameter.Lines.Contains(x.Line));
 
             return qry;
@@ -87,11 +90,11 @@ namespace FmsbwebCoreApi.Repositories
                 qry = qry.Where(x => x.Shift.ToLower() == resourceParameter.Shift.ToLower().Trim());
 
             // x.Line => A2
-            if (resourceParameter.MachinesHxh.Count > 0)
+            if (resourceParameter.MachinesHxh.Any())
                 qry = qry.Where(x => resourceParameter.MachinesHxh.Contains(x.Line));
 
             // x.MachineName => Assembly 2
-            if (resourceParameter.Lines.Count > 0)
+            if (resourceParameter.Lines.Any())
                 qry = qry.Where(x => resourceParameter.Lines.Contains(x.MachineName));
 
             var result = await qry.ToListAsync();
@@ -126,7 +129,8 @@ namespace FmsbwebCoreApi.Repositories
             var result = await _intranetContext.EolvsEosView
                 .Where(x => x.ShiftDate >= start && x.ShiftDate <= end
                             && x.Shift.ToLower().Contains(shift))
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
 
             return result.Select(x => new HxHProdDto
             {

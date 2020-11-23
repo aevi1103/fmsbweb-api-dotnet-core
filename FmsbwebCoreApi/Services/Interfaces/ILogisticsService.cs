@@ -15,5 +15,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<dynamic> GetLogisticsStatus(DateTime dateTime);
         Task<dynamic> GetLogisticsSettingsStatus(DateTime dateTime);
         Task<List<LogisticsCustomerDto>> GetCustomerCommentsDto(DateTime dateTime);
+        Task<dynamic> GetWeeklyProductionOrder(string workCenter);
     }
 }

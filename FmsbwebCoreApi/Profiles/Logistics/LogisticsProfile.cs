@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using FmsbwebCoreApi.Entity.SAP;
+using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.Models.Logistics;
 
 namespace FmsbwebCoreApi.Profiles.Logistics
@@ -15,6 +16,7 @@ namespace FmsbwebCoreApi.Profiles.Logistics
         {
             CreateMap<SapDumpWithSafetyStock, SapDumpNewDto>();
             CreateMap<SapDumpNewUnpivotWithUnrestrictedInv, SapDumpUnpivotDto>();
+            CreateMap<SapProdOrders, SapProdOrdersDto>();
         }
     }
 }

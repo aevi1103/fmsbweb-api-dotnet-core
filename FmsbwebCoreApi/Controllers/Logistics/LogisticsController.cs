@@ -232,5 +232,39 @@ namespace FmsbwebCoreApi.Controllers.Logistics
 
         }
 
+        [HttpGet]
+        [Route("order/{workCenter}")]
+        public async Task<ActionResult> GetProductionOrder(string workCenter)
+        {
+            try
+            {
+                var data = await _logisticsService.GetWeeklyProductionOrder(workCenter).ConfigureAwait(false);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+
+        }
+
+        [HttpGet]
+        [Route("order/workCenters")]
+        public async Task<ActionResult> GetProductionOrderWorkCenters()
+        {
+            try
+            {
+                var data = await _logisticsService.GetProductionOrderWorkCenters().ConfigureAwait(false);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+
+        }
+
     }
 }
