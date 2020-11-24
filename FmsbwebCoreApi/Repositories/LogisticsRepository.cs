@@ -152,8 +152,6 @@ namespace FmsbwebCoreApi.Repositories
             }
         }
 
-
-
         public async Task<List<LogisticCustomerName>> GetCustomerName()
         {
             return await _fmsb2Context
@@ -217,6 +215,85 @@ namespace FmsbwebCoreApi.Repositories
         public async Task<List<string>> GetProductionOrderWorkCenters()
         {
             return await _context.SapProdOrders.Select(x => x.WorkCenter).Distinct().OrderBy(x => x).ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public async Task<List<InvProgramTargets>> GetProgramSlocInventoryTargets()
+        {
+            return await _context.InvProgramTargets
+                .AsNoTracking()
+                .OrderBy(x => x.Program)
+                .ThenBy(x => x.Sloc)
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public async Task<InvProgramTargets> UpdateProgramSlocInventoryTargets(InvProgramTargets data)
+        {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+
+            try
+            {
+                if (data.Id == 0)
+                {
+                    var isExist = await _context.InvProgramTargets
+                        .AnyAsync(x => x.Program == data.Program && x.Sloc == data.Sloc)
+                        .ConfigureAwait(false);
+
+                    if (isExist)
+                        throw new OperationCanceledException($"{data.Program} in {data.Sloc} already exist in the database! Please update the record instead.");
+                }
+
+                _context.InvProgramTargets.Update(data);
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+                return data;
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
+        }
+
+        public async Task DeleteProgramSlocInventoryTargets(int id)
+        {
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+
+            try
+            {
+                _context.InvProgramTargets.Remove(new InvProgramTargets { Id = id});
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
+        }
+
+        public async Task<List<string>> GetDistinctPrograms()
+        {
+            return await _context.SapDumpWithSafetyStock
+                .Select(x => x.Program)
+                .Distinct()
+                .Where(x => !string.IsNullOrEmpty(x))
+                .OrderBy(x => x)
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public async Task<List<string>> GetDistinctSloc()
+        {
+            return await _context.SapDumpNewUnpivot
+                .Select(x => x.Location)
+                .Distinct()
+                .Where(x => !string.IsNullOrEmpty(x))
+                .OrderBy(x => x)
+                .ToListAsync()
                 .ConfigureAwait(false);
         }
 

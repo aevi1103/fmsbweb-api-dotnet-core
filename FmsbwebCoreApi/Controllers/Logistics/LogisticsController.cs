@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using FmsbwebCoreApi.Entity.Fmsb2;
+using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.ResourceParameters;
+using FmsbwebCoreApi.ResourceParameters.Logistics;
 using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,10 +20,12 @@ namespace FmsbwebCoreApi.Controllers.Logistics
     public class LogisticsController : ControllerBase
     {
         private readonly ILogisticsService _logisticsService;
+        private readonly IMapper _mapper;
 
-        public LogisticsController(ILogisticsService logisticsService)
+        public LogisticsController(ILogisticsService logisticsService, IMapper mapper)
         {
             _logisticsService = logisticsService ?? throw new ArgumentNullException(nameof(logisticsService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         [HttpPost]
@@ -256,6 +261,95 @@ namespace FmsbwebCoreApi.Controllers.Logistics
             try
             {
                 var data = await _logisticsService.GetProductionOrderWorkCenters().ConfigureAwait(false);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+
+        }
+
+        [HttpGet]
+        [Route("program/targets")]
+        public async Task<ActionResult> GetProgramSlocInventoryTargets()
+        {
+            try
+            {
+                var data = await _logisticsService.GetProgramSlocInventoryTargets().ConfigureAwait(false);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+
+        }
+
+        [HttpPost]
+        [Route("program/targets")]
+        public async Task<ActionResult> UpdateProgramSlocInventoryTargets(InvProgramTargetResourceParameter resourceParameter)
+        {
+            try
+            {
+                if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
+                if (resourceParameter.Min > resourceParameter.Max)
+                    throw new OperationCanceledException($"Min target of {resourceParameter.Min} must be less than max target of {resourceParameter.Max}.");
+
+                var data = _mapper.Map<InvProgramTargets>(resourceParameter);
+                var result = await _logisticsService.UpdateProgramSlocInventoryTargets(data).ConfigureAwait(false);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("program/targets/{id}")]
+        public async Task<ActionResult> DeleteProgramSlocInventoryTargets(int id)
+        {
+            try
+            {
+                await _logisticsService.DeleteProgramSlocInventoryTargets(id).ConfigureAwait(false);
+                return Ok(true);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("programs")]
+        public async Task<ActionResult> GetDistinctPrograms()
+        {
+            try
+            {
+                var data = await _logisticsService.GetDistinctPrograms().ConfigureAwait(false);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+
+        }
+
+        [HttpGet]
+        [Route("locations")]
+        public async Task<ActionResult> GetDistinctSloc()
+        {
+            try
+            {
+                var data = await _logisticsService.GetDistinctSloc().ConfigureAwait(false);
                 return Ok(data);
             }
             catch (Exception e)

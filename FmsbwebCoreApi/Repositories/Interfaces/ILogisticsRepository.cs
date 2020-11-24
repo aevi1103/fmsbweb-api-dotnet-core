@@ -25,5 +25,11 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
 
         Task<List<SapProdOrders>> GetProductionOrders(string workCenter);
         Task<List<string>> GetProductionOrderWorkCenters();
+
+        Task<List<InvProgramTargets>> GetProgramSlocInventoryTargets();
+        Task<InvProgramTargets> UpdateProgramSlocInventoryTargets(InvProgramTargets data);
+        Task DeleteProgramSlocInventoryTargets(int id);
+        Task<List<string>> GetDistinctPrograms();
+        Task<List<string>> GetDistinctSloc();
     }
 }
