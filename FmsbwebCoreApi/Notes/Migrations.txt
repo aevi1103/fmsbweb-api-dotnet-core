@@ -1,3 +1,3 @@
-﻿Add-Migration -Name AddOee -OutputDir "Migrations/Fmsb2" -Context Fmsb2Context 
-Update-Database -Context "Fmsb2Context"
+﻿Add-Migration -Name AddTables -OutputDir "Migrations/Iconics" -Context IconicsContext 
+Update-Database -Context "IconicsContext"
 

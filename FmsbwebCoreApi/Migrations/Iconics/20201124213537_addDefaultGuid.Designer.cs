@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Iconics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Iconics
 {
     [DbContext(typeof(IconicsContext))]
-    partial class IconicsContextModelSnapshot : ModelSnapshot
+    [Migration("20201124213537_addDefaultGuid")]
+    partial class addDefaultGuid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,9 +68,6 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("GroupName")
                         .HasColumnType("nvarchar(5)")
                         .HasMaxLength(5);
@@ -83,67 +82,60 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                     b.HasData(
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("3554f89b-06b6-4c2d-a774-a5ea62197997"),
                             GroupName = "A2",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 576, DateTimeKind.Local).AddTicks(3515)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 77, DateTimeKind.Local).AddTicks(2817)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("4e7f855a-1999-4848-b811-06ac81c2c431"),
                             GroupName = "A3",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(7760)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 78, DateTimeKind.Local).AddTicks(5269)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("0445d260-273d-44fe-af79-46a8a38b7b27"),
                             GroupName = "A4",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8015)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 78, DateTimeKind.Local).AddTicks(5392)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("87dde5c2-6177-4831-bd4d-8ad613767b43"),
                             GroupName = "A5",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8084)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 78, DateTimeKind.Local).AddTicks(5418)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("6425df41-847a-4fee-b3d3-0d3935370dcc"),
                             GroupName = "A6",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8141)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 78, DateTimeKind.Local).AddTicks(5451)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("c86e18f2-5ce9-401f-aa2d-2a3a35e96efa"),
                             GroupName = "A7",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8200)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 78, DateTimeKind.Local).AddTicks(5481)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("72723b26-5652-4d82-9bc3-eac81a74b022"),
                             GroupName = "A8",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8254)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 78, DateTimeKind.Local).AddTicks(5504)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("e9f14765-bb45-4dd1-adbc-be7cb3d49c8c"),
                             GroupName = "A9",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8310)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 35, 37, 78, DateTimeKind.Local).AddTicks(5526)
                         });
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Iconics.KepServerTagNameMonitor", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("KepServerTagNameMonitorId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<Guid>("KepServerTagNameGroupId")
                         .HasColumnType("uniqueidentifier");
@@ -155,71 +147,13 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("Id");
+                    b.HasKey("KepServerTagNameMonitorId");
 
                     b.HasIndex("KepServerTagNameGroupId");
 
                     b.HasIndex("TagName");
 
                     b.ToTable("KepServerTagNameMonitors");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("b37a8885-7889-407f-a44a-3cbcf3ee1a14"),
-                            KepServerTagNameGroupId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
-                            TagName = "A2_PACKOUT_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(6620)
-                        },
-                        new
-                        {
-                            Id = new Guid("9f1aabaf-fc1e-437e-8af3-2e3e17aa4192"),
-                            KepServerTagNameGroupId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
-                            TagName = "A3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(7974)
-                        },
-                        new
-                        {
-                            Id = new Guid("d81f4aca-b172-4e2d-b138-85fca35fdb48"),
-                            KepServerTagNameGroupId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
-                            TagName = "A4_M3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8048)
-                        },
-                        new
-                        {
-                            Id = new Guid("978337b6-98c6-4f65-97da-bed63b415e4a"),
-                            KepServerTagNameGroupId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
-                            TagName = "A5_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8114)
-                        },
-                        new
-                        {
-                            Id = new Guid("bb1862ce-201c-40b1-be25-c6f13f8ec6b1"),
-                            KepServerTagNameGroupId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
-                            TagName = "A6_M2_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8173)
-                        },
-                        new
-                        {
-                            Id = new Guid("e6273b83-641d-4669-8003-be5bdd928093"),
-                            KepServerTagNameGroupId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
-                            TagName = "A7_M3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8229)
-                        },
-                        new
-                        {
-                            Id = new Guid("d43a0be0-32cc-4e28-9f74-88d10c04b6a8"),
-                            KepServerTagNameGroupId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
-                            TagName = "A8_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8282)
-                        },
-                        new
-                        {
-                            Id = new Guid("61a26041-c823-427b-be03-9a10f37e344a"),
-                            KepServerTagNameGroupId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
-                            TagName = "A9_M3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8338)
-                        });
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Iconics.KepserverMachineDowntime", b =>

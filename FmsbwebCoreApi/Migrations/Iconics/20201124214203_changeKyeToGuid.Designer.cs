@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Iconics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Iconics
 {
     [DbContext(typeof(IconicsContext))]
-    partial class IconicsContextModelSnapshot : ModelSnapshot
+    [Migration("20201124214203_changeKyeToGuid")]
+    partial class changeKyeToGuid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,9 +68,6 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("GroupName")
                         .HasColumnType("nvarchar(5)")
                         .HasMaxLength(5);
@@ -83,59 +82,51 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                     b.HasData(
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("3a724a2e-bd4f-47f1-a0f5-830c40c770d7"),
                             GroupName = "A2",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 576, DateTimeKind.Local).AddTicks(3515)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 978, DateTimeKind.Local).AddTicks(6386)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("7bdff7de-8049-4059-8b9e-c0138af93119"),
                             GroupName = "A3",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(7760)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 980, DateTimeKind.Local).AddTicks(1793)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("baddedd6-2d1c-46e8-bc25-9101ae0c6e87"),
                             GroupName = "A4",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8015)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 980, DateTimeKind.Local).AddTicks(1978)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("bfe14929-c580-4c76-b3b0-0f1250208cbb"),
                             GroupName = "A5",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8084)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 980, DateTimeKind.Local).AddTicks(2009)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("6dfe84ae-7850-44cf-bd90-26685b34bee8"),
                             GroupName = "A6",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8141)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 980, DateTimeKind.Local).AddTicks(2047)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("76eef47b-7541-4b52-884c-af130e121c77"),
                             GroupName = "A7",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8200)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 980, DateTimeKind.Local).AddTicks(2081)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("95800b52-3430-4200-a546-000dbd13bb92"),
                             GroupName = "A8",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8254)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 980, DateTimeKind.Local).AddTicks(2107)
                         },
                         new
                         {
-                            KepServerTagNameGroupId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
-                            Department = "Assembly",
+                            KepServerTagNameGroupId = new Guid("ffb2e046-ff1a-42e0-8b10-a24e4b17dd11"),
                             GroupName = "A9",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8310)
+                            TimeStamp = new DateTime(2020, 11, 24, 16, 42, 2, 980, DateTimeKind.Local).AddTicks(2134)
                         });
                 });
 
@@ -162,64 +153,6 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                     b.HasIndex("TagName");
 
                     b.ToTable("KepServerTagNameMonitors");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("b37a8885-7889-407f-a44a-3cbcf3ee1a14"),
-                            KepServerTagNameGroupId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
-                            TagName = "A2_PACKOUT_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(6620)
-                        },
-                        new
-                        {
-                            Id = new Guid("9f1aabaf-fc1e-437e-8af3-2e3e17aa4192"),
-                            KepServerTagNameGroupId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
-                            TagName = "A3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(7974)
-                        },
-                        new
-                        {
-                            Id = new Guid("d81f4aca-b172-4e2d-b138-85fca35fdb48"),
-                            KepServerTagNameGroupId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
-                            TagName = "A4_M3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8048)
-                        },
-                        new
-                        {
-                            Id = new Guid("978337b6-98c6-4f65-97da-bed63b415e4a"),
-                            KepServerTagNameGroupId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
-                            TagName = "A5_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8114)
-                        },
-                        new
-                        {
-                            Id = new Guid("bb1862ce-201c-40b1-be25-c6f13f8ec6b1"),
-                            KepServerTagNameGroupId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
-                            TagName = "A6_M2_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8173)
-                        },
-                        new
-                        {
-                            Id = new Guid("e6273b83-641d-4669-8003-be5bdd928093"),
-                            KepServerTagNameGroupId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
-                            TagName = "A7_M3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8229)
-                        },
-                        new
-                        {
-                            Id = new Guid("d43a0be0-32cc-4e28-9f74-88d10c04b6a8"),
-                            KepServerTagNameGroupId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
-                            TagName = "A8_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8282)
-                        },
-                        new
-                        {
-                            Id = new Guid("61a26041-c823-427b-be03-9a10f37e344a"),
-                            KepServerTagNameGroupId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
-                            TagName = "A9_M3_APC",
-                            TimeStamp = new DateTime(2020, 11, 25, 9, 46, 35, 579, DateTimeKind.Local).AddTicks(8338)
-                        });
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.Iconics.KepserverMachineDowntime", b =>
