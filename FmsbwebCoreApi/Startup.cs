@@ -59,7 +59,7 @@ namespace FmsbwebCoreApi
                 {
                     builder.WithOrigins(
                         "http://10.129.224.149:82",
-                        "http://10.129.224.149:83",
+                        "http://10.129.224.149:84",
                         "http://10.129.224.149",
                         "http://localhost:58256",
                         "http://localhost:3000")
