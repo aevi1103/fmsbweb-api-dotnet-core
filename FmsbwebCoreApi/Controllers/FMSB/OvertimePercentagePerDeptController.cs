@@ -29,13 +29,43 @@ namespace FmsbwebCoreApi.Controllers.FMSB
         {
             try
             {
-                return Ok(await _fmsbLibRepo.GetOvertimePercentage(dept, start, end));
+                var data = await _fmsbLibRepo.GetOvertimePercentage(dept, start, end).ConfigureAwait(false);
+                return Ok(data);
             }
             catch (Exception e)
             {
                 throw new Exception(e.Message);
             }
+        }
 
+        [Route("quarter")]
+        [HttpGet]
+        public async Task<IActionResult> GetOvertimeQuarter(string dept, DateTime start, DateTime end)
+        {
+            try
+            {
+                var data = await _fmsbLibRepo.GetOvertimePercentage(dept, start, end).ConfigureAwait(false);
+                return Ok(data.quarterSummary);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        [Route("shift")]
+        [HttpGet]
+        public async Task<IActionResult> GetOvertimeShift(string dept, DateTime start, DateTime end)
+        {
+            try
+            {
+                var data = await _fmsbLibRepo.GetOvertimePercentage(dept, start, end).ConfigureAwait(false);
+                return Ok(data.shiftSummary);
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
     }
 }
