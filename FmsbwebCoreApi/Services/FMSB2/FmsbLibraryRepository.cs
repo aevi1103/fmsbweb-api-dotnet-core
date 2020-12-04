@@ -326,20 +326,18 @@ namespace FmsbwebCoreApi.Services.FMSB2
             #region Overtime Percent Per Shift 
 
             var uniqueShifts = hoursData.Select(x => x.Shift2).Distinct();
-            var shiftSummary = new List<dynamic>();
-            foreach (var shift in uniqueShifts)
-            {
-                var shiftData = GetLaborHours(hoursData.Where(x => x.Shift2 == shift).ToList());
-                var rec = new
+            var shiftSummary = (from shift in uniqueShifts
+                let shiftData = GetLaborHours(hoursData.Where(x => x.Shift2 == shift).ToList())
+                select new
                 {
                     Shift = shift,
                     OverallHours = shiftData.OverAll,
                     OvertimeHours = shiftData.Overtime,
-                    OvertimePercentage = shiftData.OverAll == 0 ? 0 : (decimal)shiftData.Overtime / (decimal)shiftData.OverAll,
-                };
-                shiftSummary.Add(rec);
-            };
-
+                    OvertimePercentage = shiftData.OverAll == 0 
+                                            ? 0 
+                                            : (decimal) shiftData.Overtime / (decimal) shiftData.OverAll,
+                }).Cast<dynamic>()
+                .ToList();
 
             shiftSummary = shiftSummary.OrderByDescending(x => x.OvertimePercentage).ToList();
 

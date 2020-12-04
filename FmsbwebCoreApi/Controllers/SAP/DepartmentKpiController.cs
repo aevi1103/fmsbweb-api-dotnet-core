@@ -26,6 +26,8 @@ namespace FmsbwebCoreApi.Controllers.SAP
         {
             try
             {
+                if (@params.Area == "Plant") return Ok(null);
+
                 var data = await _sapLibRepo.GetDepartmentKpi(@params).ConfigureAwait(false);
                 return Ok(data);
             }

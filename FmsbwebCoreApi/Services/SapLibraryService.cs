@@ -1188,10 +1188,12 @@ namespace FmsbwebCoreApi.Services
 
         public async Task<List<dynamic>> GetScrapVariancePerProgram(SapResourceParameter @params)
         {
+            if (@params == null) throw new ArgumentNullException(nameof(@params));
+
             var areas = new List<string> { "Foundry Cell", "Machine Line", "Skirt Coat", "Assembly" };
             if (!@params.IsPlantTotal)
             {
-                areas = areas.Where(x => x.ToLower().Trim() == @params.Area.ToLower().Trim()).ToList();
+                areas = areas.Where(x => x.ToLower().Trim() == @params.Area?.ToLower().Trim()).ToList();
             }
 
             var list = new List<dynamic>();
