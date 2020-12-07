@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Iconics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Iconics
 {
     [DbContext(typeof(IconicsContext))]
-    partial class IconicsContextModelSnapshot : ModelSnapshot
+    [Migration("20201204184811_removeMOnitorTable")]
+    partial class removeMOnitorTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,9 +81,6 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("WorkCenter")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("KepServerTagNameGroupId");
 
                     b.ToTable("KepServerTagNameGroups");
@@ -92,72 +91,64 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             KepServerTagNameGroupId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
                             Department = "Assembly",
                             GroupName = "A2",
-                            TagName = "Assembly.A2_PACKOUT.A2_PACKOUT_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 232, DateTimeKind.Local).AddTicks(7628),
-                            WorkCenter = "ASBY0002"
+                            TagName = "A2_PACKOUT_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 934, DateTimeKind.Local).AddTicks(9609)
                         },
                         new
                         {
                             KepServerTagNameGroupId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
                             Department = "Assembly",
                             GroupName = "A3",
-                            TagName = "Assembly.A3.A3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6473),
-                            WorkCenter = "ASBY0003"
+                            TagName = "A3_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 936, DateTimeKind.Local).AddTicks(8418)
                         },
                         new
                         {
                             KepServerTagNameGroupId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
                             Department = "Assembly",
                             GroupName = "A4",
-                            TagName = "Assembly.A4_M3.A4_M3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6708),
-                            WorkCenter = "ASBY0004"
+                            TagName = "A4_M3_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 936, DateTimeKind.Local).AddTicks(8550)
                         },
                         new
                         {
                             KepServerTagNameGroupId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
                             Department = "Assembly",
                             GroupName = "A5",
-                            TagName = "Assembly.A5.A5_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6771),
-                            WorkCenter = "ASBY0005"
+                            TagName = "A5_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 936, DateTimeKind.Local).AddTicks(8576)
                         },
                         new
                         {
                             KepServerTagNameGroupId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
                             Department = "Assembly",
                             GroupName = "A6",
-                            TagName = "Assembly.A6_M2.A6_M2_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6837),
-                            WorkCenter = "ASBY0006"
+                            TagName = "A6_M2_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 936, DateTimeKind.Local).AddTicks(8600)
                         },
                         new
                         {
                             KepServerTagNameGroupId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
                             Department = "Assembly",
                             GroupName = "A7",
-                            TagName = "Assembly.A7_M3.A7_M3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6916),
-                            WorkCenter = "ASBY0007"
+                            TagName = "A7_M3_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 936, DateTimeKind.Local).AddTicks(8641)
                         },
                         new
                         {
                             KepServerTagNameGroupId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
                             Department = "Assembly",
                             GroupName = "A8",
-                            TagName = "Assembly.A8.A8_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6962),
-                            WorkCenter = "ASBY0008"
+                            TagName = "A8_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 936, DateTimeKind.Local).AddTicks(8666)
                         },
                         new
                         {
                             KepServerTagNameGroupId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
                             Department = "Assembly",
                             GroupName = "A9",
-                            TagName = "Assembly.A9_M3.A9_M3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(7008),
-                            WorkCenter = "ASBY0009"
+                            TagName = "A9_M3_APC",
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 48, 10, 936, DateTimeKind.Local).AddTicks(8784)
                         });
                 });
 

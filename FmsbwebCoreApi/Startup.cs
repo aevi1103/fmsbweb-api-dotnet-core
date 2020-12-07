@@ -233,7 +233,7 @@ namespace FmsbwebCoreApi
                 endpoints.MapHub<ChatHub>("/chathub");
                 endpoints.MapHub<CounterHub>("/counterhub");
                 endpoints.MapHub<DowntimeHub>("/downtimehub");
-                endpoints.MapHub<DowntimeHub>("/scraphub");
+                endpoints.MapHub<ScrapHub>("/scraphub");
             });
 
         }

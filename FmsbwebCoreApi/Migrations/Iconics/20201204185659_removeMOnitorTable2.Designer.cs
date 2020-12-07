@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Iconics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Iconics
 {
     [DbContext(typeof(IconicsContext))]
-    partial class IconicsContextModelSnapshot : ModelSnapshot
+    [Migration("20201204185659_removeMOnitorTable2")]
+    partial class removeMOnitorTable2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,9 +81,6 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                     b.Property<DateTime>("TimeStamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("WorkCenter")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("KepServerTagNameGroupId");
 
                     b.ToTable("KepServerTagNameGroups");
@@ -93,8 +92,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A2",
                             TagName = "Assembly.A2_PACKOUT.A2_PACKOUT_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 232, DateTimeKind.Local).AddTicks(7628),
-                            WorkCenter = "ASBY0002"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 848, DateTimeKind.Local).AddTicks(2034)
                         },
                         new
                         {
@@ -102,8 +100,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A3",
                             TagName = "Assembly.A3.A3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6473),
-                            WorkCenter = "ASBY0003"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 849, DateTimeKind.Local).AddTicks(4883)
                         },
                         new
                         {
@@ -111,8 +108,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A4",
                             TagName = "Assembly.A4_M3.A4_M3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6708),
-                            WorkCenter = "ASBY0004"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 849, DateTimeKind.Local).AddTicks(5012)
                         },
                         new
                         {
@@ -120,8 +116,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A5",
                             TagName = "Assembly.A5.A5_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6771),
-                            WorkCenter = "ASBY0005"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 849, DateTimeKind.Local).AddTicks(5039)
                         },
                         new
                         {
@@ -129,8 +124,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A6",
                             TagName = "Assembly.A6_M2.A6_M2_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6837),
-                            WorkCenter = "ASBY0006"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 849, DateTimeKind.Local).AddTicks(5074)
                         },
                         new
                         {
@@ -138,8 +132,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A7",
                             TagName = "Assembly.A7_M3.A7_M3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6916),
-                            WorkCenter = "ASBY0007"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 849, DateTimeKind.Local).AddTicks(5103)
                         },
                         new
                         {
@@ -147,8 +140,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A8",
                             TagName = "Assembly.A8.A8_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(6962),
-                            WorkCenter = "ASBY0008"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 849, DateTimeKind.Local).AddTicks(5128)
                         },
                         new
                         {
@@ -156,8 +148,7 @@ namespace FmsbwebCoreApi.Migrations.Iconics
                             Department = "Assembly",
                             GroupName = "A9",
                             TagName = "Assembly.A9_M3.A9_M3_APC",
-                            TimeStamp = new DateTime(2020, 12, 4, 16, 24, 39, 234, DateTimeKind.Local).AddTicks(7008),
-                            WorkCenter = "ASBY0009"
+                            TimeStamp = new DateTime(2020, 12, 4, 13, 56, 58, 849, DateTimeKind.Local).AddTicks(5152)
                         });
                 });
 
