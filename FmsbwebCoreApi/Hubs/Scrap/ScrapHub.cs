@@ -14,5 +14,13 @@ namespace FmsbwebCoreApi.Hubs.Scrap
         {
             _scrapTicker = scrapTicker;
         }
+
+        public async Task AddToGroup(string groupName)
+        {
+            var connectionId = Context.ConnectionId;
+            await Groups.AddToGroupAsync(connectionId, groupName).ConfigureAwait(false);
+            await Clients.Group(groupName).SendAsync("BroadCastChange", $"{connectionId} has joined the group {groupName}.")
+                .ConfigureAwait(false);
+        }
     }
 }

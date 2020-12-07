@@ -14,5 +14,7 @@ namespace FmsbwebCoreApi.Hubs.Downtime
         public bool IsDownBool => !string.IsNullOrEmpty(IsDown)
                                   && Convert.ToBoolean(IsDown.ToLower(new CultureInfo("en-US")),
                                       new CultureInfo("en-US"));
+
+        public string GroupName => TagName.Split('.')[2];
     }
 }

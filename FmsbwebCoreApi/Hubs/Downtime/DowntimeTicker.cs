@@ -54,7 +54,8 @@ namespace FmsbwebCoreApi.Hubs.Downtime
 
         private async Task BroadCastChange(DowntimeModel data)
         {
-            await Hub.Clients.All.SendAsync("BroadCastChange", data);
+            //await Hub.Clients.All.SendAsync("BroadCastChange", data);
+            await Hub.Clients.Group(data.GroupName).SendAsync("BroadCastChange", data).ConfigureAwait(false);
         }
 
         private static void SqlTableDependency_OnError(object sender, ErrorEventArgs e)

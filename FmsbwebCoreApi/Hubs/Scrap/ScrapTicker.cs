@@ -52,7 +52,8 @@ namespace FmsbwebCoreApi.Hubs.Scrap
 
         private async Task BroadCastChange(ScrapModel data)
         {
-            await Hub.Clients.All.SendAsync("BroadCastChange", data).ConfigureAwait(false);
+            //await Hub.Clients.All.SendAsync("BroadCastChange", data).ConfigureAwait(false);
+            await Hub.Clients.Group(data.WorkCenter).SendAsync("BroadCastChange", data).ConfigureAwait(false);
         }
 
         private static void SqlTableDependency_OnError(object sender, ErrorEventArgs e)

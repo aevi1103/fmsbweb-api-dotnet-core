@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Context.Iconics;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NUnit.Framework.Constraints;
 using TableDependency.SqlClient;
@@ -17,7 +19,9 @@ namespace FmsbwebCoreApi.Hubs.Counter
         private readonly IConfiguration _configuration;
         private static SqlTableDependency<CounterModel> _tableDependency;
 
-        public CounterTicker(IHubContext<CounterHub> counterHubContext, IConfiguration configuration)
+        public CounterTicker(
+            IHubContext<CounterHub> counterHubContext,
+            IConfiguration configuration)
         {
             Hub = counterHubContext;
             _configuration = configuration;
@@ -57,7 +61,8 @@ namespace FmsbwebCoreApi.Hubs.Counter
 
         private async Task BroadCastChange(CounterModel data)
         {
-            await Hub.Clients.All.SendAsync("BroadCastChange", data);
+            //await Hub.Clients.All.SendAsync("BroadCastChange", data);
+            await Hub.Clients.Group(data.TagName).SendAsync("BroadCastChange", data).ConfigureAwait(false);
         }
 
         private static void SqlTableDependency_OnError(object sender, ErrorEventArgs e)
