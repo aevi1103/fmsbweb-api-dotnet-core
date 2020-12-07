@@ -15,6 +15,9 @@ namespace FmsbwebCoreApi.Entity.Iconics
         [StringLength(5)]
         public string GroupName { get; set; }
 
+        public string TagName { get; set; }
+        public string WorkCenter { get; set; }
+
         public string Department { get; set; }
 
         [Required]
