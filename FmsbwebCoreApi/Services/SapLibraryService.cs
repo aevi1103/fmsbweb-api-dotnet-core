@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
 using DateShiftLib.Extensions;
+using Microsoft.Extensions.Configuration;
 using Scrap = FmsbwebCoreApi.Models.SAP.Scrap;
 
 namespace FmsbwebCoreApi.Services
@@ -34,6 +35,11 @@ namespace FmsbwebCoreApi.Services
 
         private readonly IScrapService _scrapService;
         private readonly IProductionService _productionService;
+        private readonly IConfiguration _config;
+
+        private string _black;
+        private string _red;
+        private string _green;
 
         public SapLibraryService(
             SapContext context,
@@ -41,15 +47,21 @@ namespace FmsbwebCoreApi.Services
             IFmsb2LibraryRepository fmsb2Repo,
             IFmsbMvcLibraryRepository fmsbMvcRepo,
             IScrapService scrapService,
-            IProductionService productionService)
+            IProductionService productionService,
+            IConfiguration config)
         {
             _scrapService = scrapService ?? throw new ArgumentNullException(nameof(scrapService));
             _productionService = productionService ?? throw new ArgumentNullException(nameof(productionService));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _fmsbContext = fmsbContext ?? throw new ArgumentNullException(nameof(fmsbContext));
             _fmsb2Repo = fmsb2Repo ?? throw new ArgumentNullException(nameof(fmsb2Repo));
             _fmsbMvcRepo = fmsbMvcRepo ?? throw new ArgumentNullException(nameof(fmsbMvcRepo));
             _mapArea = new MapArea();
+
+            _black = config.GetValue<string>("AppColors:Black");
+            _red = config.GetValue<string>("AppColors:Red");
+            _green = config.GetValue<string>("AppColors:Green");
         }
 
         public void Dispose()
@@ -381,23 +393,20 @@ namespace FmsbwebCoreApi.Services
                             }).ToListAsync().ConfigureAwait(false);
         }
 
-        private static string GetColorCode(KpiTarget targets, string type, decimal? value)
+        private string GetColorCode(KpiTarget targets, string type, decimal? value)
         {
             targets = targets ?? throw new ArgumentNullException(nameof(targets));
 
-            const string black = "#262626";
-            const string red = "#FF4136";
-            const string green = "#19A974";
 
-            if (value == null) return black;
+            if (value == null) return _black;
 
             return type switch
             {
-                "oae" => value <= targets.OaeTarget / 100 ? red : green,
-                "scrap" => value <= targets.ScrapRateTarget / 100 ? green : red,
-                "ppmh" => value <= targets.PpmhTarget ? red : green,
-                "downtime" => value <= targets.DowntimeRateTarget / 100 ? red : green,
-                _ => black
+                "oae" => value <= targets.OaeTarget / 100 ? _red : _green,
+                "scrap" => value <= targets.ScrapRateTarget / 100 ? _green : _red,
+                "ppmh" => value <= targets.PpmhTarget ? _red : _green,
+                "downtime" => value <= targets.DowntimeRateTarget / 100 ? _red : _green,
+                _ => _black
             };
         }
 
@@ -1909,7 +1918,7 @@ namespace FmsbwebCoreApi.Services
                 SapGross = sapGross,
                 SapOae = sapOae,
                 OaeTarget = oaeTarget,
-                OaeColor = sapOae >= oaeTarget ? "#19bc9c" : "#e74d3d",
+                OaeColor = sapOae >= oaeTarget ? _green : _red,
                 OverallScrapRate = overallScrapRate,
                 DowntimeRate = downtimeRate,
                 UnkownRate = unknownRate,

@@ -1,28 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using FmsbwebCoreApi.Entity.FmsbOee;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using FmsbwebCoreApi.Entity.Iconics;
 
-namespace FmsbwebCoreApi.Context.Iconics
+namespace FmsbwebCoreApi.Context.FmsbOee
 {
-    public partial class IconicsContext : DbContext
+    public partial class FmsbOeeContext : DbContext
     {
-        public IconicsContext()
+        public FmsbOeeContext()
         {
         }
 
-        public IconicsContext(DbContextOptions<IconicsContext> options)
-            : base(options)
+        public FmsbOeeContext(DbContextOptions<FmsbOeeContext> options) : base(options)
         {
         }
 
-        public virtual DbSet<KepserverMachineDowntime> KepserverMachineDowntime { get; set; }
-        public virtual DbSet<KepserverTagNamesView> KepserverTagNamesView { get; set; }
-        public virtual DbSet<KepServerTagName> KepServerTagNames { get; set; }
-
-        public virtual DbSet<KepServerTagNameGroup> KepServerTagNameGroups { get; set; }
+        public virtual DbSet<OeeLine> OeeLines { get; set; }
+        public virtual DbSet<Oee> Oee { get; set; }
+        public virtual DbSet<ClockNumber> ClockNumbers { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -32,7 +29,6 @@ namespace FmsbwebCoreApi.Context.Iconics
         {
             modelBuilder = modelBuilder ?? throw new ArgumentNullException(nameof(modelBuilder));
 
-            // set initial values
             var tags = new List<dynamic>
             {
                 new
@@ -95,56 +91,16 @@ namespace FmsbwebCoreApi.Context.Iconics
 
             foreach (var tag in tags)
             {
-                modelBuilder.Entity<KepServerTagNameGroup>().HasData(new KepServerTagNameGroup
+                modelBuilder.Entity<OeeLine>().HasData(new OeeLine
                 {
-                    KepServerTagNameGroupId = new Guid(tag.Guid),
+                    OeeLineId = new Guid(tag.Guid),
                     GroupName = tag.Line,
                     TagName = tag.Tag,
                     Department = "Assembly",
                     WorkCenter = tag.WorkCenter,
-                    TimeStamp = DateTime.Now,
+                    DateModified = DateTime.Now
                 });
             }
-
-            modelBuilder.Entity<KepserverMachineDowntime>(entity =>
-            {
-                entity.Property(e => e.CurrentVal).IsUnicode(false);
-
-                entity.Property(e => e.TagName).IsUnicode(false);
-            });
-
-            modelBuilder.Entity<KepserverTagNamesView>(entity =>
-            {
-                entity.HasNoKey();
-
-                entity.ToView("KEPserverTagNames_view");
-
-                entity.Property(e => e.Address).IsUnicode(false);
-
-                entity.Property(e => e.CellSide).IsUnicode(false);
-
-                entity.Property(e => e.DataType).IsUnicode(false);
-
-                entity.Property(e => e.Dept).IsUnicode(false);
-
-                entity.Property(e => e.Description).IsUnicode(false);
-
-                entity.Property(e => e.Line).IsUnicode(false);
-
-                entity.Property(e => e.LineHxh).IsUnicode(false);
-
-                entity.Property(e => e.MachineMapper).IsUnicode(false);
-
-                entity.Property(e => e.MachineName).IsUnicode(false);
-
-                entity.Property(e => e.MachineName2).IsUnicode(false);
-
-                entity.Property(e => e.TagId).IsUnicode(false);
-
-                entity.Property(e => e.TagName).IsUnicode(false);
-            });
-
-            OnModelCreatingPartial(modelBuilder);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

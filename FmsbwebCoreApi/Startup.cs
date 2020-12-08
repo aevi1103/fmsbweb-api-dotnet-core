@@ -21,6 +21,7 @@ using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.FmsbQuality;
 using FmsbwebCoreApi.Context.Master;
 using FmsbwebCoreApi.Context.FmsbMvc;
+using FmsbwebCoreApi.Context.FmsbOee;
 using FmsbwebCoreApi.Context.Iconics;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
@@ -176,6 +177,7 @@ namespace FmsbwebCoreApi
             services.AddDbContext<masterContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmoMaster")));
             services.AddDbContext<QualityCheckSheetsContext>(options => options.UseSqlServer(Configuration.GetConnectionString("qualityCheckSheetsConn")));
             services.AddDbContext<AutoGageContext>(options => options.UseSqlServer(Configuration.GetConnectionString("autoGageConn")));
+            services.AddDbContext<FmsbOeeContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbOeeConn")));
 
             //signal r
             services.AddSignalR();

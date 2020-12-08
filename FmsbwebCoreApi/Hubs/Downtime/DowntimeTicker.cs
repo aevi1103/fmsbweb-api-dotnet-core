@@ -55,6 +55,7 @@ namespace FmsbwebCoreApi.Hubs.Downtime
         private async Task BroadCastChange(DowntimeModel data)
         {
             //await Hub.Clients.All.SendAsync("BroadCastChange", data);
+            Console.WriteLine(data.GroupName);
             await Hub.Clients.Group(data.GroupName).SendAsync("BroadCastChange", data).ConfigureAwait(false);
         }
 
