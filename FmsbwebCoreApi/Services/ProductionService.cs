@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DateShiftLib.Helpers;
 using FmsbwebCoreApi.Context.Fmsb2;
+using FmsbwebCoreApi.Context.Iconics;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.SAP;
 using FmsbwebCoreApi.Entity.Fmsb2;
@@ -31,9 +32,10 @@ namespace FmsbwebCoreApi.Services
             Hour hour,
             IDataAccessUtilityService dataAccessUtilityService,
             IUtilityService utilityService,
-            IScrapService scrapService
+            IScrapService scrapService,
+            IconicsContext iconicsContext
             ) 
-            : base(context, intranetContext, fmsb2Context)
+            : base(context, intranetContext, fmsb2Context, iconicsContext)
         {
             _dataAccessUtilityService = dataAccessUtilityService ?? throw new ArgumentNullException(nameof(dataAccessUtilityService));
             _utilityService = utilityService ?? throw new ArgumentNullException(nameof(utilityService));

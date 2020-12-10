@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.SAP;
 using FmsbwebCoreApi.Entity.Fmsb2;
@@ -44,28 +45,42 @@ namespace FmsbwebCoreApi.Repositories
             if (!string.IsNullOrEmpty(resourceParameter.Department))
                 qry = qry.Where(x => x.Department.ToLower() == resourceParameter.Department.ToLower());
 
-            if (!string.IsNullOrEmpty(resourceParameter.Line)) 
-                qry = qry.Where(x => x.MachineHxh.ToLower().Trim() == resourceParameter.Line.ToLower().Trim());
-
             if (!string.IsNullOrEmpty(resourceParameter.Program))
                 qry = qry.Where(x => x.Program.ToLower().Trim() == resourceParameter.Program.ToLower().Trim());
 
             if (!string.IsNullOrEmpty(resourceParameter.Shift))
                 qry = qry.Where(x => x.Shift == resourceParameter.Shift);
 
-            if (resourceParameter.WorkCenters.Count > 0)
-                qry = qry.Where(x => resourceParameter.WorkCenters.Contains(x.WorkCenter));
+            if (!string.IsNullOrEmpty(resourceParameter.ScrapAreaName))
+                qry = qry.Where(x => x.ScrapAreaName == resourceParameter.ScrapAreaName);
 
             if (resourceParameter.MachineHxHs.Count > 0)
                 qry = qry.Where(x => resourceParameter.MachineHxHs.Contains(x.MachineHxh));
 
-            if (resourceParameter.Lines.Count > 0)
+            if (resourceParameter.Lines.Count > 0 && string.IsNullOrEmpty(resourceParameter.Line))
                 qry = qry.Where(x => resourceParameter.Lines.Contains(x.Machine2));
 
-            if (!string.IsNullOrEmpty(resourceParameter.ScrapAreaName))
-                qry = qry.Where(x => x.ScrapAreaName == resourceParameter.ScrapAreaName);
+            if (!string.IsNullOrEmpty(resourceParameter.Line))
+                qry = qry.Where(x => x.MachineHxh.ToLower().Trim() == resourceParameter.Line.ToLower().Trim());
+
+            if (resourceParameter.WorkCenters.Count > 0 && string.IsNullOrEmpty(resourceParameter.WorkCenter))
+                qry = qry.Where(x => resourceParameter.WorkCenters.Contains(x.WorkCenter));
+
+            if (!string.IsNullOrEmpty(resourceParameter.WorkCenter))
+                qry = qry.Where(x => x.WorkCenter == resourceParameter.WorkCenter);
 
             return qry;
+        }
+
+        public async Task<List<Scrap2>> GetScrapList(DateTime localStartDateTime, DateTime localEndDateTime, string workCenter)
+        {
+            return await _context
+                .Scrap2
+                .AsNoTracking()
+                .Where(x => x.LocalDateTime >= localStartDateTime && x.LocalDateTime <= localEndDateTime
+                            && x.WorkCenter == workCenter)
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
 
         public async Task<List<ScrapAreaCode>> GetScrapAreaCodes()

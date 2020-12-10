@@ -10,6 +10,7 @@ using FmsbwebCoreApi.Hubs.Counter;
 using FmsbwebCoreApi.Hubs.Downtime;
 using FmsbwebCoreApi.Hubs.Scrap;
 using FmsbwebCoreApi.ResourceParameters;
+using FmsbwebCoreApi.Services.Interfaces;
 using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,10 +24,12 @@ namespace FmsbwebCoreApi.Controllers.OEE
     public class OeeController : ControllerBase
     {
         private readonly FmsbOeeContext _context;
+        private readonly IOeeService _oeeService;
 
-        public OeeController(FmsbOeeContext context)
+        public OeeController(FmsbOeeContext context, IOeeService oeeService)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _oeeService = oeeService ?? throw new ArgumentNullException(nameof(oeeService));
         }
 
         [EnableQuery]
@@ -108,6 +111,21 @@ namespace FmsbwebCoreApi.Controllers.OEE
             {
                 Console.WriteLine(e);
                 throw new Exception(e.Message);
+            }
+        }
+
+        [Route("summary")]
+        [HttpGet]
+        public async Task<IActionResult> GetSummary([FromQuery] OeeResourceParameter resourceParameter)
+        {
+            try
+            {
+                var data = await _oeeService.GetOee(resourceParameter).ConfigureAwait(false);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
             }
         }
 

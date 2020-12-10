@@ -29,8 +29,8 @@ namespace FmsbwebCoreApi.Services.Iconics
                 minDowntimeEvent = minDowntimeEvent < 0 ? 0 : minDowntimeEvent;
                 maxDowntimeEvent = maxDowntimeEvent < 0 ? 0 : maxDowntimeEvent;
 
-                var dataQry = from machineDowntime in _context.KepserverMachineDowntime
-                              join tagNames in _context.KepserverTagNamesView on machineDowntime.TagName equals tagNames.TagId into dv
+                var dataQry = from machineDowntime in _context.KepserverMachineDowntimes
+                              join tagNames in _context.KepserverTagNamesViews on machineDowntime.TagName equals tagNames.TagId into dv
                               from tagNames in dv.DefaultIfEmpty()
                               where machineDowntime.StartStamp >= startDate &&
                                     machineDowntime.StartStamp <= endDate && tagNames.Dept.ToLower().Contains(dept.ToLower().Trim()) &&

@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Threading.Tasks;
+using FmsbwebCoreApi.Enums;
 
 namespace FmsbwebCoreApi.Entity.FmsbOee
 {
@@ -23,6 +21,12 @@ namespace FmsbwebCoreApi.Entity.FmsbOee
 
         [Required]
         public string Department { get; set; }
+
+        [Required]
+        public decimal CycleTimeSeconds { get; set; }
+
+        [Required]
+        public ScrapInspectionLocation ScrapInspectionLocation { get; set; }
 
         [Required]
         public DateTime DateModified { get; set; } = DateTime.Now;

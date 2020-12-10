@@ -10,7 +10,6 @@ namespace FmsbwebCoreApi.ResourceParameters
     {
         [Required]
         public Guid OeeLineId { get; set; }
-
         public Guid? OeeId { get; set; }
         public byte[] Timestamp { get; set; }
         public DateTime? EndDateTime { get; set; }

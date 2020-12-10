@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.FmsbOee;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.FmsbOee
 {
     [DbContext(typeof(FmsbOeeContext))]
-    partial class FmsbOeeContextModelSnapshot : ModelSnapshot
+    [Migration("20201209142006_AddNewColumns")]
+    partial class AddNewColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,7 +79,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal>("CycleTimeSeconds")
+                    b.Property<decimal>("CycleTime")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("DateModified")
@@ -110,8 +112,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
-                            CycleTimeSeconds = 5m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 916, DateTimeKind.Local).AddTicks(7349),
+                            CycleTime = 5m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 163, DateTimeKind.Local).AddTicks(4117),
                             Department = "Assembly",
                             GroupName = "A2",
                             ScrapInspectionLocation = 2,
@@ -121,8 +123,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
-                            CycleTimeSeconds = 11m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 924, DateTimeKind.Local).AddTicks(616),
+                            CycleTime = 11m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 170, DateTimeKind.Local).AddTicks(7763),
                             Department = "Assembly",
                             GroupName = "A3",
                             ScrapInspectionLocation = 1,
@@ -132,8 +134,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
-                            CycleTimeSeconds = 8.4m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 924, DateTimeKind.Local).AddTicks(791),
+                            CycleTime = 8.4m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 170, DateTimeKind.Local).AddTicks(7949),
                             Department = "Assembly",
                             GroupName = "A4",
                             ScrapInspectionLocation = 1,
@@ -143,8 +145,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
-                            CycleTimeSeconds = 8m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 924, DateTimeKind.Local).AddTicks(824),
+                            CycleTime = 8m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 170, DateTimeKind.Local).AddTicks(7984),
                             Department = "Assembly",
                             GroupName = "A5",
                             ScrapInspectionLocation = 2,
@@ -154,8 +156,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
-                            CycleTimeSeconds = 8m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 924, DateTimeKind.Local).AddTicks(853),
+                            CycleTime = 8m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 170, DateTimeKind.Local).AddTicks(8012),
                             Department = "Assembly",
                             GroupName = "A6",
                             ScrapInspectionLocation = 1,
@@ -165,8 +167,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
-                            CycleTimeSeconds = 9m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 924, DateTimeKind.Local).AddTicks(886),
+                            CycleTime = 9m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 170, DateTimeKind.Local).AddTicks(8043),
                             Department = "Assembly",
                             GroupName = "A7",
                             ScrapInspectionLocation = 1,
@@ -176,8 +178,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
-                            CycleTimeSeconds = 12m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 924, DateTimeKind.Local).AddTicks(914),
+                            CycleTime = 12m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 170, DateTimeKind.Local).AddTicks(8070),
                             Department = "Assembly",
                             GroupName = "A8",
                             ScrapInspectionLocation = 1,
@@ -187,8 +189,8 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         new
                         {
                             OeeLineId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
-                            CycleTimeSeconds = 8.5m,
-                            DateModified = new DateTime(2020, 12, 9, 14, 9, 23, 924, DateTimeKind.Local).AddTicks(939),
+                            CycleTime = 8.5m,
+                            DateModified = new DateTime(2020, 12, 9, 9, 20, 6, 170, DateTimeKind.Local).AddTicks(8097),
                             Department = "Assembly",
                             GroupName = "A9",
                             ScrapInspectionLocation = 1,

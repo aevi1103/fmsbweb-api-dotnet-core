@@ -14,6 +14,8 @@
     <Compile Remove="Migrations\Iconics\20201124212415_changeMonitorToguidKey.Designer.cs" />
     <Compile Remove="Migrations\Iconics\20201124213853_changeKyeToGuid.cs" />
     <Compile Remove="Migrations\Iconics\20201124213853_changeKyeToGuid.Designer.cs" />
+    <Compile Remove="Migrations\Iconics\20201209190615_RenameColumn.cs" />
+    <Compile Remove="Migrations\Iconics\20201209190615_RenameColumn.Designer.cs" />
     <Compile Remove="Migrations\QualityCheckSheets\20200812161930_addCheckSheetTables.cs" />
     <Compile Remove="Migrations\QualityCheckSheets\20200812161930_addCheckSheetTables.Designer.cs" />
     <Compile Remove="Migrations\QualityCheckSheets\20200812162424_addCheckSheetTables.cs" />

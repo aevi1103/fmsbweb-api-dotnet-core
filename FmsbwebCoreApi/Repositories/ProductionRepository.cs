@@ -3,16 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.Fmsb2;
+using FmsbwebCoreApi.Context.Iconics;
 using FmsbwebCoreApi.Context.Intranet;
 using FmsbwebCoreApi.Context.SAP;
-using FmsbwebCoreApi.Entity.Fmsb2;
-using FmsbwebCoreApi.Entity.Intranet;
+using FmsbwebCoreApi.Entity.Iconics;
 using FmsbwebCoreApi.Entity.SAP;
 using FmsbwebCoreApi.Models.FMSB2;
-using FmsbwebCoreApi.Models.Intranet;
 using FmsbwebCoreApi.Repositories.Interfaces;
 using FmsbwebCoreApi.ResourceParameters;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Repositories
@@ -22,12 +20,18 @@ namespace FmsbwebCoreApi.Repositories
         private readonly SapContext _context;
         private readonly IntranetContext _intranetContext;
         private readonly Fmsb2Context _fmsb2Context;
+        private readonly IconicsContext _iconicsContext;
 
-        public ProductionRepository(SapContext context, IntranetContext intranetContext, Fmsb2Context fmsb2Context)
+        public ProductionRepository(
+            SapContext context,
+            IntranetContext intranetContext,
+            Fmsb2Context fmsb2Context,
+            IconicsContext iconicsContext)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _intranetContext = intranetContext ?? throw new ArgumentNullException(nameof(intranetContext));
             _fmsb2Context = fmsb2Context ?? throw new ArgumentNullException(nameof(fmsb2Context));
+            _iconicsContext = iconicsContext ?? throw new ArgumentNullException(nameof(iconicsContext));
         }
 
         /// <summary>
@@ -66,6 +70,21 @@ namespace FmsbwebCoreApi.Repositories
 
             return qry;
 
+        }
+
+        public IQueryable<KepserverPermCountsHistory> GetPlcProductionQueryable(PlcProdResourceParameter resourceParameter)
+        {
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
+            var qry = _iconicsContext.KepserverPermCountsHistories
+                .AsNoTracking()
+                .Where(x => x.TimeStamp >= resourceParameter.StartDate && x.TimeStamp <= resourceParameter.EndDate)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(resourceParameter.TagName))
+                qry = qry.Where(x => x.TagName == resourceParameter.TagName);
+
+            return qry;
         }
 
         /// <summary>
