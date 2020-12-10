@@ -50,8 +50,6 @@ namespace FmsbwebCoreApi.Services.Iconics
                     MachineName = x.tagNames.MachineName2 ?? x.tagNames.Line,
                     StartStamp = (DateTime)x.machineDowntime.StartStamp,
                     EndStamp = (DateTime)x.machineDowntime.EndStamp,
-                    StarHour = ((DateTime)x.machineDowntime.StartStamp).Hour,
-                    EndHour = ((DateTime)x.machineDowntime.EndStamp).Hour,
                     Downtime = (decimal)x.machineDowntime.DowntimeMinutes
                 })
                 .ToListAsync()
@@ -75,8 +73,8 @@ namespace FmsbwebCoreApi.Services.Iconics
             var list = new List<IconicsDowntimeDto>();
             if (!data.Any()) return list;
 
-            var dataToSpreadDowntime = data.Where(x => x.StarHour != x.EndHour).ToList();
-            var others = data.Where(x => x.StarHour == x.EndHour).ToList();
+            var dataToSpreadDowntime = data.Where(x => !x.IsSameHour).ToList();
+            var others = data.Where(x => x.IsSameHour).ToList();
 
             foreach (var item in dataToSpreadDowntime)
             {
@@ -89,9 +87,6 @@ namespace FmsbwebCoreApi.Services.Iconics
 
                     itemCopy.StartStamp = start;
                     itemCopy.EndStamp = endTime;
-
-                    itemCopy.StarHour = start.Hour;
-                    itemCopy.EndHour = endTime.Hour;
 
                     if (start.Date != endStamp.Date)
                     {
@@ -108,7 +103,6 @@ namespace FmsbwebCoreApi.Services.Iconics
                     else
                     {
                         itemCopy.EndStamp = endStamp;
-                        itemCopy.EndHour = endStamp.Hour;
                         list.Add(itemCopy);
                         break;
                     }

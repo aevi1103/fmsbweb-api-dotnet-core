@@ -37,7 +37,8 @@ namespace FmsbwebCoreApi.Controllers.Iconics
                 @params.MaxDowntimeEvent)
             .ConfigureAwait(false);
 
-            var spreadHours = _repo.SpreadHours(data.ToList()).Where(x => x.StartStamp >= @params.Start && x.StartStamp <= @params.End);
+            var spreadHours = _repo.SpreadHours(data.ToList())
+                .Where(x => x.StartStamp >= @params.Start && x.StartStamp <= @params.End);
 
             var result = spreadHours.GroupBy(x => new { x.Dept, x.Line })
                             .Select(x => new

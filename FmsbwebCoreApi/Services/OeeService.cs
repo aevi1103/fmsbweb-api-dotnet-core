@@ -109,6 +109,7 @@ namespace FmsbwebCoreApi.Services
 
             return new
             {
+                Oee = oee,
                 ProductionTotal = productionTotal,
                 ScrapTotal = scrapTotal,
                 DowntimeTotalMinutes = Math.Round(downtimeTotalMinutes, 0),
