@@ -24,8 +24,8 @@ namespace FmsbwebCoreApi.ResourceParameters.SAP
             set => _shift = value;
         }
 
-        public bool IsPurchasedScrap { get; set; } = false;
-        public bool IsPlantTotal { get; set; } = false;
+        public bool IsPurchasedScrap { get; set; }
+        public bool IsPlantTotal { get; set; }
         public DateTime MonthStart { get; set; } = DateTime.Today.AddDays(-1);
         public DateTime MonthEnd { get; set; } = DateTime.Today.AddDays(-1);
 

@@ -521,6 +521,64 @@ namespace FmsbwebCoreApi.Services
             ws.Columns().AdjustToContents();
         }
 
+        private static void ShiftWorkSheet(IXLWorkbook wb, IEnumerable<ProductionByShiftDto> lines)
+        {
+            var ws = wb.Worksheets.Add("Shift").SetTabColor(XLColor.Blue);
+            var currentRow = 1;
+
+            var columnsNames = new List<string>
+            {
+                        "Department",
+                        "Shift",
+                        "Target",
+                        "HxH Gross",
+                        "SAP Gross",
+                        "SB Scrap",
+                        "Purchased Scrap",
+                        "Warmers",
+                        "Foundry Scrap",
+                        "Machining Scrap",
+                        "Anodize Scrap",
+                        "Skirt Coat Scrap",
+                        "Assembly Scrap",
+                        "SAP Net",
+                        "SAP OAE",
+                        "HxH Net",
+                        "HxH OAE"
+                    };
+
+            for (var i = 0; i < columnsNames.Count; i++)
+            {
+                ws.Cell(currentRow, i + 1).Value = columnsNames[i];
+            }
+
+            foreach (var line in lines)
+            {
+                currentRow++;
+                ws.Cell(currentRow, 1).Value = line.Department;
+                ws.Cell(currentRow, 2).Value = line.Shift;
+                ws.Cell(currentRow, 3).Value = line.Target;
+                ws.Cell(currentRow, 4).Value = line.HxHGross;
+                ws.Cell(currentRow, 5).Value = line.SapGross;
+                ws.Cell(currentRow, 6).Value = line.TotalSbScrap;
+                ws.Cell(currentRow, 7).Value = line.TotalPurchaseScrap;
+                ws.Cell(currentRow, 8).Value = line.TotalWarmers;
+
+                ws.Cell(currentRow, 9).Value = line.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "foundry")?.Qty;
+                ws.Cell(currentRow, 10).Value = line.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "machining")?.Qty;
+                ws.Cell(currentRow, 11).Value = line.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "anodize")?.Qty;
+                ws.Cell(currentRow, 12).Value = line.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "skirt coat")?.Qty;
+                ws.Cell(currentRow, 13).Value = line.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "assembly")?.Qty;
+
+                ws.Cell(currentRow, 14).Value = line.SapNet;
+                ws.Cell(currentRow, 15).Value = line.SapOae;
+                ws.Cell(currentRow, 16).Value = line.HxHNet;
+                ws.Cell(currentRow, 17).Value = line.HxHOae;
+            }
+
+            ws.Columns().AdjustToContents();
+        }
+
         private static void ProgramsWorkSheet(IXLWorkbook wb, IEnumerable<ProductionByProgramDto> programs)
         {
             var ws = wb.Worksheets.Add("Program").SetTabColor(XLColor.Blue);
@@ -628,6 +686,8 @@ namespace FmsbwebCoreApi.Services
             var data = await _kpiService.GetDepartmentDetails(resourceParameter).ConfigureAwait(false);
             var lines = data.DetailsByLine.ToList();
             var program = data.DetailsByProgram.ToList();
+            var shift = data.DetailsByShift.ToList();
+
             var sbScrap = data.SbScrapDetails;
             var purchasedScrap = data.PurchaseScrapDetails;
 
@@ -637,6 +697,7 @@ namespace FmsbwebCoreApi.Services
             SummaryWorkSheet(wb, data);
             LinesWorkSheet(wb, lines);
             ProgramsWorkSheet(wb, program);
+            ShiftWorkSheet(wb, shift);
             ScrapWorkSheet(wb, sbScrap, data.SapGross, "SB Scrap");
             ScrapWorkSheet(wb, purchasedScrap, data.SapGross, "Purchased Scrap");
 

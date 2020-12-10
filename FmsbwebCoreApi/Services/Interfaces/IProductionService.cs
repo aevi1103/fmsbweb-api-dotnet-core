@@ -16,7 +16,7 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<List<HourlyProductionDto>> GetHourByHourProductionByHour(ProductionResourceParameter resourceParameter, List<Scrap2> scrap, List<SwotTargetWithDeptId> target);
 
         Task<IEnumerable<HxhProductionDto>> GetHxhProduction(DateTime start, DateTime end, string area);
-        Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineAndProgram(DateTime start, DateTime end, string area, string shift = "");
+        Task<HxhProductionByLineAndProgramDto> GetHxhProdByLineProgramShift(DateTime start, DateTime end, string area, string shift = "");
         Task<IEnumerable<DailyHxHTargetDto>> DailyHxHTargetByArea(DateTime start, DateTime end, string area);
         Task<IEnumerable<HxHTargetDto>> HxHTargetByArea(DateTime startDate, DateTime endDate, string area);
     }

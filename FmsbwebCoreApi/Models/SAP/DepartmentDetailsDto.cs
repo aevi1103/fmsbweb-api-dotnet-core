@@ -30,6 +30,7 @@ namespace FmsbwebCoreApi.Models.SAP
 
         public IEnumerable<ProductionByLineDto> DetailsByLine { get; set; } = new List<ProductionByLineDto>();
         public IEnumerable<ProductionByProgramDto> DetailsByProgram { get; set; } = new List<ProductionByProgramDto>();
+        public IEnumerable<ProductionByShiftDto> DetailsByShift { get; set; } = new List<ProductionByShiftDto>();
 
         public IEnumerable<Scrap> SbScrapDetails { get; set; } = new List<Scrap>(); 
         public IEnumerable<Scrap> PurchaseScrapDetails { get; set; } = new List<Scrap>();

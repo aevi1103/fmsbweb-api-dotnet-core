@@ -1953,7 +1953,7 @@ namespace FmsbwebCoreApi.Services
                                 .ToListAsync()
                                 .ConfigureAwait(false);
 
-            var hxh = await _productionService.GetHxhProdByLineAndProgram(start, end, area)
+            var hxh = await _productionService.GetHxhProdByLineProgramShift(start, end, area)
                             .ConfigureAwait(false);
 
             var lineTargets = await _fmsbContext.SwotTargetWithDeptId.Where(x => x.DeptName == _mapArea.RanameAreaToDepartment(area))

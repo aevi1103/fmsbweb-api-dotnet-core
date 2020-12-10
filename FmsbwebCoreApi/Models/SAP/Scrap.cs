@@ -8,6 +8,7 @@ namespace FmsbwebCoreApi.Models.SAP
     public class Scrap
     {
         public string Department { get; set; }
+        public string Shift { get; set; }
         public string Area { get; set; }
         public string Line { get; set; } = "";
         public string Program { get; set; } = "";

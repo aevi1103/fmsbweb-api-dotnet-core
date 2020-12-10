@@ -211,51 +211,33 @@ namespace FmsbwebCoreApi.Services
             var result = distinctLines.Select(line =>
                 {
                     //hxh
-                    var hxhByLine = hxh.FirstOrDefault(x => string.Equals(x.Line.Trim(), line.Trim(), StringComparison.CurrentCultureIgnoreCase));
+                    var hxhByLine = hxh.FirstOrDefault(x => string.Equals(x.Line.Trim(), line.Trim(), StringComparison.OrdinalIgnoreCase));
                     var dept = hxhByLine?.Department ?? "";
                     var area = hxhByLine?.Area ?? "";
                     var target = hxhByLine?.Target ?? 0;
                     var hxhGross = hxhByLine?.GrossWithWarmers ?? 0;
 
                     //targets
-                    var lineTarget = targets.FirstOrDefault(x => string.Equals(x.Line.Trim(), line.Trim(), StringComparison.CurrentCultureIgnoreCase));
+                    var lineTarget = targets.FirstOrDefault(x => string.Equals(x.Line.Trim(), line.Trim(), StringComparison.OrdinalIgnoreCase));
                     var oaeTarget = lineTarget?.OaeTarget ?? 0;
                     var foundryScrapTarget = lineTarget?.FoundryScrapTarget ?? 0;
                     var machiningScrapTarget = lineTarget?.MachineScrapTarget ?? 0;
                     var afScrapTarget = lineTarget?.AfScrapTarget ?? 0;
 
                     //scrap
-                    var totalScrap = scrapByLine.Any(x => x.Line == line)
-                        ? scrapByLine.Where(x => x.Line == line).Sum(s => s.Qty)
-                        : 0;
-                    var totalSbScrap = sbScrap.Any(x => x.Line == line)
-                        ? sbScrap.Where(x => x.Line == line).Sum(s => s.Qty)
-                        : 0;
-                    var totalPurchaseScrap = purchasedScrap.Any(x => x.Line == line)
-                        ? purchasedScrap.Where(x => x.Line == line).Sum(s => s.Qty)
-                        : 0;
-                    var totalAfScrap = afScrap.Any(x => x.Line == line)
-                        ? afScrap.Where(x => x.Line == line).Sum(s => s.Qty)
-                        : 0;
-                    var totalWarmers = warmersByLine.Any(x => x.Line == line)
-                        ? warmersByLine.Where(x => x.Line == line).Sum(s => s.Qty)
-                        : 0;
-                    var scrapDetails = sbScrap.Any(x => x.Line == line)
-                        ? sbScrap.Where(x => x.Line == line).ToList()
-                        : new List<Scrap>();
-                    var purchasedScrapDetails = purchasedScrap.Any(x => x.Line == line)
-                        ? purchasedScrap.Where(x => x.Line == line).ToList()
-                        : new List<Scrap>();
+                    var totalScrap = scrapByLine.Where(x => x.Line == line).Sum(s => s.Qty);
+                    var totalSbScrap = sbScrap.Where(x => x.Line == line).Sum(s => s.Qty);
+                    var totalPurchaseScrap = purchasedScrap.Where(x => x.Line == line).Sum(s => s.Qty);
+                    var totalAfScrap = afScrap.Where(x => x.Line == line).Sum(s => s.Qty);
+                    var totalWarmers = warmersByLine.Where(x => x.Line == line).Sum(s => s.Qty);
+                    var scrapDetails = sbScrap.Where(x => x.Line == line).ToList();
+                    var purchasedScrapDetails = purchasedScrap.Where(x => x.Line == line).ToList();
 
                     //net, oae
                     var hxhNet = hxhByLine?.Net ?? 0;
                     var hxhOae = target == 0 ? 0 : hxhNet / target;
-
-                    var isLineExistInSapProd = prod.Any(x => x.Line == line);
-                    var sapNet = isLineExistInSapProd ? prod.Where(x => x.Line == line).Sum(s => s.SapNet) : 0;
-                    var sapNetDetails = isLineExistInSapProd
-                        ? prod.Where(x => x.Line == line).OrderBy(x => x.DateScanned).ToList()
-                        : new List<SapProdDetailDto>();
+                    var sapNet = prod.Where(x => x.Line == line).Sum(s => s.SapNet);
+                    var sapNetDetails = prod.Where(x => x.Line == line).OrderBy(x => x.DateScanned).ToList();
                     var sapOae = target == 0 ? 0 : sapNet / target;
 
                     //scrap rates
@@ -393,32 +375,16 @@ namespace FmsbwebCoreApi.Services
                     var hxhGross = hxhByProgram?.GrossWithWarmers ?? 0;
 
                     //scrap
-                    var totalWarmers = warmers.Any(x => x.Program == program)
-                        ? warmers.Where(x => x.Program == program).Sum(s => s.Qty)
-                        : 0;
-                    var totalScrap = scrapByProgram.Any(x => x.Program == program)
-                        ? scrapByProgram.Where(x => x.Program == program).Sum(s => s.Qty)
-                        : 0;
-                    var totalSbScrap = sbScrap.Any(x => x.Program == program)
-                        ? sbScrap.Where(x => x.Program == program).Sum(s => s.Qty)
-                        : 0;
-                    var totalPurchaseScrap = purchasedScrap.Any(x => x.Program == program)
-                        ? purchasedScrap.Where(x => x.Program == program).Sum(s => s.Qty)
-                        : 0;
-                    var sbScrapDetails = sbScrap.Any(x => x.Program == program)
-                        ? sbScrap.Where(x => x.Program == program).ToList()
-                        : new List<Scrap>();
-                    var purchaseScrapDetails = purchasedScrap.Any(x => x.Program == program)
-                        ? purchasedScrap.Where(x => x.Program == program).ToList()
-                        : new List<Scrap>();
+                    var totalWarmers = warmers.Where(x => x.Program == program).Sum(s => s.Qty);
+                    var totalScrap = scrapByProgram.Where(x => x.Program == program).Sum(s => s.Qty);
+                    var totalSbScrap = sbScrap.Where(x => x.Program == program).Sum(s => s.Qty);
+                    var totalPurchaseScrap = purchasedScrap.Where(x => x.Program == program).Sum(s => s.Qty);
+                    var sbScrapDetails = sbScrap.Where(x => x.Program == program).ToList();
+                    var purchaseScrapDetails = purchasedScrap.Where(x => x.Program == program).ToList();
 
                     //net
-                    var sapNet = prod.Any(x => x.Program == program)
-                        ? prod.Where(x => x.Program == program).Sum(s => s.SapNet)
-                        : 0;
-                    var sapNetDetails = prod.Any(x => x.Program == program)
-                        ? prod.Where(x => x.Program == program).OrderBy(x => x.DateScanned).ToList()
-                        : new List<SapProdDetailDto>();
+                    var sapNet = prod.Where(x => x.Program == program).Sum(s => s.SapNet);
+                    var sapNetDetails = prod.Where(x => x.Program == program).OrderBy(x => x.DateScanned).ToList();
 
                     var hxhNet = hxhByProgram?.Net ?? 0;
                     var hxhOae = target == 0 ? 0 : hxhNet / target;
@@ -505,6 +471,151 @@ namespace FmsbwebCoreApi.Services
             return result.OrderBy(x => x.Program).ToList();
         }
 
+        private static IEnumerable<ProductionByShiftDto> GetDepartmentDetailsByShift(
+            List<Scrap> scrap,
+            List<Scrap> warmers,
+            List<SapProdDetailDto> prod,
+            List<HxHProductionByShiftDto> hxh,
+            DateTime startDate, DateTime endDate)
+        {
+            if (scrap == null) throw new ArgumentNullException(nameof(scrap));
+            if (prod == null) throw new ArgumentNullException(nameof(prod));
+            if (hxh == null) throw new ArgumentNullException(nameof(hxh));
+
+            //distinct program
+            var scrapShift = scrap.Select(x => x.Shift).Distinct();
+            var sapProdShift = prod.Select(x => x.Shift).Distinct();
+            var hxhShift = hxh.Select(x => x.Shift).Distinct();
+            var distinctShift = (scrapShift.Concat(sapProdShift).Concat(hxhShift)).Distinct().OrderBy(x => x);
+
+            //transform data
+            var scrapByShift = scrap
+                                .GroupBy(x => new { x.Department, x.Area, x.Shift, x.ScrapAreaName, x.ScrapCode, x.ScrapDesc, x.IsPurchashedExclude, x.IsPurchashedExclude2 })
+                                .Select(x => new Scrap
+                                {
+                                    Department = x.Key.Department,
+                                    Area = x.Key.Area,
+                                    Shift = x.Key.Shift,
+                                    ScrapAreaName = x.Key.ScrapAreaName,
+                                    ScrapCode = x.Key.ScrapCode,
+                                    ScrapDesc = x.Key.ScrapDesc,
+                                    IsPurchashedExclude = x.Key.IsPurchashedExclude,
+                                    IsPurchashedExclude2 = x.Key.IsPurchashedExclude2,
+                                    Qty = x.Sum(s => s.Qty),
+                                    StartDate = startDate,
+                                    EndDate = endDate
+                                })
+                                .OrderByDescending(x => x.Qty)
+                                .ToList();
+
+            var sbScrap = scrapByShift.Where(x => x.IsPurchashedExclude == false).ToList();
+            var purchasedScrap = scrapByShift.Where(x => x.IsPurchashedExclude).ToList();
+
+            //details
+            var result = distinctShift.Select(shift =>
+            {
+                //hxh
+                var hxhByShift = hxh.Where(x => x.Shift == shift).ToList();
+                var dept = hxhByShift.FirstOrDefault()?.Department ?? "";
+                var area = hxhByShift.FirstOrDefault()?.Area ?? "";
+                var target = hxhByShift.Sum(t => t.Target);
+                var hxhGross = hxhByShift.Sum(t => t.GrossWithWarmers);
+
+                //scrap
+                var totalWarmers = warmers.Where(x => x.Shift == shift).Sum(s => s.Qty);
+                var totalScrap = scrapByShift.Where(x => x.Shift == shift).Sum(s => s.Qty);
+                var totalSbScrap = sbScrap.Where(x => x.Shift == shift).Sum(s => s.Qty);
+                var totalPurchaseScrap = purchasedScrap.Where(x => x.Shift == shift).Sum(s => s.Qty);
+                var sbScrapDetails = sbScrap.Where(x => x.Shift == shift).ToList();
+                var purchaseScrapDetails = purchasedScrap.Where(x => x.Shift == shift).ToList();
+
+                //net
+                var sapNet = prod.Where(x => x.Shift == shift).Sum(s => s.SapNet);
+                var sapNetDetails = prod.Where(x => x.Shift == shift).OrderBy(x => x.DateScanned).ToList();
+
+                var hxhNet = hxhByShift.Sum(t => t.Net);
+                var hxhOae = target == 0 ? 0 : hxhNet / target;
+                var sapOae = target == 0 ? 0 : sapNet / target;
+
+                //scrap rates
+                var sapGross = sapNet + totalScrap;
+                var totalScrapRate = sapGross > 0 ? (decimal)totalScrap / sapGross : 0;
+                var totalSbScrapRate = sapGross > 0 ? (decimal)totalSbScrap / sapGross : 0;
+
+                var sbScrapAreaDetails = sbScrap
+                    .Where(s => s.Shift == shift)
+                    .GroupBy(s => new { s.Area, s.ScrapAreaName, s.IsPurchashedExclude2 })
+                    .Select(s => new ScrapByCodeDetailsDto
+                    {
+                        Area = s.Key.Area,
+                        ScrapType = s.Key.IsPurchashedExclude2,
+                        ScrapAreaName = s.Key.ScrapAreaName,
+                        Qty = s.Sum(q => q.Qty),
+                        SapGross = sapGross,
+                        ScrapRate = sapGross == 0 ? 0 : (decimal)s.Sum(q => q.Qty) / sapGross,
+
+                        Details = scrap
+                            .Where(d => d.IsPurchashedExclude == false && d.Shift == shift && d.ScrapAreaName == s.Key.ScrapAreaName)
+                            .GroupBy(d => new
+                            {
+                                d.Department,
+                                d.Area,
+                                d.ScrapAreaName,
+                                d.ScrapCode,
+                                d.ScrapDesc,
+                                d.IsPurchashedExclude2
+                            })
+                            .Select(d => new Scrap
+                            {
+                                Department = d.Key.Department,
+                                Area = d.Key.Area,
+                                Shift = shift,
+                                ScrapAreaName = d.Key.ScrapAreaName,
+                                IsPurchashedExclude2 = d.Key.IsPurchashedExclude2,
+                                ScrapCode = d.Key.ScrapCode,
+                                ScrapDesc = d.Key.ScrapDesc,
+                                Qty = d.Sum(q => q.Qty),
+                                StartDate = startDate,
+                                EndDate = endDate
+                            })
+                            .OrderByDescending(d => d.Qty)
+                    }).ToList();
+
+                return new ProductionByShiftDto
+                {
+                    Department = dept,
+                    Area = area,
+                    Shift = shift,
+                    Target = target.ToInt(),
+
+                    HxHGross = hxhGross,
+                    HxHNet = hxhNet,
+                    HxHOae = hxhOae,
+
+                    SapGross = sapGross,
+                    SapNet = sapNet,
+                    SapOae = sapOae,
+                    SapNetDetails = sapNetDetails,
+
+                    TotalWarmers = totalWarmers,
+                    TotalScrap = totalScrap,
+                    TotalSbScrap = totalSbScrap,
+                    TotalPurchaseScrap = totalPurchaseScrap,
+                    SbScrapDetails = sbScrapDetails,
+                    PurchaseScrapDetails = purchaseScrapDetails,
+
+                    TotalScrapRate = totalScrapRate,
+                    TotalSbScrapRate = totalSbScrapRate,
+                    TotalPurchaseScrapRate = totalSbScrapRate,
+
+                    SbScrapAreaDetails = sbScrap.Any(s => s.Shift == shift) ? sbScrapAreaDetails : new List<ScrapByCodeDetailsDto>()
+                };
+
+            });
+
+            return result.OrderBy(x => x.Shift).ToList();
+        }
+
         public async Task<DepartmentDetailsDto> GetDepartmentDetails(SapResourceParameter parameters)
         {
             var dept = _utilityService.MapAreaToDepartment(parameters.Area);
@@ -543,6 +654,7 @@ namespace FmsbwebCoreApi.Services
                 .Select(x => new Scrap
                 {
                     Department = x.Department,
+                    Shift = x.Shift,
                     Area = x.Area,
                     Line = x.MachineHxh,
                     Program = x.Program,
@@ -557,7 +669,7 @@ namespace FmsbwebCoreApi.Services
                 .ConfigureAwait(false);
 
             //hxh production
-            var hxhProductionData = await _productionService.GetHxhProdByLineAndProgram(
+            var hxhProductionData = await _productionService.GetHxhProdByLineProgramShift(
                 parameters.Start, parameters.End, parameters.Area, parameters.Shift)
                 .ConfigureAwait(false);
 
@@ -671,8 +783,11 @@ namespace FmsbwebCoreApi.Services
                 TotalSbScrapRate = totalSbScrapRate,
                 TotalPurchaseScrapRate = totalPurchasedScrapRate,
                 SbScrapAreaDetails = scrapAreaDetails,
+
                 DetailsByLine = GetDepartmentDetailsByLine(scrap, sapProdData, hxhProductionData.LineDetails.ToList(), warmers, lineTargets, parameters.Start, parameters.End),
                 DetailsByProgram = GetDepartmentDetailsByProgram(scrap, warmers, sapProdData, hxhProductionData.ProgramDetails.ToList(), parameters.Start, parameters.End),
+                DetailsByShift = GetDepartmentDetailsByShift(scrap, warmers, sapProdData, hxhProductionData.LineShiftDetails.ToList(), parameters.Start, parameters.End),
+
                 SbScrapDetails = scrapList.Where(s => s.IsPurchashedExclude == false),
                 PurchaseScrapDetails = scrapList.Where(s => s.IsPurchashedExclude)
             };
@@ -681,14 +796,14 @@ namespace FmsbwebCoreApi.Services
         private List<EndOfShiftScrapDetailDto> GetScrapDetails(IEnumerable<Scrap2> data, int sapGross, SwotTargetWithDeptId target)
         {
             return data
-                .GroupBy(x => new {x.ScrapAreaName, x.MachineHxh})
+                .GroupBy(x => new { x.ScrapAreaName, x.MachineHxh })
                 .Select(x => new EndOfShiftScrapDetailDto
                 {
                     ScrapArea = x.Key.ScrapAreaName,
                     Qty = x.Sum(q => q.Qty ?? 0),
                     ScrapTargetRate = _kpiTargetService.GetScrapTarget(target, x.Key.ScrapAreaName),
                     ScrapRate = sapGross == 0 ? 0 : (decimal)x.Sum(q => q.Qty ?? 0) / sapGross,
-                    Details = x.GroupBy(d => new {d.ScrapCode, d.ScrapAreaName, d.ScrapDesc, d.Department, d.Area, d.MachineHxh})
+                    Details = x.GroupBy(d => new { d.ScrapCode, d.ScrapAreaName, d.ScrapDesc, d.Department, d.Area, d.MachineHxh })
                         .Select(d => new Scrap
                         {
                             Department = d.Key.Department,
@@ -818,7 +933,7 @@ namespace FmsbwebCoreApi.Services
             if (shift == null) throw new ArgumentNullException(nameof(shift));
 
             var area = _utilityService.MapDepartmentToArea(dept);
-            var machine = await _dataAccessUtilityService.GetMachine(new Machines {Line2 = line}).ConfigureAwait(false);
+            var machine = await _dataAccessUtilityService.GetMachine(new Machines { Line2 = line }).ConfigureAwait(false);
             var createHxh = await _dataAccessUtilityService.GerHourByHour(shiftDate, machine.MachineId, shift).ConfigureAwait(false);
             var hxhUrl = _utilityService.CreateHourByHourUrl(createHxh, machine) ?? "";
 
@@ -880,24 +995,24 @@ namespace FmsbwebCoreApi.Services
 
             //production
             var prodData = await _productionService.GetProductionQueryable(new ProductionResourceParameter
-                {
-                    StartDate = shiftDate,
-                    EndDate = shiftDate,
-                    Area = area,
-                    Shift = shift,
-                    WorkCenters = machines.Select(x => x.Machine).ToList()
-                })
+            {
+                StartDate = shiftDate,
+                EndDate = shiftDate,
+                Area = area,
+                Shift = shift,
+                WorkCenters = machines.Select(x => x.Machine).ToList()
+            })
                 .ToListAsync()
                 .ConfigureAwait(false);
 
             //scrap
             var scrapData = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
-                {
-                    StartDate = shiftDate,
-                    EndDate = shiftDate,
-                    Area = area,
-                    Shift = shift,
-                    WorkCenters = machines.Select(x => x.Machine).ToList()
+            {
+                StartDate = shiftDate,
+                EndDate = shiftDate,
+                Area = area,
+                Shift = shift,
+                WorkCenters = machines.Select(x => x.Machine).ToList()
             }, false)
                 .ToListAsync()
                 .ConfigureAwait(false);
@@ -980,7 +1095,7 @@ namespace FmsbwebCoreApi.Services
                 OaeTarget = oaeTarget,
 
                 PpmhTarget = ppmhTarget,
-                
+
                 HxHGross = hxhGross,
                 HxHNet = hxhNet,
                 HxHOae = hxhOae,
@@ -1006,12 +1121,12 @@ namespace FmsbwebCoreApi.Services
 
             //scrap
             var scrapData = await _scrapService.GetScrap2Queryable(new ScrapResourceParameter
-                {
-                    StartDate = shiftDate,
-                    EndDate = shiftDate,
-                    Area = area,
-                    Shift = shift
-                }, false)
+            {
+                StartDate = shiftDate,
+                EndDate = shiftDate,
+                Area = area,
+                Shift = shift
+            }, false)
                 .ToListAsync()
                 .ConfigureAwait(false);
 
@@ -1029,40 +1144,40 @@ namespace FmsbwebCoreApi.Services
                 .ConfigureAwait(false);
 
             var dataSet = hxh.Where(x => !x.IsCurrentHour).Select(x => new
-                {
-                    x.ShiftDate,
-                    x.Shift,
-                    x.ShiftOrder,
-                    x.Department,
-                    x.Area,
-                    x.Line,
-                    x.CellSide,
-                    x.MachineId,
-                    x.Hour,
+            {
+                x.ShiftDate,
+                x.Shift,
+                x.ShiftOrder,
+                x.Department,
+                x.Area,
+                x.Line,
+                x.CellSide,
+                x.MachineId,
+                x.Hour,
 
-                    x.SwotTarget,
+                x.SwotTarget,
 
-                    x.Target,
-                    x.Gross,
-                    x.Net,
+                x.Target,
+                x.Gross,
+                x.Net,
 
-                    x.Warmers,
-                    x.Sol,
-                    x.GageScrap,
-                    x.VisualScrap,
-                    x.Eol,
-                    x.TotalScrap,
+                x.Warmers,
+                x.Sol,
+                x.GageScrap,
+                x.VisualScrap,
+                x.Eol,
+                x.TotalScrap,
 
-                    WarmersDefects = _scrapService.GetScrapSummary(x.WarmersDefects, shiftDate, shiftDate),
-                    SolDefects = _scrapService.GetScrapSummary(x.SolDefects, shiftDate, shiftDate),
-                    GageScrapDefects = _scrapService.GetScrapSummary(x.GageScrapDefects, shiftDate, shiftDate),
-                    VisualScrapDefects = _scrapService.GetScrapSummary(x.VisualScrapDefects, shiftDate, shiftDate),
-                    EolDefects = _scrapService.GetScrapSummary(x.EolDefects, shiftDate, shiftDate),
-                    TotalScrapDefects = _scrapService.GetScrapSummary(x.TotalScrapDefects, shiftDate, shiftDate),
+                WarmersDefects = _scrapService.GetScrapSummary(x.WarmersDefects, shiftDate, shiftDate),
+                SolDefects = _scrapService.GetScrapSummary(x.SolDefects, shiftDate, shiftDate),
+                GageScrapDefects = _scrapService.GetScrapSummary(x.GageScrapDefects, shiftDate, shiftDate),
+                VisualScrapDefects = _scrapService.GetScrapSummary(x.VisualScrapDefects, shiftDate, shiftDate),
+                EolDefects = _scrapService.GetScrapSummary(x.EolDefects, shiftDate, shiftDate),
+                TotalScrapDefects = _scrapService.GetScrapSummary(x.TotalScrapDefects, shiftDate, shiftDate),
 
-                    x.HxHUrl,
-                    x.IsCurrentHour
-                })
+                x.HxHUrl,
+                x.IsCurrentHour
+            })
                 .OrderBy(x => x.MachineId)
                 .ThenBy(x => x.CellSide)
                 .ThenBy(x => x.ShiftDate)
@@ -1070,8 +1185,8 @@ namespace FmsbwebCoreApi.Services
                 .ThenBy(x => x.Hour)
                 .ToList();
 
-            var rows = dataSet.Select(x => new {x.MachineId, x.Line}).Distinct().OrderBy(x => x.MachineId).ToList();
-            var columns = dataSet.Select(x => new {x.ShiftDate, x.Shift, x.ShiftOrder, x.Hour}).Distinct()
+            var rows = dataSet.Select(x => new { x.MachineId, x.Line }).Distinct().OrderBy(x => x.MachineId).ToList();
+            var columns = dataSet.Select(x => new { x.ShiftDate, x.Shift, x.ShiftOrder, x.Hour }).Distinct()
                 .OrderBy(x => x.ShiftDate)
                 .ThenBy(x => x.ShiftOrder)
                 .ThenBy(x => x.Hour)

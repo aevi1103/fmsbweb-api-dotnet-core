@@ -9,5 +9,6 @@ namespace FmsbwebCoreApi.Models.Intranet
     {
         public IEnumerable<HxHProductionByLineDto> LineDetails { get; set; }
         public IEnumerable<HxhProductionByProgramDto> ProgramDetails { get; set; }
+        public IEnumerable<HxHProductionByShiftDto> LineShiftDetails { get; set; }
     }
 }
