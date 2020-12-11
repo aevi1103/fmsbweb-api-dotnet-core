@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.FmsbOee;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.FmsbOee
 {
     [DbContext(typeof(FmsbOeeContext))]
-    partial class FmsbOeeContextModelSnapshot : ModelSnapshot
+    [Migration("20201210201633_addDowntimeEvtTbl")]
+    partial class addDowntimeEvtTbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,9 +64,6 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                     b.Property<Guid>("MachineId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("OeeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("SecondaryReasonId")
                         .HasColumnType("uniqueidentifier");
 
@@ -76,8 +75,6 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                     b.HasKey("DowntimeEventId");
 
                     b.HasIndex("MachineId");
-
-                    b.HasIndex("OeeId");
 
                     b.HasIndex("SecondaryReasonId");
 
@@ -124,7 +121,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
                             CycleTimeSeconds = 5m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 539, DateTimeKind.Local).AddTicks(535),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 201, DateTimeKind.Local).AddTicks(3693),
                             Department = "Assembly",
                             GroupName = "A2",
                             ScrapInspectionLocation = 2,
@@ -135,7 +132,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
                             CycleTimeSeconds = 11m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 546, DateTimeKind.Local).AddTicks(1074),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 208, DateTimeKind.Local).AddTicks(7136),
                             Department = "Assembly",
                             GroupName = "A3",
                             ScrapInspectionLocation = 1,
@@ -146,7 +143,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
                             CycleTimeSeconds = 8.4m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 546, DateTimeKind.Local).AddTicks(1427),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 208, DateTimeKind.Local).AddTicks(7476),
                             Department = "Assembly",
                             GroupName = "A4",
                             ScrapInspectionLocation = 1,
@@ -157,7 +154,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
                             CycleTimeSeconds = 8m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 546, DateTimeKind.Local).AddTicks(1572),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 208, DateTimeKind.Local).AddTicks(7510),
                             Department = "Assembly",
                             GroupName = "A5",
                             ScrapInspectionLocation = 2,
@@ -168,7 +165,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
                             CycleTimeSeconds = 8m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 546, DateTimeKind.Local).AddTicks(1700),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 208, DateTimeKind.Local).AddTicks(7537),
                             Department = "Assembly",
                             GroupName = "A6",
                             ScrapInspectionLocation = 1,
@@ -179,7 +176,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
                             CycleTimeSeconds = 9m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 546, DateTimeKind.Local).AddTicks(1809),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 208, DateTimeKind.Local).AddTicks(7571),
                             Department = "Assembly",
                             GroupName = "A7",
                             ScrapInspectionLocation = 1,
@@ -190,7 +187,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
                             CycleTimeSeconds = 12m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 546, DateTimeKind.Local).AddTicks(1930),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 208, DateTimeKind.Local).AddTicks(7597),
                             Department = "Assembly",
                             GroupName = "A8",
                             ScrapInspectionLocation = 1,
@@ -201,7 +198,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
                             CycleTimeSeconds = 8.5m,
-                            DateModified = new DateTime(2020, 12, 11, 12, 21, 15, 546, DateTimeKind.Local).AddTicks(1962),
+                            DateModified = new DateTime(2020, 12, 10, 15, 16, 33, 208, DateTimeKind.Local).AddTicks(7635),
                             Department = "Assembly",
                             GroupName = "A9",
                             ScrapInspectionLocation = 1,
@@ -240,7 +237,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                     b.Property<DateTime?>("EndDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("LineId")
+                    b.Property<Guid>("OeeLineId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("StartDateTime")
@@ -253,7 +250,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
 
                     b.HasKey("OeeId");
 
-                    b.HasIndex("LineId");
+                    b.HasIndex("OeeLineId");
 
                     b.ToTable("Oee");
                 });
@@ -316,12 +313,6 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FmsbwebCoreApi.Entity.FmsbOee.Oee", "Oee")
-                        .WithMany()
-                        .HasForeignKey("OeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("FmsbwebCoreApi.Entity.FmsbOee.SecondaryReason", "SecondaryReason")
                         .WithMany()
                         .HasForeignKey("SecondaryReasonId")
@@ -331,9 +322,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.FmsbOee.Oee", b =>
                 {
-                    b.HasOne("FmsbwebCoreApi.Entity.FmsbOee.Line", "Line")
+                    b.HasOne("FmsbwebCoreApi.Entity.FmsbOee.Line", "OeeLine")
                         .WithMany()
-                        .HasForeignKey("LineId")
+                        .HasForeignKey("OeeLineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

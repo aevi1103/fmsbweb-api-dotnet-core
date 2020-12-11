@@ -1844,7 +1844,7 @@ namespace FmsbwebCoreApi.Services
             var oaeTarget = ((await _fmsb2Repo.GetTargets(@params.Area, @params.Start.Year, @params.End.Year))
                                     .First(x => x.Year == @params.End.Year && x.MonthNumber == @params.End.Month).OaeTarget) / 100;
 
-            var downtimeData = (await _fmsbMvcRepo.GetDowntime(new DowntimeResourceParameter { Start = @params.Start, End = @params.End }).ConfigureAwait(false));
+            var downtimeData = (await _fmsbMvcRepo.GetDowntime(new ResourceParameters.FMSB.DowntimeResourceParameter { Start = @params.Start, End = @params.End }).ConfigureAwait(false));
             downtimeData = downtimeData.Where(x => x.Dept.ToLower().Trim() == deptHxh.ToLower().Trim()).ToList();
 
             //get line targets for pph to convert downtime minutes to pa

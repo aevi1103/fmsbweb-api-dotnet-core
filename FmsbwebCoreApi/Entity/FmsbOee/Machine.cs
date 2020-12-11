@@ -7,24 +7,13 @@ using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Entity.FmsbOee
 {
-    public class Oee
+    public class Machine
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid OeeId { get; set; } = Guid.NewGuid();
-
+        public Guid MachineId { get; set; } = Guid.NewGuid();
         [Required]
-        public Guid LineId { get; set; }
-        public virtual Line Line { get; set; }
-
-        [Required]
-        public DateTime StartDateTime { get; set; } = DateTime.Now;
-
-        public DateTime? EndDateTime { get; set; }
-
+        public string MachineName { get; set; }
         [Required]
         public DateTime DateModified { get; set; } = DateTime.Now;
-
-        [Timestamp]
-        public byte[] Timestamp { get; set; }
     }
 }

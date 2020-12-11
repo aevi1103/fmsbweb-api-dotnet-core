@@ -1269,7 +1269,7 @@ namespace FmsbwebCoreApi.Services
             var scrapVariance = await _sapLibService.GetScrapVariance(monthRangeParams).ConfigureAwait(false);
             var scrapVariancePerProgram = await _sapLibService.GetScrapVariancePerProgram(dateRangeParams).ConfigureAwait(false);
             var ppmhPlant = await _sapLibService.GetPlantWidePpmh(monthRangeParams).ConfigureAwait(false);
-            var downtime = await _downtimeRepository.GetDowntime(new DowntimeResourceParameter
+            var downtime = await _downtimeRepository.GetDowntime(new ResourceParameters.FMSB.DowntimeResourceParameter
             {
                 Start = dateRangeParams.Start,
                 End = dateRangeParams.End
@@ -1687,7 +1687,7 @@ namespace FmsbwebCoreApi.Services
             var scrapVariancePerShift = await _sapLibService.GetScrapByShift(dateRangeParams).ConfigureAwait(false);
             var overtimeMonthRange = await _fmsb2LibraryRepository.GetOvertimePercentage(monthRangeParams.Area, monthRangeParams.Start, monthRangeParams.End).ConfigureAwait(false);
             var overtimeDateRange = await _fmsb2LibraryRepository.GetOvertimePercentage(dateRangeParams.Area, dateRangeParams.Start, dateRangeParams.End).ConfigureAwait(false);
-            var downtimeByOwner = await _downtimeRepository.GetDowntimeByOwner(new DowntimeResourceParameter
+            var downtimeByOwner = await _downtimeRepository.GetDowntimeByOwner(new ResourceParameters.FMSB.DowntimeResourceParameter
             {
                 Start = dateRangeParams.Start,
                 End = dateRangeParams.End,

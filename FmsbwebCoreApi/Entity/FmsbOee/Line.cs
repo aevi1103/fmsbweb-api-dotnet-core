@@ -5,10 +5,10 @@ using FmsbwebCoreApi.Enums;
 
 namespace FmsbwebCoreApi.Entity.FmsbOee
 {
-    public class OeeLine
+    public class Line
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid OeeLineId { get; set; } = Guid.NewGuid();
+        public Guid LineId { get; set; } = Guid.NewGuid();
 
         [StringLength(5)]
         public string GroupName { get; set; }
@@ -24,6 +24,8 @@ namespace FmsbwebCoreApi.Entity.FmsbOee
 
         [Required]
         public decimal CycleTimeSeconds { get; set; }
+
+        public decimal CycleTimeMinutes => CycleTimeSeconds / 60;
 
         [Required]
         public ScrapInspectionLocation ScrapInspectionLocation { get; set; }

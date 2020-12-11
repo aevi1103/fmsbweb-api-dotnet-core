@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using DateShiftLib.Extensions;
 using FmsbwebCoreApi.Context.FmsbOee;
+using FmsbwebCoreApi.Entity.FmsbOee;
+using FmsbwebCoreApi.Enums;
 using FmsbwebCoreApi.Repositories.Interfaces;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.Services.Interfaces;
@@ -30,18 +33,25 @@ namespace FmsbwebCoreApi.Services
             _fmsbOeeContext = fmsbOeeContext ?? throw new ArgumentNullException(nameof(fmsbOeeContext));
         }
 
-        public async Task<dynamic> GetOee(OeeResourceParameter resourceParameter)
+        public async Task<dynamic> GetOee(Guid lineId)
         {
-            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
-
-            var oee = await _fmsbOeeContext
+            var entity = await _fmsbOeeContext
                 .Oee
+                .Include(x => x.Line)
                 .AsNoTracking()
-                .Include(x => x.OeeLine)
-                .FirstOrDefaultAsync(x => x.OeeId == resourceParameter.OeeId)
+                .FirstOrDefaultAsync(x => x.LineId == lineId && x.EndDateTime == null)
                 .ConfigureAwait(false);
 
-            if (oee == null) throw new ArgumentNullException(nameof(oee));
+            if (entity == null) return null;
+
+            var lineData = await _fmsbOeeContext
+                .Oee
+                .AsNoTracking()
+                .Include(x => x.Line)
+                .FirstOrDefaultAsync(x => x.OeeId == entity.OeeId)
+                .ConfigureAwait(false);
+
+            if (lineData == null) throw new OperationCanceledException("Invalid OEE ID");
 
             var now = DateTime.Now;
 
@@ -49,44 +59,55 @@ namespace FmsbwebCoreApi.Services
             var prod = await _productionService
                 .GetPlcProductionQueryable(new PlcProdResourceParameter
                 {
-                    StartDate = oee.StartDateTime,
-                    EndDate = oee.EndDateTime ?? now,
-                    TagName = oee.OeeLine.TagName
+                    StartDate = lineData.StartDateTime,
+                    EndDate = lineData.EndDateTime ?? now,
+                    TagName = lineData.Line.TagName
                 })
                 .ToListAsync()
                 .ConfigureAwait(false);
 
             var scrap = await _scrapService
                 .GetScrapList(
-                    oee.StartDateTime,
-                    oee.EndDateTime ?? now,
-                    oee.OeeLine.WorkCenter)
+                    lineData.StartDateTime,
+                    lineData.EndDateTime ?? now,
+                    lineData.Line.WorkCenter)
                 .ConfigureAwait(false);
 
-            var downtime = await _downtimeRepository.GetPlcDowntimeQueryable(new PlcDowntimeResourceParameter
+            var plcDowntime = await _downtimeRepository.GetPlcDowntimeQueryable(new DowntimeResourceParameter
             {
-                StartDate = oee.StartDateTime,
-                EndDate = oee.EndDateTime ?? now,
-                Line = oee.OeeLine.GroupName
+                StartDate = lineData.StartDateTime,
+                EndDate = lineData.EndDateTime ?? now,
+                Line = lineData.Line.GroupName
+            })
+                .ToListAsync()
+                .ConfigureAwait(false);
+
+            var operatorDowntimeEvents = await _downtimeRepository.GetDowntimeEvents(new DowntimeResourceParameter
+            {
+                OeeId = lineData.OeeId
             })
                 .ToListAsync()
                 .ConfigureAwait(false);
 
             //transform data
 
-            var downtimeMap = downtime.Select(x =>
-            {
-                var ppm = oee.OeeLine.CycleTimeSeconds == 0 ? 0 : 60 / oee.OeeLine.CycleTimeSeconds;
+            var plannedDowntimeEvents = operatorDowntimeEvents
+                .Where(x => x.DowntimeEventType == DowntimeEventType.Planned)
+                .ToList();
 
+            var unPlannedDowntimeEvents = operatorDowntimeEvents
+                .Where(x => x.DowntimeEventType == DowntimeEventType.Unplanned)
+                .ToList();
+
+            var plcDowntimeEvents = plcDowntime.Select(x =>
+            {
+                const string dateFormat = "MM/dd/yyyy HH:mm";
                 var startTime = Convert.ToDateTime(x.StartStamp, new CultureInfo("en-US"));
                 var endTime = x.EndStamp ?? now;
-
-                var startTimeStripSeconds = DateTime.Parse(startTime.ToString("MM/dd/yyyy HH:mm"));
-                var endTimeStripSeconds = DateTime.Parse(endTime.ToString("MM/dd/yyyy HH:mm"));
-
+                var startTimeStripSeconds = DateTime.Parse(startTime.ToString(dateFormat));
+                var endTimeStripSeconds = DateTime.Parse(endTime.ToString(dateFormat));
                 var downtimeInMinutes = (endTimeStripSeconds - startTimeStripSeconds).TotalMinutes;
                 var downtimeInSeconds = (endTimeStripSeconds - startTimeStripSeconds).TotalSeconds;
-                var downtimeInParts = (decimal)downtimeInMinutes * ppm;
 
                 return new
                 {
@@ -96,29 +117,80 @@ namespace FmsbwebCoreApi.Services
                     Fixed = x.EndStamp != null,
                     OriginalDowntimeMinute = x.DowntimeMinutes,
                     DowntimeInMinutes = downtimeInMinutes,
-                    DowntimeInSeconds = downtimeInSeconds,
-                    DowntimeInParts = downtimeInParts
+                    DowntimeInSeconds = downtimeInSeconds
                 };
 
             }).ToList();
 
             var productionTotal = prod.Sum(x => x.Count ?? 0);
             var scrapTotal = scrap.Sum(x => x.Qty ?? 0);
-            var downtimeTotalMinutes = downtimeMap.Sum(x => x.DowntimeInMinutes);
-            var downtimeTotalParts = downtimeMap.Sum(x => x.DowntimeInParts);
+
+            // PLC counter is located before scrap inspection, meaning the counter counts gross parts
+            var gross = lineData.Line.ScrapInspectionLocation == ScrapInspectionLocation.Before
+                ? productionTotal
+                : productionTotal + scrapTotal;
+
+            // PLC counter is located after inspection, meaning the counter counts net/good parts
+            var net = lineData.Line.ScrapInspectionLocation == ScrapInspectionLocation.After
+                ? productionTotal
+                : productionTotal - scrapTotal;
+
+            // Downtime
+            var totalPlcDowntime = (int)plcDowntimeEvents.Sum(x => x.DowntimeInMinutes);
+            var totalPlannedDowntime = plannedDowntimeEvents.Sum(x => x.Downtime);
+            var totalUnplannedDowntime = unPlannedDowntimeEvents.Sum(x => x.Downtime);
+
+            // oee calculation
+            var allTime = ((lineData.EndDateTime ?? now) - lineData.StartDateTime).TotalMinutes;
+            var ppt = allTime - totalPlannedDowntime; // planned production time
+
+            //* todo: ask eloise how to handle downtime if whether to add the operator downtime as well
+            var runTime = ppt - totalPlcDowntime;
+
+            var availability = ppt == 0 ? 0 : (decimal)runTime / (decimal)ppt;
+            var performance = runTime == 0 ? 0 :(lineData.Line.CycleTimeMinutes * gross) / (decimal)runTime;
+            var quality = gross == 0 ? 0 : (decimal)net / (decimal)gross;
+            var oee = availability * performance * quality;
 
             return new
             {
-                Oee = oee,
-                ProductionTotal = productionTotal,
-                ScrapTotal = scrapTotal,
-                DowntimeTotalMinutes = Math.Round(downtimeTotalMinutes, 0),
-                DowntimeTotalParts = Math.Round(downtimeTotalParts, 0),
+                Line = lineData,
+                Status = new
+                {
+                    lineData.OeeId,
+                    Running = lineData.EndDateTime == null,
+                    StartTime = lineData.StartDateTime,
+                    EndTime = lineData.EndDateTime ?? now,
+                    lineData.Line.CycleTimeSeconds,
+                    lineData.Line.CycleTimeMinutes,
+                    PlcDowntime = totalPlcDowntime,
+                    PlannedDowntime = totalPlannedDowntime,
+                    UnPlannedDowntime = totalUnplannedDowntime,
+                    AllTime = allTime,
+                    PlannedProductionTime = ppt,
+                    RuntTime = runTime,
+                    PlcCounter = productionTotal,
+                    Gross = gross,
+                    ScrapTotal = scrapTotal,
+                    Net = net,
+                    Availability = availability,
+                    Performance = performance,
+                    Quality = quality,
+                    Oee = oee
+                },
                 DataList = new
                 {
-                    prod,
-                    scrap,
-                    downtime = downtimeMap,
+                    Prod = prod,
+                    Scrap = scrap.GroupBy(x => new { x.ScrapAreaName, x.ScrapDesc })
+                        .Select(x => new
+                        {
+                            x.Key.ScrapAreaName,
+                            x.Key.ScrapDesc,
+                            Qty = x.Sum(q => q.Qty ?? 0)
+                        })
+                        .OrderByDescending(x => x.Qty)
+                        .ToList(),
+                    downtime = plcDowntimeEvents,
                 }
             };
         }

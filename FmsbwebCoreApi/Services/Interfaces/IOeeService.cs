@@ -8,6 +8,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
 {
     public interface IOeeService
     {
-        Task<dynamic> GetOee(OeeResourceParameter resourceParameter);
+        Task<dynamic> GetOee(Guid lineId);
     }
 }

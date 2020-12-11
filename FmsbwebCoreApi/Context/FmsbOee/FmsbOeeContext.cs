@@ -20,9 +20,13 @@ namespace FmsbwebCoreApi.Context.FmsbOee
         {
         }
 
-        public virtual DbSet<OeeLine> OeeLines { get; set; }
+        public virtual DbSet<Line> Lines { get; set; }
         public virtual DbSet<Oee> Oee { get; set; }
         public virtual DbSet<ClockNumber> ClockNumbers { get; set; }
+        public virtual DbSet<Machine> Machines { get; set; }
+        public virtual DbSet<PrimaryReason> PrimaryReasons { get; set; }
+        public virtual DbSet<SecondaryReason> SecondaryReasons { get; set; }
+        public virtual DbSet<DowntimeEvent> DowntimeEvents { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -110,9 +114,9 @@ namespace FmsbwebCoreApi.Context.FmsbOee
 
             foreach (var tag in tags)
             {
-                modelBuilder.Entity<OeeLine>().HasData(new OeeLine
+                modelBuilder.Entity<Line>().HasData(new Line
                 {
-                    OeeLineId = new Guid(tag.Guid),
+                    LineId = new Guid(tag.Guid),
                     GroupName = tag.Line,
                     TagName = tag.Tag,
                     Department = "Assembly",

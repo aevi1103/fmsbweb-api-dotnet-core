@@ -7,24 +7,16 @@ using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Entity.FmsbOee
 {
-    public class Oee
+    public class SecondaryReason
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid OeeId { get; set; } = Guid.NewGuid();
-
+        public Guid SecondaryReasonId { get; set; }
         [Required]
-        public Guid LineId { get; set; }
-        public virtual Line Line { get; set; }
-
+        public Guid PrimaryReasonId { get; set; }
+        public PrimaryReason PrimaryReason { get; set; }
         [Required]
-        public DateTime StartDateTime { get; set; } = DateTime.Now;
-
-        public DateTime? EndDateTime { get; set; }
-
+        public string Reason { get; set; }
         [Required]
         public DateTime DateModified { get; set; } = DateTime.Now;
-
-        [Timestamp]
-        public byte[] Timestamp { get; set; }
     }
 }

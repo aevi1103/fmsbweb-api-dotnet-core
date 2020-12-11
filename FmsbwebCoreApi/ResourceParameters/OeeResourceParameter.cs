@@ -9,9 +9,10 @@ namespace FmsbwebCoreApi.ResourceParameters
     public class OeeResourceParameter
     {
         [Required]
-        public Guid OeeLineId { get; set; }
-        public Guid? OeeId { get; set; }
+        public Guid LineId { get; set; }
+        public Guid? OeeId { get; set; } = Guid.Empty;
         public byte[] Timestamp { get; set; }
         public DateTime? EndDateTime { get; set; }
+        public int ClockNumber { get; set; }
     }
 }

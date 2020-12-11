@@ -38,7 +38,7 @@ namespace FmsbwebCoreApi.Controllers.OEE
         {
             try
             {
-                return Ok(_context.OeeLines.AsNoTracking());
+                return Ok(_context.Lines.AsNoTracking());
             }
             catch (Exception e)
             {
@@ -53,13 +53,25 @@ namespace FmsbwebCoreApi.Controllers.OEE
         {
             try
             {
-                return Ok(_context.OeeLines.AsNoTracking().FirstOrDefault(x => x.OeeLineId == id));
+                return Ok(_context.Lines.AsNoTracking().FirstOrDefault(x => x.LineId == id));
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 throw new Exception(e.Message);
             }
+        }
+
+        private async Task AddClockNumber(Guid oeeId, int clockNumber)
+        {
+            await _context.ClockNumbers.AddAsync(new ClockNumber
+            {
+                OeeId = oeeId,
+                Clock = clockNumber,
+                DateModified = DateTime.Now
+            }).ConfigureAwait(false);
+
+            await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         /*
@@ -69,32 +81,14 @@ namespace FmsbwebCoreApi.Controllers.OEE
         public async Task<IActionResult> Update(OeeResourceParameter resourceParameter)
         {
             if (resourceParameter == null) return BadRequest(new ArgumentException("Resource parameter is empty!"));
-
-            await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
             try
             {
-                var record = _context.Oee.Update(new Oee
-                {
-                    OeeLineId = resourceParameter.OeeLineId,
-                    OeeId = resourceParameter.OeeId == null ? Guid.Empty : new Guid(resourceParameter.OeeId.ToString()),
-                    Timestamp = resourceParameter.Timestamp,
-                    EndDateTime = resourceParameter.EndDateTime,
-                    DateModified = DateTime.Now
-                });
-
-                await _context.SaveChangesAsync().ConfigureAwait(false);
-                await transaction.CommitAsync().ConfigureAwait(false);
-
-                var entity = await _context.Oee
-                    .Include(x => x.OeeLine)
-                    .FirstOrDefaultAsync(x => x.OeeLineId == record.Entity.OeeLineId && x.EndDateTime == null)
-                    .ConfigureAwait(false);
-
-                return Ok(entity);
+                var entity = await UpdateEntry(resourceParameter).ConfigureAwait(false);
+                var oee = await _oeeService.GetOee(entity.LineId).ConfigureAwait(false);
+                return Ok(oee);
             }
             catch (Exception e)
             {
-                await transaction.RollbackAsync().ConfigureAwait(false);
                 return BadRequest(e.Message);
             }
         }
@@ -105,7 +99,7 @@ namespace FmsbwebCoreApi.Controllers.OEE
         {
             try
             {
-                return Ok(_context.Oee.Include(x => x.OeeLine).AsNoTracking());
+                return Ok(_context.Oee.Include(x => x.Line).AsNoTracking());
             }
             catch (Exception e)
             {
@@ -116,16 +110,48 @@ namespace FmsbwebCoreApi.Controllers.OEE
 
         [Route("summary")]
         [HttpGet]
-        public async Task<IActionResult> GetSummary([FromQuery] OeeResourceParameter resourceParameter)
+        public async Task<IActionResult> GetSummary([FromQuery] Guid lineId)
         {
             try
             {
-                var data = await _oeeService.GetOee(resourceParameter).ConfigureAwait(false);
-                return Ok(data);
+                var oee = await _oeeService.GetOee(lineId).ConfigureAwait(false);
+                return Ok(oee);
             }
             catch (Exception e)
             {
                 return BadRequest(e.Message);
+            }
+        }
+
+        private async Task<Oee> UpdateEntry(OeeResourceParameter resourceParameter)
+        {
+            if (resourceParameter == null) throw new ArgumentNullException(nameof(resourceParameter));
+
+            await using var transaction = await _context.Database.BeginTransactionAsync().ConfigureAwait(false);
+            try
+            {
+                var record = _context.Oee.Update(new Oee
+                {
+                    LineId = resourceParameter.LineId,
+                    OeeId = new Guid(resourceParameter.OeeId.ToString()),
+                    Timestamp = resourceParameter.Timestamp,
+                    EndDateTime = resourceParameter.EndDateTime,
+                    DateModified = DateTime.Now
+                });
+
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+
+                if (resourceParameter.OeeId == Guid.Empty)
+                    await AddClockNumber(record.Entity.OeeId, resourceParameter.ClockNumber).ConfigureAwait(false);
+
+                await transaction.CommitAsync().ConfigureAwait(false);
+
+                return record.Entity;
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
             }
         }
 

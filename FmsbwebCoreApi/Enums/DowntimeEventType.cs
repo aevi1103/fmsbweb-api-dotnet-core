@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Enums
 {
-    public enum ScrapInspectionLocation
+    public enum DowntimeEventType
     {
-        None = 0,
-        Before = 1, // Gross
-        After = 2 // Net
+        None,
+        Planned,
+        Unplanned
     }
 }

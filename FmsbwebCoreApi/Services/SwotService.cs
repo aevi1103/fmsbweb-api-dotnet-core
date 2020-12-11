@@ -2109,7 +2109,7 @@ namespace FmsbwebCoreApi.Services
                 Area = parameter.Area
             };
 
-            var downtimeParameter = new DowntimeResourceParameter
+            var downtimeParameter = new ResourceParameters.FMSB.DowntimeResourceParameter
             {
                 Start = parameter.LastDayStart,
                 End = parameter.LastDayEnd,
@@ -2327,7 +2327,7 @@ namespace FmsbwebCoreApi.Services
                 Shift = parameter.Shift ?? ""
             };
 
-            var downtimeParameter = new DowntimeResourceParameter
+            var downtimeParameter = new ResourceParameters.FMSB.DowntimeResourceParameter
             {
                 Start = start,
                 End = end,
