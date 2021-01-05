@@ -62,23 +62,35 @@ namespace FmsbwebCoreApi.Repositories
 
         public async Task<KpiTarget> GetDepartmentTargets(string dept, string area, DateTime startDateTime, DateTime endDateTime)
         {
-
             var data = await _fmsb2Context.KpiTarget.AsNoTracking()
-                .Where(x => x.Department.ToLower() == dept.ToLower() 
-                            && x.Year >= startDateTime.Year && x.Year == endDateTime.Year 
-                            && x.MonthNumber >= startDateTime.Month 
+                .Where(x => x.Department.ToLower() == dept.ToLower()
+                            && x.Year >= startDateTime.Year && x.Year == endDateTime.Year
+                            && x.MonthNumber >= startDateTime.Month
                             && x.MonthNumber <= endDateTime.Month)
                 .ToListAsync()
                 .ConfigureAwait(false);
 
+            if (data.Count > 0)
+            {
+                return new KpiTarget
+                {
+                    Department = area,
+                    OaeTarget = data.Average(x => x.OaeTarget),
+                    ScrapRateTarget = data.Average(x => x.ScrapRateTarget),
+                    PpmhTarget = data.Average(x => x.PpmhTarget),
+                    DowntimeRateTarget = data.Average(x => x.DowntimeRateTarget),
+                };
+            }
+
             return new KpiTarget
             {
                 Department = area,
-                OaeTarget = data.Average(x => x.OaeTarget),
-                ScrapRateTarget = data.Average(x => x.ScrapRateTarget),
-                PpmhTarget = data.Average(x => x.PpmhTarget),
-                DowntimeRateTarget = data.Average(x => x.DowntimeRateTarget),
+                OaeTarget = 0,
+                ScrapRateTarget = 0,
+                PpmhTarget = 0,
+                DowntimeRateTarget = 0,
             };
+
         }
 
         public async Task<List<KpiTarget>> GetDepartmentTargets(string dept, DateTime startDateTime, DateTime endDateTime)

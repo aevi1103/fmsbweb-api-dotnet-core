@@ -12,5 +12,6 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
     {
         IQueryable<KepserverMachineDowntime> GetPlcDowntimeQueryable(DowntimeResourceParameter resourceParameter);
         IQueryable<DowntimeEvent> GetDowntimeEvents(DowntimeResourceParameter resourceParameter);
+        string GetAssemblyMachineName(string assemblyTagName);
     }
 }

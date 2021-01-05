@@ -430,14 +430,27 @@ namespace FmsbwebCoreApi.Services.FMSB2
 
             data = data.Where(x => x.MonthNumber >= startDate.Month && x.MonthNumber <= endDate.Month).ToList();
 
+            if (data.Count > 0)
+            {
+                return new KpiTarget
+                {
+                    Department = area,
+                    OaeTarget = data.Average(x => x.OaeTarget),
+                    ScrapRateTarget = data.Average(x => x.ScrapRateTarget),
+                    PpmhTarget = data.Average(x => x.PpmhTarget),
+                    DowntimeRateTarget = data.Average(x => x.DowntimeRateTarget),
+                };
+            }
+
             return new KpiTarget
             {
                 Department = area,
-                OaeTarget = data.Average(x => x.OaeTarget),
-                ScrapRateTarget = data.Average(x => x.ScrapRateTarget),
-                PpmhTarget = data.Average(x => x.PpmhTarget),
-                DowntimeRateTarget = data.Average(x => x.DowntimeRateTarget),
+                OaeTarget = 0,
+                ScrapRateTarget = 0,
+                PpmhTarget = 0,
+                DowntimeRateTarget = 0,
             };
+
         }
 
         public async Task<List<FinanceLaborHoursView>> GetPlantLaborHours(DateTime startDate, DateTime endDate)

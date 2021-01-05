@@ -2315,12 +2315,15 @@ namespace FmsbwebCoreApi.Services
                                         .ToListAsync()
                                         .ConfigureAwait(false);
 
-                var ppmhTarget = await _fmsbContext.KpiTarget
-                                    .Where(x => x.Year >= @params.Start.Year && x.Year <= @params.End.Year)
-                                    .Where(x => x.MonthNumber >= @params.Start.Month && x.MonthNumber <= @params.End.Month)
-                                    .Where(x => x.Department.ToLower() == deptForTarget)
-                                    .AverageAsync(x => x.PpmhTarget)
-                                    .ConfigureAwait(false);
+                var ppmh = await _fmsbContext.KpiTarget
+                    .Where(x => x.Year >= @params.Start.Year && x.Year <= @params.End.Year)
+                    .Where(x => x.MonthNumber >= @params.Start.Month && x.MonthNumber <= @params.End.Month)
+                    .Where(x => x.Department.ToLower() == deptForTarget)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+
+                var ppmhTarget = ppmh.Count > 0 ? ppmh.Average(x => x.PpmhTarget) : 0;
+                                    
 
                 var uniqueShifts = prod.Select(x => x.Shift).Distinct().ToList();
 

@@ -112,6 +112,7 @@ namespace FmsbwebCoreApi.Services
                 return new
                 {
                     x.TagName,
+                    Line = _downtimeRepository.GetAssemblyMachineName(x.TagName),
                     StartStamp = startTimeStripSeconds,
                     EndStamp = endTimeStripSeconds,
                     Fixed = x.EndStamp != null,
@@ -148,8 +149,12 @@ namespace FmsbwebCoreApi.Services
             var runTime = ppt - totalPlcDowntime;
 
             var availability = ppt == 0 ? 0 : (decimal)runTime / (decimal)ppt;
-            var performance = runTime == 0 ? 0 :(lineData.Line.CycleTimeMinutes * gross) / (decimal)runTime;
-            var quality = gross == 0 ? 0 : (decimal)net / (decimal)gross;
+            var capacity = (1 / lineData.Line.CycleTimeMinutes) * (decimal)runTime;
+
+            //var performance = runTime == 0 ? 0 : (lineData.Line.CycleTimeMinutes * gross) / (decimal)runTime;
+            var performance = capacity == 0 ? 0 : gross / capacity;
+
+            var quality = gross == 0 ? 0 : (decimal)net / gross;
             var oee = availability * performance * quality;
 
             return new
@@ -173,6 +178,7 @@ namespace FmsbwebCoreApi.Services
                     Gross = gross,
                     ScrapTotal = scrapTotal,
                     Net = net,
+                    Capacity = capacity,
                     Availability = availability,
                     Performance = performance,
                     Quality = quality,
@@ -180,7 +186,14 @@ namespace FmsbwebCoreApi.Services
                 },
                 DataList = new
                 {
-                    Prod = prod,
+                    Prod = prod.GroupBy(x => new { x.TimeStamp.Hour, AmPm = $"{x.TimeStamp:tt}" })
+                        .Select(x => new
+                        {
+                            x.Key.Hour,
+                            x.Key.AmPm,
+                            Count = x.Sum(q => q.Count)
+                        }).OrderBy(x => x.Hour),
+
                     Scrap = scrap.GroupBy(x => new { x.ScrapAreaName, x.ScrapDesc })
                         .Select(x => new
                         {
@@ -190,7 +203,13 @@ namespace FmsbwebCoreApi.Services
                         })
                         .OrderByDescending(x => x.Qty)
                         .ToList(),
-                    downtime = plcDowntimeEvents,
+
+                    downtime = plcDowntimeEvents.GroupBy(x => new { x.Line })
+                        .Select(x => new
+                        {
+                            Machine = x.Key.Line,
+                            Downtime = x.Sum(q => q.DowntimeInMinutes)
+                        }).OrderByDescending(x => x.Downtime),
                 }
             };
         }

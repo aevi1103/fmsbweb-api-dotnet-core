@@ -60,5 +60,19 @@ namespace FmsbwebCoreApi.Repositories
 
             return qry;
         }
+
+        public string GetAssemblyMachineName(string assemblyTagName)
+        {
+            var tag = assemblyTagName.Trim().ToLower();
+            if (tag.Contains("m1")) return "Ringer";
+            if (tag.Contains("ring")) return "Ringer";
+
+            if (tag.Contains("m2")) return "Vision";
+            if (tag.Contains("m3")) return "PRAM";
+            if (tag.Contains("packout")) return "PACKOUT";
+            if (tag.Contains("a9_rod_cell")) return "Rod Cell";
+
+            return "N/A";
+        }
     }
 }
