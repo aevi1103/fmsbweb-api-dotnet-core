@@ -1,4 +1,4 @@
 ﻿Add-Migration -Name AddTables -OutputDir "Migrations/Iconics" -Context IconicsContext 
 Update-Database -Context "IconicsContext"
 
-Add-Migration -Name AddOeeDb -OutputDir "Migrations/FmsbOee" -Context FmsbOeeContext 
+Add-Migration -Name AddMachineGroup -OutputDir "Migrations/FmsbOee" -Context FmsbOeeContext 

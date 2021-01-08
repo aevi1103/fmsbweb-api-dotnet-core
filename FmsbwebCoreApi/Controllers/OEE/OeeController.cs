@@ -53,7 +53,11 @@ namespace FmsbwebCoreApi.Controllers.OEE
         {
             try
             {
-                return Ok(_context.Lines.AsNoTracking().FirstOrDefault(x => x.LineId == id));
+                return Ok(_context
+                    .Lines
+                    .Include(x => x.MachineGroups)
+                    .AsNoTracking()
+                    .FirstOrDefault(x => x.LineId == id));
             }
             catch (Exception e)
             {

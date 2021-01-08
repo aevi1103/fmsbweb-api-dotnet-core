@@ -6,6 +6,7 @@ using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.FmsbOee;
 using FmsbwebCoreApi.Enums;
 using Microsoft.EntityFrameworkCore;
+using MachineGroup = FmsbwebCoreApi.Entity.Fmsb2.MachineGroup;
 using Oee = FmsbwebCoreApi.Entity.FmsbOee.Oee;
 
 namespace FmsbwebCoreApi.Context.FmsbOee
@@ -23,6 +24,7 @@ namespace FmsbwebCoreApi.Context.FmsbOee
         public virtual DbSet<Line> Lines { get; set; }
         public virtual DbSet<Oee> Oee { get; set; }
         public virtual DbSet<ClockNumber> ClockNumbers { get; set; }
+        public virtual DbSet<Entity.FmsbOee.MachineGroup> MachineGroups { get; set; }
         public virtual DbSet<Machine> Machines { get; set; }
         public virtual DbSet<PrimaryReason> PrimaryReasons { get; set; }
         public virtual DbSet<SecondaryReason> SecondaryReasons { get; set; }
@@ -45,7 +47,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0002",
                     Guid = "01b888a3-00ca-4736-96ae-1636dc7ec914",
                     CycleTime = (decimal) 5,
-                    InspectionLocation = ScrapInspectionLocation.After
+                    InspectionLocation = ScrapInspectionLocation.After,
+                    Machine = "Assembly 2"
                 },
                 new
                 {
@@ -54,7 +57,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0003",
                     Guid = "bd9eae20-60c7-44cd-ae2e-96c5f015f82e",
                     CycleTime = (decimal)11,
-                    InspectionLocation = ScrapInspectionLocation.Before
+                    InspectionLocation = ScrapInspectionLocation.Before,
+                    Machine = "Assembly 3"
                 },
                 new
                 {
@@ -63,7 +67,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0004",
                     Guid = "77e6d96c-f58d-46ea-a00d-5f962cfaf67b",
                     CycleTime = (decimal)8.4,
-                    InspectionLocation = ScrapInspectionLocation.Before
+                    InspectionLocation = ScrapInspectionLocation.Before,
+                    Machine = "Assembly 4"
                 },
                 new
                 {
@@ -72,7 +77,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0005",
                     Guid = "c26e4341-8e94-48f8-9eb6-fd2c5061bae3",
                     CycleTime = (decimal)8,
-                    InspectionLocation = ScrapInspectionLocation.After
+                    InspectionLocation = ScrapInspectionLocation.After,
+                    Machine = "Assembly 5"
                 },
                 new
                 {
@@ -81,7 +87,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0006",
                     Guid = "f5ede641-fb76-40d5-924b-5d28ceea1ac9",
                     CycleTime = (decimal)8,
-                    InspectionLocation = ScrapInspectionLocation.Before
+                    InspectionLocation = ScrapInspectionLocation.Before,
+                    Machine = "Assembly 6"
                 },
                 new
                 {
@@ -90,7 +97,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0007",
                     Guid = "1ace746f-f44f-47c4-bb9c-6c49fc550488",
                     CycleTime = (decimal)9,
-                    InspectionLocation = ScrapInspectionLocation.Before
+                    InspectionLocation = ScrapInspectionLocation.Before,
+                    Machine = "Assembly 7"
                 },
                 new
                 {
@@ -99,7 +107,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0008",
                     Guid = "13667af3-8a37-456a-8d65-5e98627af1ad",
                     CycleTime = (decimal)12,
-                    InspectionLocation = ScrapInspectionLocation.Before
+                    InspectionLocation = ScrapInspectionLocation.Before,
+                    Machine = "Assembly 8"
                 },
                 new
                 {
@@ -108,7 +117,8 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = "ASBY0009",
                     Guid = "3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2",
                     CycleTime =(decimal)8.5,
-                    InspectionLocation = ScrapInspectionLocation.Before
+                    InspectionLocation = ScrapInspectionLocation.Before,
+                    Machine = "Assembly 9"
                 },
             };
 
@@ -123,9 +133,11 @@ namespace FmsbwebCoreApi.Context.FmsbOee
                     WorkCenter = tag.WorkCenter,
                     DateModified = DateTime.Now,
                     CycleTimeSeconds = tag.CycleTime,
-                    ScrapInspectionLocation = tag.InspectionLocation
+                    ScrapInspectionLocation = tag.InspectionLocation,
+                    MachineName = tag.Machine
                 });
             }
+
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

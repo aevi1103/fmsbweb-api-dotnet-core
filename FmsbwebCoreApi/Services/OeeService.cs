@@ -48,6 +48,7 @@ namespace FmsbwebCoreApi.Services
                 .Oee
                 .AsNoTracking()
                 .Include(x => x.Line)
+                //.Include(x => x.Line.MachineGroups)
                 .FirstOrDefaultAsync(x => x.OeeId == entity.OeeId)
                 .ConfigureAwait(false);
 
@@ -186,13 +187,21 @@ namespace FmsbwebCoreApi.Services
                 },
                 DataList = new
                 {
-                    Prod = prod.GroupBy(x => new { x.TimeStamp.Hour, AmPm = $"{x.TimeStamp:tt}" })
+                    Prod = prod.GroupBy(x => new
+                    {
+                        x.TimeStamp.Date,
+                        x.TimeStamp.Hour,
+                        Label = $"{x.TimeStamp:h tt}"
+                    })
                         .Select(x => new
                         {
+                            x.Key.Date,
                             x.Key.Hour,
-                            x.Key.AmPm,
+                            x.Key.Label,
                             Count = x.Sum(q => q.Count)
-                        }).OrderBy(x => x.Hour),
+                        })
+                        .OrderBy(x => x.Date)
+                        .ThenBy(x => x.Hour),
 
                     Scrap = scrap.GroupBy(x => new { x.ScrapAreaName, x.ScrapDesc })
                         .Select(x => new

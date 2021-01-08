@@ -7,18 +7,15 @@ using System.Threading.Tasks;
 
 namespace FmsbwebCoreApi.Entity.FmsbOee
 {
-    public class Machine
+    public class MachineGroup
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid MachineId { get; set; } = Guid.NewGuid();
-
+        public Guid MachineGroupId { get; set; } = Guid.NewGuid();
         [Required]
-        public MachineGroup MachineGroup { get; set; }
-        public Guid MachineGroupId { get; set; }
-
-        [Required]
-        public string MachineName { get; set; }
+        public string GroupName { get; set; }
         [Required]
         public DateTime DateModified { get; set; } = DateTime.Now;
+
+        public ICollection<Machine> Machines { get; set; }
     }
 }

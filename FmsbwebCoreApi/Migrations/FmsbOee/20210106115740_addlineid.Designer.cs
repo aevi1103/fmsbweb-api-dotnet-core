@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.FmsbOee;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.FmsbOee
 {
     [DbContext(typeof(FmsbOeeContext))]
-    partial class FmsbOeeContextModelSnapshot : ModelSnapshot
+    [Migration("20210106115740_addlineid")]
+    partial class addlineid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,9 +106,6 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         .HasColumnType("nvarchar(5)")
                         .HasMaxLength(5);
 
-                    b.Property<string>("MachineName")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("ScrapInspectionLocation")
                         .HasColumnType("int");
 
@@ -127,10 +126,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("01b888a3-00ca-4736-96ae-1636dc7ec914"),
                             CycleTimeSeconds = 5m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 258, DateTimeKind.Local).AddTicks(6573),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 767, DateTimeKind.Local).AddTicks(736),
                             Department = "Assembly",
                             GroupName = "A2",
-                            MachineName = "Assembly 2",
                             ScrapInspectionLocation = 2,
                             TagName = "Assembly.A2_PACKOUT.A2_PACKOUT_APC",
                             WorkCenter = "ASBY0002"
@@ -139,10 +137,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("bd9eae20-60c7-44cd-ae2e-96c5f015f82e"),
                             CycleTimeSeconds = 11m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 267, DateTimeKind.Local).AddTicks(9474),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 783, DateTimeKind.Local).AddTicks(792),
                             Department = "Assembly",
                             GroupName = "A3",
-                            MachineName = "Assembly 3",
                             ScrapInspectionLocation = 1,
                             TagName = "Assembly.A3.A3_APC",
                             WorkCenter = "ASBY0003"
@@ -151,10 +148,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("77e6d96c-f58d-46ea-a00d-5f962cfaf67b"),
                             CycleTimeSeconds = 8.4m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 267, DateTimeKind.Local).AddTicks(9676),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 783, DateTimeKind.Local).AddTicks(1275),
                             Department = "Assembly",
                             GroupName = "A4",
-                            MachineName = "Assembly 4",
                             ScrapInspectionLocation = 1,
                             TagName = "Assembly.A4_M3.A4_M3_APC",
                             WorkCenter = "ASBY0004"
@@ -163,10 +159,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("c26e4341-8e94-48f8-9eb6-fd2c5061bae3"),
                             CycleTimeSeconds = 8m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 267, DateTimeKind.Local).AddTicks(9709),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 783, DateTimeKind.Local).AddTicks(1366),
                             Department = "Assembly",
                             GroupName = "A5",
-                            MachineName = "Assembly 5",
                             ScrapInspectionLocation = 2,
                             TagName = "Assembly.A5.A5_APC",
                             WorkCenter = "ASBY0005"
@@ -175,10 +170,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("f5ede641-fb76-40d5-924b-5d28ceea1ac9"),
                             CycleTimeSeconds = 8m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 267, DateTimeKind.Local).AddTicks(9736),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 783, DateTimeKind.Local).AddTicks(1440),
                             Department = "Assembly",
                             GroupName = "A6",
-                            MachineName = "Assembly 6",
                             ScrapInspectionLocation = 1,
                             TagName = "Assembly.A6_M2.A6_M2_APC",
                             WorkCenter = "ASBY0006"
@@ -187,10 +181,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("1ace746f-f44f-47c4-bb9c-6c49fc550488"),
                             CycleTimeSeconds = 9m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 267, DateTimeKind.Local).AddTicks(9770),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 783, DateTimeKind.Local).AddTicks(2050),
                             Department = "Assembly",
                             GroupName = "A7",
-                            MachineName = "Assembly 7",
                             ScrapInspectionLocation = 1,
                             TagName = "Assembly.A7_M3.A7_M3_APC",
                             WorkCenter = "ASBY0007"
@@ -199,10 +192,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("13667af3-8a37-456a-8d65-5e98627af1ad"),
                             CycleTimeSeconds = 12m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 267, DateTimeKind.Local).AddTicks(9859),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 783, DateTimeKind.Local).AddTicks(2163),
                             Department = "Assembly",
                             GroupName = "A8",
-                            MachineName = "Assembly 8",
                             ScrapInspectionLocation = 1,
                             TagName = "Assembly.A8.A8_APC",
                             WorkCenter = "ASBY0008"
@@ -211,10 +203,9 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         {
                             LineId = new Guid("3ea0d0fe-9c1b-4171-baa1-aa5b6e6422e2"),
                             CycleTimeSeconds = 8.5m,
-                            DateModified = new DateTime(2021, 1, 6, 8, 48, 45, 267, DateTimeKind.Local).AddTicks(9891),
+                            DateModified = new DateTime(2021, 1, 6, 6, 57, 39, 783, DateTimeKind.Local).AddTicks(2233),
                             Department = "Assembly",
                             GroupName = "A9",
-                            MachineName = "Assembly 9",
                             ScrapInspectionLocation = 1,
                             TagName = "Assembly.A9_M3.A9_M3_APC",
                             WorkCenter = "ASBY0009"
@@ -257,12 +248,7 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("LineId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("MachineGroupId");
-
-                    b.HasIndex("LineId");
 
                     b.ToTable("MachineGroups");
                 });
@@ -375,13 +361,6 @@ namespace FmsbwebCoreApi.Migrations.FmsbOee
                         .HasForeignKey("MachineGroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("FmsbwebCoreApi.Entity.FmsbOee.MachineGroup", b =>
-                {
-                    b.HasOne("FmsbwebCoreApi.Entity.FmsbOee.Line", null)
-                        .WithMany("MachineGroups")
-                        .HasForeignKey("LineId");
                 });
 
             modelBuilder.Entity("FmsbwebCoreApi.Entity.FmsbOee.Oee", b =>

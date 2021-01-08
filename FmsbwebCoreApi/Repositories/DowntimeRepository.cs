@@ -72,7 +72,7 @@ namespace FmsbwebCoreApi.Repositories
             if (tag.Contains("packout")) return "PACKOUT";
             if (tag.Contains("a9_rod_cell")) return "Rod Cell";
 
-            return "N/A";
+            return assemblyTagName;
         }
     }
 }
