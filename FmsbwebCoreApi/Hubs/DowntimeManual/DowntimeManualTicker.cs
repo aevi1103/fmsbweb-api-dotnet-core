@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Hubs.Downtime;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using TableDependency.SqlClient;
@@ -7,27 +8,24 @@ using TableDependency.SqlClient.Base;
 using TableDependency.SqlClient.Base.Enums;
 using TableDependency.SqlClient.Base.EventArgs;
 
-namespace FmsbwebCoreApi.Hubs.Downtime
+namespace FmsbwebCoreApi.Hubs.DowntimeManual
 {
-    public class DowntimeTicker : IDisposable
+    public class DowntimeManualTicker : IDisposable
     {
         private readonly IConfiguration _configuration;
-        private static SqlTableDependency<DowntimeModel> _tableDependency;
+        private static SqlTableDependency<DowntimeManualModel> _tableDependency;
 
-        public DowntimeTicker(IHubContext<DowntimeHub> counterHubContext, IConfiguration configuration)
+        public DowntimeManualTicker(IHubContext<DowntimeManualHub> counterHubContext, IConfiguration configuration)
         {
             Hub = counterHubContext;
             _configuration = configuration;
 
-            var mapper = new ModelToTableMapper<DowntimeModel>();
-            mapper.AddMapping(s => s.TagName, "tagName");
-            mapper.AddMapping(s => s.LastUpdate, "lastUpdate");
-            mapper.AddMapping(s => s.IsDown, "isDown");
+            var mapper = new ModelToTableMapper<DowntimeManualModel>();
 
-            _tableDependency = new SqlTableDependency<DowntimeModel>(
-                configuration.GetConnectionString("iconicsConn"),
+            _tableDependency = new SqlTableDependency<DowntimeManualModel>(
+                configuration.GetConnectionString("fmsbOeeConn"),
                 schemaName: "dbo",
-                tableName: "KEPServer_CurrentStatus_MachineDowntime"
+                tableName: "DowntimeEvents"
             );
 
             _tableDependency.OnChanged += SqlTableDependency_Changed;
@@ -35,24 +33,24 @@ namespace FmsbwebCoreApi.Hubs.Downtime
             _tableDependency.Start();
         }
 
-        private IHubContext<DowntimeHub> Hub { get; set; }
+        private IHubContext<DowntimeManualHub> Hub { get; set; }
 
-        private void SqlTableDependency_Changed(object sender, RecordChangedEventArgs<DowntimeModel> e) 
+        private void SqlTableDependency_Changed(object sender, RecordChangedEventArgs<DowntimeManualModel> e)
         {
             if (e.ChangeType == ChangeType.None) return;
 
-            if (e.Entity.TagName != null)
-            {
-                BroadCastChange(e.Entity);
-            }
+            BroadCastChange(e.Entity);
 
         }
 
-        private async Task BroadCastChange(DowntimeModel data)
+        private async Task BroadCastChange(DowntimeManualModel data)
         {
             //await Hub.Clients.All.SendAsync("BroadCastChange", data);
-            Console.WriteLine(data.GroupName);
-            await Hub.Clients.Group(data.GroupName).SendAsync("BroadCastChange", data).ConfigureAwait(false);
+            Console.WriteLine(data.MachineId);
+            await Hub.Clients
+                .Group(data.MachineId.ToString())
+                .SendAsync("BroadCastChange", data)
+                .ConfigureAwait(false);
         }
 
         private static void SqlTableDependency_OnError(object sender, ErrorEventArgs e)
@@ -75,7 +73,7 @@ namespace FmsbwebCoreApi.Hubs.Downtime
             _disposed = true;
         }
 
-        ~DowntimeTicker()
+        ~DowntimeManualTicker()
         {
             Dispose(false);
         }
@@ -86,6 +84,5 @@ namespace FmsbwebCoreApi.Hubs.Downtime
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
     }
 }

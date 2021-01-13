@@ -124,6 +124,8 @@ namespace FmsbwebCoreApi.Services
 
             }).ToList();
 
+            #region Summary
+
             var productionTotal = prod.Sum(x => x.Count ?? 0);
             var scrapTotal = scrap.Sum(x => x.Qty ?? 0);
 
@@ -157,6 +159,8 @@ namespace FmsbwebCoreApi.Services
 
             var quality = gross == 0 ? 0 : (decimal)net / gross;
             var oee = availability * performance * quality;
+
+            #endregion
 
             return new
             {

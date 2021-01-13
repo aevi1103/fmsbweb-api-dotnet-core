@@ -28,6 +28,7 @@ using FmsbwebCoreApi.Entity.QualityCheckSheets;
 using FmsbwebCoreApi.Hubs;
 using FmsbwebCoreApi.Hubs.Counter;
 using FmsbwebCoreApi.Hubs.Downtime;
+using FmsbwebCoreApi.Hubs.DowntimeManual;
 using FmsbwebCoreApi.Hubs.Scrap;
 using Microsoft.AspNet.OData.Builder;
 using Microsoft.AspNet.OData.Extensions;
@@ -187,6 +188,7 @@ namespace FmsbwebCoreApi
             // inject singleton instance for hub tickers
             services.AddSingleton<CounterTicker>();
             services.AddSingleton<DowntimeTicker>();
+            //services.AddSingleton<DowntimeManualTicker>();
             services.AddSingleton<ScrapTicker>();
         }
 
@@ -237,6 +239,7 @@ namespace FmsbwebCoreApi
                 endpoints.MapHub<ChatHub>("/chathub");
                 endpoints.MapHub<CounterHub>("/counterhub");
                 endpoints.MapHub<DowntimeHub>("/downtimehub");
+                //endpoints.MapHub<DowntimeManualHub>("/downtimemanualhub");
                 endpoints.MapHub<ScrapHub>("/scraphub");
             });
 
