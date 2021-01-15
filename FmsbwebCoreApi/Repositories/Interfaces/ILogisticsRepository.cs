@@ -31,5 +31,8 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
         Task DeleteProgramSlocInventoryTargets(int id);
         Task<List<string>> GetDistinctPrograms();
         Task<List<string>> GetDistinctSloc();
+        Task<List<StockSafetyDays>> GetStockSafetyDays();
+        Task<StockSafetyDays> UpdateStockSafetyDay(StockSafetyDays data);
+        Task<StockSafetyDays> DeleteStockSafetyDay(StockSafetyDays data);
     }
 }

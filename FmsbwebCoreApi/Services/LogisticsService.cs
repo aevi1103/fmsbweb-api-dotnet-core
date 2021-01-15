@@ -481,16 +481,21 @@ namespace FmsbwebCoreApi.Services
             return raw.Concat(wip).Concat(fin).OrderBy(x => x.CostTypeOrder).ToList();
         }
 
-        private static dynamic GetDaysOnHand(IEnumerable<SapDumpUnpivotDto> dto)
+        private static dynamic GetDaysOnHand(IEnumerable<SapDumpUnpivotDto> dto, IEnumerable<StockSafetyDays> safetyDays)
         {
+            
             var result = dto
                 .Where(x => x.Type == "P1A" && x.Location == "0300")
                 .GroupBy(x => new { x.Date, x.Material, x.Program })
                 .Select(x =>
                 {
-                    var qty = x.Sum(q => q.Qty);
-                    var safetyStock = x.Average(q => q.SafetyStock);
-                    var daysOnHand = safetyStock == 0 ? 0 : qty / safetyStock;
+                    var qty = x.Sum(q => q.Qty ?? 0);
+                    var safetyStock = x.Average(q => q.SafetyStock ?? 0);
+                    var safetyDay = safetyDays.FirstOrDefault(s => s.MaterialNumber == x.Key.Material);
+                    var days = safetyDay?.Days ?? 0;
+
+                    var safetyStockOverDays = days == 0 ? 0 : safetyStock / days;
+                    var daysOnHand = safetyStockOverDays == 0 ? 0 : qty / safetyStockOverDays;
 
                     return new
                     {
@@ -499,7 +504,8 @@ namespace FmsbwebCoreApi.Services
                         x.Key.Program,
                         Qty = qty,
                         SafetyStock = safetyStock,
-                        DaysOnHand = daysOnHand
+                        DaysOnHand = daysOnHand,
+                        SafetyDays = safetyDay
                     };
 
                 });
@@ -696,12 +702,14 @@ namespace FmsbwebCoreApi.Services
                 var dto = _mapper.Map<List<SapDumpUnpivotDto>>(data);
                 var costTargets = await GetCostTargets().ConfigureAwait(false);
 
+                var stockSafetyDays = await GetStockSafetyDays().ConfigureAwait(false);
+
                 return new
                 {
                     InventoryStatus = GetInventoryStatus(dto),
                     InventoryCost = GetInventoryCost(dto, costTargets),
                     CustomerComments = await GetCustomerCommentsDto(dateTime).ConfigureAwait(false),
-                    DaysOnHand = GetDaysOnHand(dto)
+                    DaysOnHand = GetDaysOnHand(dto, stockSafetyDays)
                 };
             }
             catch (Exception e)

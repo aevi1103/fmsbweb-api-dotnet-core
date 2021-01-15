@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using FmsbwebCoreApi.Entity.Fmsb2;
+using FmsbwebCoreApi.Entity.SAP;
 
 namespace FmsbwebCoreApi.Context.Fmsb2
 {
@@ -274,7 +275,7 @@ namespace FmsbwebCoreApi.Context.Fmsb2
 
         public virtual DbSet<AnodizeChecklist> AnodizeChecklist { get; set; }
         public virtual DbSet<AnodizeChecklistEntries> AnodizeChecklistEntries { get; set; }
-
+        public virtual DbSet<StockSafetyDays> StockSafetyDays { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

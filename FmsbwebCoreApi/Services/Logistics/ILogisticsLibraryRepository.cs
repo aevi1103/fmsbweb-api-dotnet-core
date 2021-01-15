@@ -21,19 +21,24 @@ namespace FmsbwebCoreApi.Services.Logistics
         Task<List<LogisticsDollarsDto>> GetLogisticsDollars(DateTime startDate, DateTime endDate);
 
         IEnumerable<InventoryStatusDto> GetInventoryStatus(
-                List<SapDumpNewView> inventoryData,
-                List<string> dmax,
-                List<LogisticsCommentDto> logiticsComments);
+            List<SapDumpNewView> inventoryData,
+            List<string> dmax,
+            List<LogisticsCommentDto> logiticsComments);
+
         IEnumerable<InventoryCostDto> GetInventoryCost(
             List<SapDumpNewView> data,
             List<RawMatInv> rawMatData,
             List<LogisticsDollarsDto> dollarsData,
             List<string> dmax);
+
         Task<IEnumerable<CustomerCommentsDto>> GetCustomerComments(DateTime startDate, DateTime endDate);
 
         DaysOnHandColorCode DaysOnHandStatusColor(decimal daysOnHand, int InvQty);
         Task<IEnumerable<InventoryDaysOnHandDto>> GetInventoryDaysOnHand(DateTime startDate, DateTime endDate);
 
         Task<StockStatusDto> GetStockStatus(DateTime startDate, DateTime endDate);
+
+
+
     }
 }

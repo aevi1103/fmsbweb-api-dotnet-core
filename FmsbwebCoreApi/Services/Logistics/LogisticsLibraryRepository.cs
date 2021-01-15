@@ -562,7 +562,5 @@ namespace FmsbwebCoreApi.Services.Logistics
                 DaysOnHand = daysOnHand
             };
         }
-
-
     }
 }

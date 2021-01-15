@@ -312,5 +312,34 @@ namespace FmsbwebCoreApi.Repositories
                 .ToListAsync()
                 .ConfigureAwait(false);
         }
+
+        public async Task<List<StockSafetyDays>> GetStockSafetyDays()
+        {
+            return await _fmsb2Context.StockSafetyDays.ToListAsync().ConfigureAwait(false);
+        }
+
+        public async Task<StockSafetyDays> UpdateStockSafetyDay(StockSafetyDays data)
+        {
+            await using var transaction = await _fmsb2Context.Database.BeginTransactionAsync().ConfigureAwait(false);
+            try
+            {
+                _fmsb2Context.StockSafetyDays.Update(data);
+                await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+                await transaction.CommitAsync().ConfigureAwait(false);
+                return data;
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync().ConfigureAwait(false);
+                throw new Exception(e.Message);
+            }
+        }
+
+        public async Task<StockSafetyDays> DeleteStockSafetyDay(StockSafetyDays data)
+        {
+            _fmsb2Context.StockSafetyDays.Remove(data);
+            await _fmsb2Context.SaveChangesAsync().ConfigureAwait(false);
+            return data;
+        }
     }
 }

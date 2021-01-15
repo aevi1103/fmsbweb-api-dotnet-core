@@ -43,7 +43,9 @@ namespace FmsbwebCoreApi.Repositories
                 Shift = x.Shift,
                 Line = x.Line,
                 Defect = x.DefectOnly
-            }).ToListAsync();
+            })
+                .ToListAsync()
+                .ConfigureAwait(false);
         }
     }
 }

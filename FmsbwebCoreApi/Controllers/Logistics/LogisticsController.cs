@@ -360,5 +360,30 @@ namespace FmsbwebCoreApi.Controllers.Logistics
 
         }
 
+        [HttpPost]
+        [Route("days")]
+        public async Task<ActionResult> UpdateStockSafetyDays(SafetyStockDaysResourceParameter data)
+        {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+
+            try
+            {
+                var result = await _logisticsService.UpdateStockSafetyDay(new StockSafetyDays
+                {
+                    StockSafetyDaysId = data.StockSafetyDaysId,
+                    MaterialNumber = data.MaterialNumber,
+                    Days = data.Days,
+                    TimeStamp = data.TimeStamp
+                }).ConfigureAwait(false);
+
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return BadRequest(e.Message);
+            }
+        }
+
     }
 }
