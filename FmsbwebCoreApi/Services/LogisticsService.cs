@@ -481,6 +481,7 @@ namespace FmsbwebCoreApi.Services
             return raw.Concat(wip).Concat(fin).OrderBy(x => x.CostTypeOrder).ToList();
         }
 
+
         private static dynamic GetDaysOnHand(IEnumerable<SapDumpUnpivotDto> dto, IEnumerable<StockSafetyDays> safetyDays)
         {
             
@@ -489,6 +490,8 @@ namespace FmsbwebCoreApi.Services
                 .GroupBy(x => new { x.Date, x.Material, x.Program })
                 .Select(x =>
                 {
+                
+
                     var qty = x.Sum(q => q.Qty ?? 0);
                     var safetyStock = x.Average(q => q.SafetyStock ?? 0);
                     var safetyDay = safetyDays.FirstOrDefault(s => s.MaterialNumber == x.Key.Material);
@@ -772,8 +775,6 @@ namespace FmsbwebCoreApi.Services
 
             return GetWorkCenterOrder(ordersDto, production, minDate, maxDate);
         }
-
- 
     }
 }
 

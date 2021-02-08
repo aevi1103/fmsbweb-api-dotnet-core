@@ -20,12 +20,13 @@ namespace FmsbwebCoreApi.Controllers.KPI
             _kpiService = kpiService ?? throw new ArgumentNullException(nameof(kpiService));
         }
 
-        private string EosErrorMsg(string dept) =>
-            $"No data available for {dept} department, Please enter data before sending the EOS report!";
+        private static string EosErrorMsg(string dept) => $"No data available for {dept} department, Please enter data before sending the EOS report!";
 
         [HttpGet(Name = "SendEosReport")]
         public async Task<IActionResult> SendEosReport(string dept, DateTime shiftDate, string shift)
         {
+            if (dept == null) throw new ArgumentNullException(nameof(dept));
+
             try
             {
                 dept = dept.ToLower();

@@ -1272,7 +1272,8 @@ namespace FmsbwebCoreApi.Services
 
             //recipients = "aebbie.rontos@tenneco.com";
 
-            await _emailService.SendEmailAsync(sender, recipients, subject, sb.ToString()).ConfigureAwait(false);
+            //await _emailService.SendEmailAsync(sender, recipients, subject, sb.ToString()).ConfigureAwait(false);
+            _emailService.SendEmail(sender, recipients, subject, sb.ToString());
 
             return true;
         }

@@ -125,6 +125,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.IAutoGageRepository, Repositories.AutoGageRepository>();
             services.AddScoped<Repositories.Interfaces.ILogisticsRepository, Repositories.LogisticsRepository>();
             services.AddScoped<Repositories.Interfaces.IDowntimeRepository, Repositories.DowntimeRepository>();
+            services.AddScoped<Repositories.Interfaces.IProjectTrackerRepository, Repositories.ProjectTrackerRepository>();
 
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ICharacteristicRepository, Repositories.QualityCheckSheets.CharacteristicRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IMachineRepository, Repositories.QualityCheckSheets.MachineRepository>();
@@ -145,6 +146,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.ISwotService, Services.SwotService>();
             services.AddScoped<Services.Interfaces.ILogisticsService, Services.LogisticsService>();
             services.AddScoped<Services.Interfaces.IOeeService, Services.OeeService>();
+            services.AddScoped<Services.Interfaces.IProjectTrackerService, Services.ProjectTrackerService>();
 
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICharacteristicService, Services.QualityCheckSheets.CharacteristicService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();
@@ -190,6 +192,9 @@ namespace FmsbwebCoreApi
             services.AddSingleton<DowntimeTicker>();
             //services.AddSingleton<DowntimeManualTicker>();
             services.AddSingleton<ScrapTicker>();
+
+            // Register the Swagger generator, defining 1 or more Swagger documents
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

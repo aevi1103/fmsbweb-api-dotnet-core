@@ -4,14 +4,16 @@ using FmsbwebCoreApi.Context.Fmsb2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FmsbwebCoreApi.Migrations.Fmsb2
 {
     [DbContext(typeof(Fmsb2Context))]
-    partial class Fmsb2ContextModelSnapshot : ModelSnapshot
+    [Migration("20210208114124_AddProjectTackerTable2")]
+    partial class AddProjectTackerTable2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3789,11 +3791,9 @@ namespace FmsbwebCoreApi.Migrations.Fmsb2
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ProjectDescription")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ProjectName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("StartDate")

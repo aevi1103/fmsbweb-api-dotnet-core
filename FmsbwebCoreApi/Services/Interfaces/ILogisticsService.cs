@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Models;
+using FmsbwebCoreApi.Models.Logistics;
 using FmsbwebCoreApi.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 
@@ -16,5 +17,6 @@ namespace FmsbwebCoreApi.Services.Interfaces
         Task<dynamic> GetLogisticsSettingsStatus(DateTime dateTime);
         Task<List<LogisticsCustomerDto>> GetCustomerCommentsDto(DateTime dateTime);
         Task<dynamic> GetWeeklyProductionOrder(string workCenter);
+   
     }
 }
