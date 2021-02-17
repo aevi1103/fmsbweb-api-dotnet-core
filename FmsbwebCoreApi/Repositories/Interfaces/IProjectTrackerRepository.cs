@@ -10,7 +10,6 @@ namespace FmsbwebCoreApi.Repositories.Interfaces
 {
     public interface IProjectTrackerRepository
     {
-        IQueryable<ProjectTracker> GetQry(ProjectTrackerResourceParameter parameters);
         Task<ProjectTracker> AddOrUpdate(ProjectTracker data);
         Task<ProjectTracker> Delete(int id);
     }

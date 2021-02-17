@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Repositories.Interfaces;
-using FmsbwebCoreApi.ResourceParameters;
-using Microsoft.AspNetCore.Razor.Language.Intermediate;
-using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Repositories
 {
@@ -19,17 +13,6 @@ namespace FmsbwebCoreApi.Repositories
         public ProjectTrackerRepository(Fmsb2Context context)
         {
             _context = context;
-        }
-
-        public IQueryable<ProjectTracker> GetQry(ProjectTrackerResourceParameter parameters)
-        {
-            var qry = _context.ProjectTracker
-                .Where(x => x.DateTimeRequested >= parameters.StartDateTime && x.DateTimeRequested <= parameters.EndDateTime)
-                .Where(x => x.ProjectName.ToLower().Trim().Contains(parameters.SearchKeyword) || x.ProjectDescription.ToLower().Trim().Contains(parameters.SearchKeyword))
-                .AsNoTracking()
-                .AsQueryable();
-
-            return qry;
         }
 
         public async Task<ProjectTracker> AddOrUpdate(ProjectTracker data)

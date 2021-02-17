@@ -23,10 +23,17 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
         [Column("shift")]
         [StringLength(50)]
         public string Shift { get; set; }
+
+        [ForeignKey("Department")]
         [Column("deptid")]
         public int Deptid { get; set; }
+        public Department Department { get; set; }
+
+        [ForeignKey("Machines")]
         [Column("machineid")]
         public int Machineid { get; set; }
+        public Machines Machines { get; set; }
+
         [Column("modifieddate", TypeName = "datetime")]
         public DateTime? Modifieddate { get; set; }
         [StringLength(10)]

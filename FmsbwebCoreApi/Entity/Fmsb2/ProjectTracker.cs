@@ -14,6 +14,7 @@ namespace FmsbwebCoreApi.Entity.Fmsb2
 
         [ForeignKey("CreateHxH")]
         public int HourByHourId { get; set; }
+
         public virtual CreateHxH CreateHxH { get; set; }
 
         [Required]

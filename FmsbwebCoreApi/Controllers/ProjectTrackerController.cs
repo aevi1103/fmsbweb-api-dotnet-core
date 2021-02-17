@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FmsbwebCoreApi.Context.Fmsb2;
 using FmsbwebCoreApi.Entity.Fmsb2;
-using FmsbwebCoreApi.ResourceParameters;
+using FmsbwebCoreApi.Enums;
 using FmsbwebCoreApi.Services.Interfaces;
+using Microsoft.AspNet.OData;
 using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Controllers
@@ -15,18 +16,27 @@ namespace FmsbwebCoreApi.Controllers
     public class ProjectTrackerController : Controller
     {
         private readonly IProjectTrackerService _service;
+        private readonly Fmsb2Context _context;
 
-        public ProjectTrackerController(IProjectTrackerService service)
+        public ProjectTrackerController(IProjectTrackerService service, Fmsb2Context context)
         {
             _service = service;
+            _context = context;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] ProjectTrackerResourceParameter parameters)
+        [EnableQuery]
+        public IActionResult Get()
         {
             try
             {
-                var data = await _service.GetQry(parameters).ToListAsync().ConfigureAwait(false);
+                var data = _context
+                    .ProjectTracker
+                    .Include(x => x.CreateHxH)
+                    .Include(x => x.CreateHxH.HxhOpsClockNum)
+                    .Include(x => x.CreateHxH.Department)
+                    .Include(x => x.CreateHxH.Machines)
+                    .AsQueryable();
                 return Ok(data);
             }
             catch (Exception e)
@@ -37,7 +47,7 @@ namespace FmsbwebCoreApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(ProjectTracker parameters)
+        public async Task<IActionResult> Post([FromBody] ProjectTracker parameters)
         {
             try
             {

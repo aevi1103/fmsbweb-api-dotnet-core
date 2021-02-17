@@ -637,6 +637,66 @@ namespace FmsbwebCoreApi.Services
             ws.Columns().AdjustToContents();
         }
 
+        private static void ProgramLineWorkSheet(IXLWorkbook wb, IEnumerable<ProductionByProgramLineDto> programLines)
+        {
+            var ws = wb.Worksheets.Add("Program & Line").SetTabColor(XLColor.Blue);
+            var currentRow = 1;
+
+            var columnsNames = new List<string>
+            {
+                        "Department",
+                        "Program",
+                        "Line",
+                        "Target",
+                        "HxH Gross",
+                        "SAP Gross",
+                        "SB Scrap",
+                        "Purchased Scrap",
+                        "Warmers",
+                        "Foundry Scrap",
+                        "Machining Scrap",
+                        "Anodize Scrap",
+                        "Skirt Coat Scrap",
+                        "Assembly Scrap",
+                        "SAP Net",
+                        "SAP OAE",
+                        "HxH Net",
+                        "HxH OAE"
+                    };
+
+            for (var i = 0; i < columnsNames.Count; i++)
+            {
+                ws.Cell(currentRow, i + 1).Value = columnsNames[i];
+            }
+
+            foreach (var programLine in programLines.Where(x => x.HxHGross > 0 || x.Target > 0))
+            {
+                currentRow++;
+                ws.Cell(currentRow, 1).Value = programLine.Department;
+                ws.Cell(currentRow, 2).Value = programLine.Program;
+                ws.Cell(currentRow, 3).Value = programLine.Line;
+                ws.Cell(currentRow, 4).Value = programLine.Target;
+                ws.Cell(currentRow, 5).Value = programLine.HxHGross;
+                ws.Cell(currentRow, 6).Value = programLine.SapGross;
+                ws.Cell(currentRow, 7).Value = programLine.TotalSbScrap;
+                ws.Cell(currentRow, 8).Value = programLine.TotalPurchaseScrap;
+                ws.Cell(currentRow, 9).Value = programLine.TotalWarmers;
+
+                ws.Cell(currentRow, 10).Value = programLine.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "foundry")?.Qty;
+                ws.Cell(currentRow, 11).Value = programLine.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "machining")?.Qty;
+                ws.Cell(currentRow, 12).Value = programLine.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "anodize")?.Qty;
+                ws.Cell(currentRow, 13).Value = programLine.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "skirt coat")?.Qty;
+                ws.Cell(currentRow, 14).Value = programLine.SbScrapAreaDetails.FirstOrDefault(x => x.ScrapAreaName.ToLower() == "assembly")?.Qty;
+
+                ws.Cell(currentRow, 15).Value = programLine.SapNet;
+                ws.Cell(currentRow, 16).Value = programLine.SapOae;
+                ws.Cell(currentRow, 17).Value = programLine.HxHNet;
+                ws.Cell(currentRow, 18).Value = programLine.HxHOae;
+            }
+
+            ws.Columns().AdjustToContents();
+        }
+
         private static void ScrapWorkSheet(IXLWorkbook wb, IEnumerable<Scrap> scrapList, int sapGross, string workSheetName, bool isDetails = false)
         {
             var ws = wb.Worksheets.Add(workSheetName).SetTabColor(XLColor.Red);
@@ -686,6 +746,7 @@ namespace FmsbwebCoreApi.Services
             var data = await _kpiService.GetDepartmentDetails(resourceParameter).ConfigureAwait(false);
             var lines = data.DetailsByLine.ToList();
             var program = data.DetailsByProgram.ToList();
+            var programLine = data.DetailsByProgramLine.ToList();
             var shift = data.DetailsByShift.ToList();
 
             var sbScrap = data.SbScrapDetails;
@@ -697,6 +758,7 @@ namespace FmsbwebCoreApi.Services
             SummaryWorkSheet(wb, data);
             LinesWorkSheet(wb, lines);
             ProgramsWorkSheet(wb, program);
+            ProgramLineWorkSheet(wb, programLine);
             ShiftWorkSheet(wb, shift);
             ScrapWorkSheet(wb, sbScrap, data.SapGross, "SB Scrap");
             ScrapWorkSheet(wb, purchasedScrap, data.SapGross, "Purchased Scrap");
