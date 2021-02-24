@@ -2,3 +2,5 @@
 Update-Database -Context "Fmsb2Context"
 
 Add-Migration -Name AddMachineGroup -OutputDir "Migrations/FmsbOee" -Context FmsbOeeContext 
+
+Add-Migration -Name Init -OutputDir "Migrations/Overtime" -Context OvertimeContext 

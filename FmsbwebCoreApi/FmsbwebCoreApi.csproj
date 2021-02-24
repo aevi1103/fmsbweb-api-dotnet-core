@@ -20,6 +20,12 @@
     <Compile Remove="Migrations\Iconics\20201124213853_changeKyeToGuid.Designer.cs" />
     <Compile Remove="Migrations\Iconics\20201209190615_RenameColumn.cs" />
     <Compile Remove="Migrations\Iconics\20201209190615_RenameColumn.Designer.cs" />
+    <Compile Remove="Migrations\Overtime\20210222183219_makeclocknumberaspk.cs" />
+    <Compile Remove="Migrations\Overtime\20210222183219_makeclocknumberaspk.Designer.cs" />
+    <Compile Remove="Migrations\Overtime\20210222190222_removeIdentitykey.cs" />
+    <Compile Remove="Migrations\Overtime\20210222190222_removeIdentitykey.Designer.cs" />
+    <Compile Remove="Migrations\Overtime\20210223172907_restructuretypetbl.cs" />
+    <Compile Remove="Migrations\Overtime\20210223172907_restructuretypetbl.Designer.cs" />
     <Compile Remove="Migrations\QualityCheckSheets\20200812161930_addCheckSheetTables.cs" />
     <Compile Remove="Migrations\QualityCheckSheets\20200812161930_addCheckSheetTables.Designer.cs" />
     <Compile Remove="Migrations\QualityCheckSheets\20200812162424_addCheckSheetTables.cs" />

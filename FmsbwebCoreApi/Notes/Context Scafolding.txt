@@ -6,3 +6,6 @@ Scaffold-DbContext "Data Source=SBNDINMS002;Initial Catalog=FMSB_HR;Integrated S
 Scaffold-DbContext "Data Source=SBNDINMS002;Initial Catalog=QualityCheckSheets;Integrated Security=False;User ID=rontoa20;Password=aebbie17;Connect Timeout=15;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" Microsoft.EntityFrameworkCore.SqlServer -OutputDir "Entity/FmsbMvc" -ContextDir "Context/QualityCheckSheets" -Context "QualityCheckSheetsContext" -d -Tables
 
 Scaffold-DbContext "Data Source=SBNDINMS002;Initial Catalog=MachineGage;Integrated Security=False;User ID=rontoa20;Password=aebbie17;Connect Timeout=15;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" Microsoft.EntityFrameworkCore.SqlServer -OutputDir "Entity/AutoGage" -ContextDir "Context/AutoGage" -Context "AutoGageContext" -d -Tables AutoGage2View
+
+
+Scaffold-DbContext "Data Source=SBNDINMS002;Initial Catalog=FMSB_Overtime;Integrated Security=False;User ID=rontoa20;Password=aebbie17;Connect Timeout=15;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False" Microsoft.EntityFrameworkCore.SqlServer -OutputDir "Entity/Overtime" -ContextDir "Context/Overtime" -Context "OvertimeContext"

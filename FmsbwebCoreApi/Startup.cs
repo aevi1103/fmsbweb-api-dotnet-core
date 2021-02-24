@@ -23,6 +23,7 @@ using FmsbwebCoreApi.Context.Master;
 using FmsbwebCoreApi.Context.FmsbMvc;
 using FmsbwebCoreApi.Context.FmsbOee;
 using FmsbwebCoreApi.Context.Iconics;
+using FmsbwebCoreApi.Context.Overtime;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
 using FmsbwebCoreApi.Hubs;
@@ -127,6 +128,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Repositories.Interfaces.IDowntimeRepository, Repositories.DowntimeRepository>();
             services.AddScoped<Repositories.Interfaces.IProjectTrackerRepository, Repositories.ProjectTrackerRepository>();
             services.AddScoped<Repositories.Interfaces.IMaintenanceAlertRepository, Repositories.MaintenanceAlertRepository>();
+            services.AddScoped<Repositories.Interfaces.IOvertimeRepository, Repositories.OvertimeRepository>();
 
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.ICharacteristicRepository, Repositories.QualityCheckSheets.CharacteristicRepository>();
             services.AddScoped<Repositories.Interfaces.QualityCheckSheets.IMachineRepository, Repositories.QualityCheckSheets.MachineRepository>();
@@ -149,6 +151,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.IOeeService, Services.OeeService>();
             services.AddScoped<Services.Interfaces.IProjectTrackerService, Services.ProjectTrackerService>();
             services.AddScoped<Services.Interfaces.IMaintenanceAlertService, Services.MaintenanceAlertService>();
+            services.AddScoped<Services.Interfaces.IOvertimeService, Services.OvertimeService>();
 
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICharacteristicService, Services.QualityCheckSheets.CharacteristicService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();
@@ -185,6 +188,7 @@ namespace FmsbwebCoreApi
             services.AddDbContext<QualityCheckSheetsContext>(options => options.UseSqlServer(Configuration.GetConnectionString("qualityCheckSheetsConn")));
             services.AddDbContext<AutoGageContext>(options => options.UseSqlServer(Configuration.GetConnectionString("autoGageConn")));
             services.AddDbContext<FmsbOeeContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbOeeConn")));
+            services.AddDbContext<OvertimeContext>(options => options.UseSqlServer(Configuration.GetConnectionString("overtimeConn")));
 
             //signal r
             services.AddSignalR();
