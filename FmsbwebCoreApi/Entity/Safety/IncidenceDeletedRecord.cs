@@ -3,21 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 #nullable disable
 
 namespace FmsbwebCoreApi.Entity.Safety
 {
-    [Table("Incidence")]
-    public partial class Incidence
+    [Table("Incidence_deleted_records")]
+    public partial class IncidenceDeletedRecord
     {
-        public Incidence()
-        {
-            Attachments = new HashSet<Attachment>();
-        }
-
         [Key]
         [Column("ID")]
         public int Id { get; set; }
@@ -64,25 +58,5 @@ namespace FmsbwebCoreApi.Entity.Safety
         [Column("deletedFlagComment")]
         [StringLength(5000)]
         public string DeletedFlagComment { get; set; }
-        public bool? Mitigated { get; set; }
-        [Column(TypeName = "datetime")]
-        public DateTime? MitigatedTimeStamp { get; set; }
-        public string Notes { get; set; }
-
-        [ForeignKey(nameof(BodyPartId))]
-        [InverseProperty("Incidences")]
-        public virtual BodyPart BodyPart { get; set; }
-        [ForeignKey(nameof(Dept))]
-        [InverseProperty("Incidences")]
-        public virtual Dept DeptNavigation { get; set; }
-        [ForeignKey(nameof(InjuryId))]
-        [InverseProperty("Incidences")]
-        public virtual Injury Injury { get; set; }
-        [ForeignKey(nameof(InjuryStatId))]
-        [InverseProperty("Incidences")]
-        public virtual InjuryStat InjuryStat { get; set; }
-        [InverseProperty(nameof(Attachment.Incident))]
-        public virtual ICollection<Attachment> Attachments { get; set; }
-
     }
 }

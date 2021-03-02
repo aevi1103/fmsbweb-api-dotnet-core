@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Serialization;
 using System;
 using FmsbwebCoreApi.Context.Fmsb2;
-using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Context.SAP;
 using System.Linq;
 using DateShiftLib.Helpers;
@@ -25,6 +24,7 @@ using FmsbwebCoreApi.Context.FmsbOee;
 using FmsbwebCoreApi.Context.Iconics;
 using FmsbwebCoreApi.Context.Overtime;
 using FmsbwebCoreApi.Context.QualityCheckSheets;
+using FmsbwebCoreApi.Context.Safety;
 using FmsbwebCoreApi.Entity.QualityCheckSheets;
 using FmsbwebCoreApi.Hubs;
 using FmsbwebCoreApi.Hubs.Counter;
@@ -109,9 +109,6 @@ namespace FmsbwebCoreApi
                 //newtonsoftOutputFormatter?.SupportedMediaTypes.Add("application/vnd.fmsbweb.hateoas+json");
             });
 
-            //register safety property mapping service
-            services.AddTransient<Services.Safety.IPropertyMappingService, Services.Safety.PropertyMappingService>();
-
             //register property checker service
             services.AddTransient<Services.IPropertyCheckerService, Services.PropertyCheckerService>();
 
@@ -152,6 +149,7 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.IProjectTrackerService, Services.ProjectTrackerService>();
             services.AddScoped<Services.Interfaces.IMaintenanceAlertService, Services.MaintenanceAlertService>();
             services.AddScoped<Services.Interfaces.IOvertimeService, Services.OvertimeService>();
+            services.AddScoped<Services.Interfaces.ISafetyService, Services.SafetyService>();
 
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICharacteristicService, Services.QualityCheckSheets.CharacteristicService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IMachineService, Services.QualityCheckSheets.MachineService>();
@@ -161,7 +159,6 @@ namespace FmsbwebCoreApi
             services.AddScoped<Services.Interfaces.QualityCheckSheets.ICheckSheetEntryService, Services.QualityCheckSheets.CheckSheetEntryService>();
             services.AddScoped<Services.Interfaces.QualityCheckSheets.IReCheckService, Services.QualityCheckSheets.ReChecksService>();
 
-            services.AddScoped<Services.Safety.ISafetyLibraryRepository, Services.Safety.SafetyLibraryRepository>();
             services.AddScoped<Services.Logistics.ILogisticsLibraryRepository, Services.Logistics.LogisticsLibraryRepository>();
             services.AddScoped<Services.FMSB2.IFmsb2LibraryRepository, Services.FMSB2.FmsbLibraryRepository>();
             services.AddScoped<Services.Intranet.IIntranetLibraryRepository, Services.Intranet.IntranetLibraryRepository>();
@@ -180,7 +177,6 @@ namespace FmsbwebCoreApi
             services.AddDbContext<Fmsb2Context>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbConn")));
             services.AddDbContext<IconicsContext>(options =>  options.UseSqlServer(Configuration.GetConnectionString("iconicsConn")));
             services.AddDbContext<FmsbMvcContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbMvc")));
-            services.AddDbContext<SafetyContext>(options => options.UseSqlServer(Configuration.GetConnectionString("safetyConn")));
             services.AddDbContext<SapContext>(options => options.UseSqlServer(Configuration.GetConnectionString("sapConn"), sqlServerOptions => sqlServerOptions.CommandTimeout(60)));
             services.AddDbContext<IntranetContext>(options => options.UseSqlServer(Configuration.GetConnectionString("intranet")));
             services.AddDbContext<fmsbQualityContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbQuality")));
@@ -189,6 +185,7 @@ namespace FmsbwebCoreApi
             services.AddDbContext<AutoGageContext>(options => options.UseSqlServer(Configuration.GetConnectionString("autoGageConn")));
             services.AddDbContext<FmsbOeeContext>(options => options.UseSqlServer(Configuration.GetConnectionString("fmsbOeeConn")));
             services.AddDbContext<OvertimeContext>(options => options.UseSqlServer(Configuration.GetConnectionString("overtimeConn")));
+            services.AddDbContext<SafetyContext>(options => options.UseSqlServer(Configuration.GetConnectionString("safetyConn")));
 
             //signal r
             services.AddSignalR();

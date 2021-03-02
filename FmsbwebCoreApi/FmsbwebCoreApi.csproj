@@ -35,6 +35,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="obj\Release\netcoreapp3.1\PubTmp\Out\efpt.config.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.0" />
     <PackageReference Include="ClosedXML" Version="0.95.3" />
     <PackageReference Include="FastDeepCloner" Version="1.3.5" />

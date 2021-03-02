@@ -1,44 +1,78 @@
 ﻿{
-   "ContextClassName": "IconicsContext",
+   "CodeGenerationMode": 0,
+   "ContextClassName": "SafetyContext",
    "ContextNamespace": null,
    "DefaultDacpacSchema": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
    "ModelNamespace": "",
-   "OutputContextPath": "Context\/Iconics",
-   "OutputPath": "Entity\/Iconics",
+   "OutputContextPath": "Context\/Safety",
+   "OutputPath": "Entity\/Safety",
    "ProjectRootNamespace": "FmsbwebCoreApi",
    "Schemas": null,
    "SelectedHandlebarsLanguage": 0,
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
-         "HasPrimaryKey": true,
-         "Name": "[dbo].[KEPServer_MachineDowntime]",
+         "Name": "[dbo].[attachments]",
          "ObjectType": 0
       },
       {
-         "HasPrimaryKey": true,
-         "Name": "[dbo].[KEPServer_PermCounts_History]",
+         "Name": "[dbo].[BodyPart]",
          "ObjectType": 0
       },
       {
-         "HasPrimaryKey": true,
-         "Name": "[dbo].[KEPserverTagNames]",
+         "Name": "[dbo].[Dept]",
          "ObjectType": 0
       },
       {
-         "HasPrimaryKey": true,
-         "Name": "[dbo].[KEPserverTagNames_view]",
+         "Name": "[dbo].[EmailNotificationLog]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[EmailsNotiRecipients]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Incidence]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Incidence_deleted_records]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Injuries]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[InjuryStat]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ManHours]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RecordableRecipients]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SafetyStatusRecords]",
          "ObjectType": 0
       }
    ],
+   "UiHint": "sbndinms002.FMSB_SafetyIncidence.dbo",
+   "UseBoolPropertiesWithoutDefaultSql": false,
    "UseDatabaseNames": false,
    "UseDbContextSplitting": false,
-   "UseFluentApiOnly": true,
+   "UseFluentApiOnly": false,
    "UseHandleBars": false,
    "UseInflector": true,
    "UseLegacyPluralizer": false,
+   "UseNoConstructor": false,
+   "UseNoNavigations": false,
    "UseNodaTime": false,
+   "UseNullableReferences": false,
    "UseSpatial": false
 }

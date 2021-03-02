@@ -9,20 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FmsbwebCoreApi.Entity.Safety
 {
-    [Table("Dept")]
-    public partial class Dept
+    public partial class RecordableRecipient
     {
-        public Dept()
-        {
-            Incidences = new HashSet<Incidence>();
-        }
-
         [Key]
-        [Column("Dept")]
+        [Column("email")]
         [StringLength(50)]
-        public string Dept1 { get; set; }
-
-        [InverseProperty(nameof(Incidence.DeptNavigation))]
-        public virtual ICollection<Incidence> Incidences { get; set; }
+        public string Email { get; set; }
     }
 }

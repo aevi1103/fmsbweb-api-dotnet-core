@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using FmsbwebCoreApi.Entity.Fmsb2;
 using FmsbwebCoreApi.Entity.SAP;
-using FmsbwebCoreApi.Models;
 using FmsbwebCoreApi.ResourceParameters;
 using FmsbwebCoreApi.ResourceParameters.Logistics;
 using FmsbwebCoreApi.Services.Interfaces;
